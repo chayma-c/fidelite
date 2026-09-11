@@ -1,0 +1,8 @@
+### Response for WalletEndpoint.getWalletToken. Bundles the current balance
+### with the token so the wallet QR screen doesn't need a second round trip
+### on every ~60s refresh.
+class: WalletTokenResponse
+fields:
+  rawToken: String
+  expiresAt: DateTime
+  currentBalanceMillimes: int

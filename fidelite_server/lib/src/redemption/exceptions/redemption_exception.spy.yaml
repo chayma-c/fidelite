@@ -1,0 +1,5 @@
+### Thrown by RedemptionEndpoint.redeemReward when a scanned wallet QR
+### can't be redeemed for the requested reward.
+exception: RedemptionException
+fields:
+  reason: RedemptionExceptionReason

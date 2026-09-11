@@ -6,6 +6,7 @@ import 'src/auth/keycloak_authentication_handler.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/menu/menu_seed.dart';
+import 'src/rewards/rewards_seed.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/root.dart';
 
@@ -65,10 +66,12 @@ void run(List<String> args) async {
   // Start the server.
   await pod.start();
 
-  // Idempotent: only inserts if the menu table is empty.
+  // Idempotent: only inserts if the respective table is empty. Rewards
+  // mirrors the menu, so it must run after.
   final seedSession = await pod.createSession();
   try {
     await ensureMenuSeeded(seedSession);
+    await ensureRewardsSeeded(seedSession);
   } finally {
     await seedSession.close();
   }

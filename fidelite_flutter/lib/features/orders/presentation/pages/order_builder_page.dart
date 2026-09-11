@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../menu/data/menu_providers.dart';
+import '../../../redemption/presentation/start_redemption_flow.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/order_submission_controller.dart';
 import '../widgets/cart_panel.dart';
@@ -45,6 +46,11 @@ class OrderBuilderPage extends ConsumerWidget {
         title: const Text('Fidélité — Order', overflow: TextOverflow.ellipsis),
         titleSpacing: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.card_giftcard),
+            tooltip: 'Redeem a reward',
+            onPressed: () => startRedemptionFlow(context),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sign out',

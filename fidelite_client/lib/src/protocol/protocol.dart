@@ -27,13 +27,22 @@ import 'points/exceptions/order_claim_exception_reason.dart' as _i13;
 import 'points/order_claim_token.dart' as _i14;
 import 'points/points_ledger_entry.dart' as _i15;
 import 'points/points_ledger_reason.dart' as _i16;
-import 'users/app_user.dart' as _i17;
-import 'package:fidelite_client/src/protocol/menu/menu_item.dart' as _i18;
+import 'points/wallet_token.dart' as _i17;
+import 'points/wallet_token_response.dart' as _i18;
+import 'redemption/exceptions/redemption_exception.dart' as _i19;
+import 'redemption/exceptions/redemption_exception_reason.dart' as _i20;
+import 'redemption/redemption.dart' as _i21;
+import 'redemption/redemption_result.dart' as _i22;
+import 'redemption/redemption_status.dart' as _i23;
+import 'rewards/reward_item.dart' as _i24;
+import 'users/app_user.dart' as _i25;
+import 'package:fidelite_client/src/protocol/menu/menu_item.dart' as _i26;
 import 'package:fidelite_client/src/protocol/orders/order_item_input.dart'
-    as _i19;
-import 'package:fidelite_client/src/protocol/orders/order.dart' as _i20;
+    as _i27;
+import 'package:fidelite_client/src/protocol/orders/order.dart' as _i28;
 import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
-    as _i21;
+    as _i29;
+import 'package:fidelite_client/src/protocol/rewards/reward_item.dart' as _i30;
 export 'menu/menu_item.dart';
 export 'orders/exceptions/invalid_order_exception.dart';
 export 'orders/exceptions/invalid_order_exception_reason.dart';
@@ -49,6 +58,14 @@ export 'points/exceptions/order_claim_exception_reason.dart';
 export 'points/order_claim_token.dart';
 export 'points/points_ledger_entry.dart';
 export 'points/points_ledger_reason.dart';
+export 'points/wallet_token.dart';
+export 'points/wallet_token_response.dart';
+export 'redemption/exceptions/redemption_exception.dart';
+export 'redemption/exceptions/redemption_exception_reason.dart';
+export 'redemption/redemption.dart';
+export 'redemption/redemption_result.dart';
+export 'redemption/redemption_status.dart';
+export 'rewards/reward_item.dart';
 export 'users/app_user.dart';
 export 'client.dart';
 
@@ -131,8 +148,32 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i16.PointsLedgerReason) {
       return _i16.PointsLedgerReason.fromJson(data) as T;
     }
-    if (t == _i17.AppUserRecord) {
-      return _i17.AppUserRecord.fromJson(data) as T;
+    if (t == _i17.WalletTokenRecord) {
+      return _i17.WalletTokenRecord.fromJson(data) as T;
+    }
+    if (t == _i18.WalletTokenResponse) {
+      return _i18.WalletTokenResponse.fromJson(data) as T;
+    }
+    if (t == _i19.RedemptionException) {
+      return _i19.RedemptionException.fromJson(data) as T;
+    }
+    if (t == _i20.RedemptionExceptionReason) {
+      return _i20.RedemptionExceptionReason.fromJson(data) as T;
+    }
+    if (t == _i21.RedemptionRecord) {
+      return _i21.RedemptionRecord.fromJson(data) as T;
+    }
+    if (t == _i22.RedemptionResult) {
+      return _i22.RedemptionResult.fromJson(data) as T;
+    }
+    if (t == _i23.RedemptionStatus) {
+      return _i23.RedemptionStatus.fromJson(data) as T;
+    }
+    if (t == _i24.RewardItemRecord) {
+      return _i24.RewardItemRecord.fromJson(data) as T;
+    }
+    if (t == _i25.AppUserRecord) {
+      return _i25.AppUserRecord.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.MenuItemRecord?>()) {
       return (data != null ? _i2.MenuItemRecord.fromJson(data) : null) as T;
@@ -190,33 +231,68 @@ class Protocol extends _i1.SerializationManager {
       return (data != null ? _i16.PointsLedgerReason.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i17.AppUserRecord?>()) {
-      return (data != null ? _i17.AppUserRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.WalletTokenRecord?>()) {
+      return (data != null ? _i17.WalletTokenRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.WalletTokenResponse?>()) {
+      return (data != null ? _i18.WalletTokenResponse.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i19.RedemptionException?>()) {
+      return (data != null ? _i19.RedemptionException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i20.RedemptionExceptionReason?>()) {
+      return (data != null
+              ? _i20.RedemptionExceptionReason.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _i1.getType<_i21.RedemptionRecord?>()) {
+      return (data != null ? _i21.RedemptionRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i22.RedemptionResult?>()) {
+      return (data != null ? _i22.RedemptionResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i23.RedemptionStatus?>()) {
+      return (data != null ? _i23.RedemptionStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i24.RewardItemRecord?>()) {
+      return (data != null ? _i24.RewardItemRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i25.AppUserRecord?>()) {
+      return (data != null ? _i25.AppUserRecord.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i18.MenuItemRecord>) {
+    if (t == List<_i26.MenuItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i18.MenuItemRecord>(e))
+              .map((e) => deserialize<_i26.MenuItemRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i19.OrderItemInput>) {
+    if (t == List<_i27.OrderItemInput>) {
       return (data as List)
-              .map((e) => deserialize<_i19.OrderItemInput>(e))
+              .map((e) => deserialize<_i27.OrderItemInput>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.OrderRecord>) {
+    if (t == List<_i28.OrderRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i20.OrderRecord>(e))
+              .map((e) => deserialize<_i28.OrderRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.PointsLedgerEntryRecord>) {
+    if (t == List<_i29.PointsLedgerEntryRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i21.PointsLedgerEntryRecord>(e))
+              .map((e) => deserialize<_i29.PointsLedgerEntryRecord>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i30.RewardItemRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_i30.RewardItemRecord>(e))
               .toList()
           as T;
     }
@@ -240,7 +316,15 @@ class Protocol extends _i1.SerializationManager {
       _i14.OrderClaimTokenRecord => 'OrderClaimTokenRecord',
       _i15.PointsLedgerEntryRecord => 'PointsLedgerEntryRecord',
       _i16.PointsLedgerReason => 'PointsLedgerReason',
-      _i17.AppUserRecord => 'AppUserRecord',
+      _i17.WalletTokenRecord => 'WalletTokenRecord',
+      _i18.WalletTokenResponse => 'WalletTokenResponse',
+      _i19.RedemptionException => 'RedemptionException',
+      _i20.RedemptionExceptionReason => 'RedemptionExceptionReason',
+      _i21.RedemptionRecord => 'RedemptionRecord',
+      _i22.RedemptionResult => 'RedemptionResult',
+      _i23.RedemptionStatus => 'RedemptionStatus',
+      _i24.RewardItemRecord => 'RewardItemRecord',
+      _i25.AppUserRecord => 'AppUserRecord',
       _ => null,
     };
   }
@@ -285,7 +369,23 @@ class Protocol extends _i1.SerializationManager {
         return 'PointsLedgerEntryRecord';
       case _i16.PointsLedgerReason():
         return 'PointsLedgerReason';
-      case _i17.AppUserRecord():
+      case _i17.WalletTokenRecord():
+        return 'WalletTokenRecord';
+      case _i18.WalletTokenResponse():
+        return 'WalletTokenResponse';
+      case _i19.RedemptionException():
+        return 'RedemptionException';
+      case _i20.RedemptionExceptionReason():
+        return 'RedemptionExceptionReason';
+      case _i21.RedemptionRecord():
+        return 'RedemptionRecord';
+      case _i22.RedemptionResult():
+        return 'RedemptionResult';
+      case _i23.RedemptionStatus():
+        return 'RedemptionStatus';
+      case _i24.RewardItemRecord():
+        return 'RewardItemRecord';
+      case _i25.AppUserRecord():
         return 'AppUserRecord';
     }
     return null;
@@ -342,8 +442,32 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'PointsLedgerReason') {
       return deserialize<_i16.PointsLedgerReason>(data['data']);
     }
+    if (dataClassName == 'WalletTokenRecord') {
+      return deserialize<_i17.WalletTokenRecord>(data['data']);
+    }
+    if (dataClassName == 'WalletTokenResponse') {
+      return deserialize<_i18.WalletTokenResponse>(data['data']);
+    }
+    if (dataClassName == 'RedemptionException') {
+      return deserialize<_i19.RedemptionException>(data['data']);
+    }
+    if (dataClassName == 'RedemptionExceptionReason') {
+      return deserialize<_i20.RedemptionExceptionReason>(data['data']);
+    }
+    if (dataClassName == 'RedemptionRecord') {
+      return deserialize<_i21.RedemptionRecord>(data['data']);
+    }
+    if (dataClassName == 'RedemptionResult') {
+      return deserialize<_i22.RedemptionResult>(data['data']);
+    }
+    if (dataClassName == 'RedemptionStatus') {
+      return deserialize<_i23.RedemptionStatus>(data['data']);
+    }
+    if (dataClassName == 'RewardItemRecord') {
+      return deserialize<_i24.RewardItemRecord>(data['data']);
+    }
     if (dataClassName == 'AppUserRecord') {
-      return deserialize<_i17.AppUserRecord>(data['data']);
+      return deserialize<_i25.AppUserRecord>(data['data']);
     }
     return super.deserializeByClassName(data);
   }

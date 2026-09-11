@@ -1,0 +1,5 @@
+### Result of a successful redemption.
+class: RedemptionResult
+fields:
+  redemption: RedemptionRecord
+  customerNewBalanceMillimes: int

@@ -1,0 +1,14 @@
+### Why RedemptionEndpoint.redeemReward was rejected.
+enum: RedemptionExceptionReason
+serialized: byName
+default: unknown
+values:
+  ### No matching unconsumed, unexpired wallet token for this customer/token
+  ### combination.
+  - tokenInvalidOrExpired
+  ### The requested reward doesn't exist or is no longer active.
+  - rewardUnavailable
+  ### The customer's balance is less than the reward's cost. The wallet
+  ### token is left unconsumed so the cashier can retry a cheaper reward.
+  - insufficientBalance
+  - unknown

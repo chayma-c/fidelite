@@ -1,0 +1,26 @@
+### A catalog item redeemable for cashback. Deliberately a separate catalog
+### from the cash menu (not "spend balance as a discount on any menu item")
+### -- confirmed as the desired model up front -- currently seeded as a
+### mirror of the menu at its normal prices, but independent going forward:
+### editing a reward here never affects menu pricing or vice versa.
+class: RewardItemRecord
+table: reward_item
+fields:
+  name: String
+  description: String?
+
+  ### In millimes, same unit as the cashback balance itself.
+  pointsCost: int
+
+  ### Soft-disable instead of delete, so historical redemptions keep valid
+  ### references (see RedemptionRecord's name/cost snapshot fields).
+  isActive: bool, default=true
+
+  ### Remaining redemptions available, or null for unlimited. Nothing
+  ### decrements this yet -- reserved for a future limited-reward feature.
+  stock: int?
+
+  sortOrder: int, default=0
+
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now

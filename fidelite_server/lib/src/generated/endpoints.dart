@@ -16,9 +16,11 @@ import '../menu/menu_endpoint.dart' as _i2;
 import '../orders/order_endpoint.dart' as _i3;
 import '../points/points_claim_endpoint.dart' as _i4;
 import '../points/wallet_endpoint.dart' as _i5;
-import '../users/user_endpoint.dart' as _i6;
+import '../redemption/redemption_endpoint.dart' as _i6;
+import '../rewards/rewards_endpoint.dart' as _i7;
+import '../users/user_endpoint.dart' as _i8;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
-    as _i7;
+    as _i9;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -48,7 +50,19 @@ class Endpoints extends _i1.EndpointDispatch {
           'wallet',
           null,
         ),
-      'user': _i6.UserEndpoint()
+      'redemption': _i6.RedemptionEndpoint()
+        ..initialize(
+          server,
+          'redemption',
+          null,
+        ),
+      'rewards': _i7.RewardsEndpoint()
+        ..initialize(
+          server,
+          'rewards',
+          null,
+        ),
+      'user': _i8.UserEndpoint()
         ..initialize(
           server,
           'user',
@@ -80,7 +94,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'items': _i1.ParameterDescription(
               name: 'items',
-              type: _i1.getType<List<_i7.OrderItemInput>>(),
+              type: _i1.getType<List<_i9.OrderItemInput>>(),
               nullable: false,
             ),
           },
@@ -160,6 +174,16 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
               ),
         ),
+        'getWalletToken': _i1.MethodConnector(
+          name: 'getWalletToken',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['wallet'] as _i5.WalletEndpoint)
+                  .getWalletToken(session),
+        ),
         'getPointsHistory': _i1.MethodConnector(
           name: 'getPointsHistory',
           params: {
@@ -181,6 +205,59 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['redemption'] = _i1.EndpointConnector(
+      name: 'redemption',
+      endpoint: endpoints['redemption']!,
+      methodConnectors: {
+        'redeemReward': _i1.MethodConnector(
+          name: 'redeemReward',
+          params: {
+            'walletUserId': _i1.ParameterDescription(
+              name: 'walletUserId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'walletToken': _i1.ParameterDescription(
+              name: 'walletToken',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'rewardItemId': _i1.ParameterDescription(
+              name: 'rewardItemId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['redemption'] as _i6.RedemptionEndpoint)
+                  .redeemReward(
+                    session,
+                    params['walletUserId'],
+                    params['walletToken'],
+                    params['rewardItemId'],
+                  ),
+        ),
+      },
+    );
+    connectors['rewards'] = _i1.EndpointConnector(
+      name: 'rewards',
+      endpoint: endpoints['rewards']!,
+      methodConnectors: {
+        'getCatalog': _i1.MethodConnector(
+          name: 'getCatalog',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['rewards'] as _i7.RewardsEndpoint)
+                  .getCatalog(session),
+        ),
+      },
+    );
     connectors['user'] = _i1.EndpointConnector(
       name: 'user',
       endpoint: endpoints['user']!,
@@ -192,7 +269,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['user'] as _i6.UserEndpoint).getMe(session),
+              ) async => (endpoints['user'] as _i8.UserEndpoint).getMe(session),
         ),
       },
     );

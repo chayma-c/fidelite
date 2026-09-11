@@ -5,6 +5,8 @@ default: adjustment
 values:
   ### Cashback earned by a customer claiming a confirmed order's receipt QR.
   - orderClaim
+  ### Cashback spent redeeming a reward (staff-scanned wallet QR).
+  - redemption
   ### Manual correction. Nothing creates this yet -- reserved for a future
   ### admin action.
   - adjustment

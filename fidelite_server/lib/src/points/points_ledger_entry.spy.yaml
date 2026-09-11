@@ -16,13 +16,16 @@ fields:
   reason: PointsLedgerReason
 
   ### Set when [reason] is orderClaim.
-  relatedOrder: OrderRecord?, relation(onDelete=Restrict)
+  relatedOrder: OrderRecord?, relation(optional, onDelete=Restrict)
+
+  ### Set when [reason] is redemption.
+  relatedRedemption: RedemptionRecord?, relation(optional, onDelete=Restrict)
 
   ### Running balance immediately after this entry, in millimes.
   balanceAfterMillimes: int
 
   ### Who caused this entry -- the customer themselves for an order claim;
-  ### will be the staff member for a future redemption/adjustment.
+  ### the staff member for a redemption.
   createdByUser: AppUserRecord?, relation(onDelete=Restrict)
 
   createdAt: DateTime, default=now

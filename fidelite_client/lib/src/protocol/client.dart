@@ -20,10 +20,15 @@ import 'package:fidelite_client/src/protocol/orders/order_item_input.dart'
     as _i5;
 import 'package:fidelite_client/src/protocol/orders/order.dart' as _i6;
 import 'package:fidelite_client/src/protocol/points/claim_result.dart' as _i7;
-import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
+import 'package:fidelite_client/src/protocol/points/wallet_token_response.dart'
     as _i8;
-import 'package:fidelite_client/src/protocol/users/app_user.dart' as _i9;
-import 'protocol.dart' as _i10;
+import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
+    as _i9;
+import 'package:fidelite_client/src/protocol/redemption/redemption_result.dart'
+    as _i10;
+import 'package:fidelite_client/src/protocol/rewards/reward_item.dart' as _i11;
+import 'package:fidelite_client/src/protocol/users/app_user.dart' as _i12;
+import 'protocol.dart' as _i13;
 
 /// {@category Endpoint}
 class EndpointMenu extends _i1.EndpointRef {
@@ -110,14 +115,71 @@ class EndpointWallet extends _i1.EndpointRef {
     {},
   );
 
+  /// Issues a fresh single-use wallet QR token for staff to scan during a
+  /// redemption. Bundles the current balance so the wallet QR screen
+  /// doesn't need a second call on every refresh.
+  _i2.Future<_i8.WalletTokenResponse> getWalletToken() =>
+      caller.callServerEndpoint<_i8.WalletTokenResponse>(
+        'wallet',
+        'getWalletToken',
+        {},
+      );
+
   /// Most recent entries first, bank-statement style.
-  _i2.Future<List<_i8.PointsLedgerEntryRecord>> getPointsHistory({
+  _i2.Future<List<_i9.PointsLedgerEntryRecord>> getPointsHistory({
     required int limit,
-  }) => caller.callServerEndpoint<List<_i8.PointsLedgerEntryRecord>>(
+  }) => caller.callServerEndpoint<List<_i9.PointsLedgerEntryRecord>>(
     'wallet',
     'getPointsHistory',
     {'limit': limit},
   );
+}
+
+/// {@category Endpoint}
+class EndpointRedemption extends _i1.EndpointRef {
+  EndpointRedemption(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'redemption';
+
+  /// Redeems a reward against a customer's wallet QR. Unlike an order
+  /// claim, "is this token valid" and "does the redemption succeed" are
+  /// separate questions here -- a valid token can still fail on
+  /// insufficient balance, and in that case the token must stay usable for
+  /// a retry. That's why this locks the token row with `FOR UPDATE`
+  /// (read-then-decide) instead of the conditional-UPDATE pattern
+  /// PointsClaimEndpoint uses (where consumption itself *is* the success
+  /// signal).
+  _i2.Future<_i10.RedemptionResult> redeemReward(
+    _i1.UuidValue walletUserId,
+    String walletToken,
+    int rewardItemId,
+  ) => caller.callServerEndpoint<_i10.RedemptionResult>(
+    'redemption',
+    'redeemReward',
+    {
+      'walletUserId': walletUserId,
+      'walletToken': walletToken,
+      'rewardItemId': rewardItemId,
+    },
+  );
+}
+
+/// {@category Endpoint}
+class EndpointRewards extends _i1.EndpointRef {
+  EndpointRewards(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'rewards';
+
+  /// Any authenticated user: customers browse what they could redeem,
+  /// staff need the same list mid-redemption.
+  _i2.Future<List<_i11.RewardItemRecord>> getCatalog() =>
+      caller.callServerEndpoint<List<_i11.RewardItemRecord>>(
+        'rewards',
+        'getCatalog',
+        {},
+      );
 }
 
 /// Proves the Keycloak auth chain end-to-end during Phase 0 integration
@@ -131,8 +193,8 @@ class EndpointUser extends _i1.EndpointRef {
   @override
   String get name => 'user';
 
-  _i2.Future<_i9.AppUserRecord> getMe() =>
-      caller.callServerEndpoint<_i9.AppUserRecord>(
+  _i2.Future<_i12.AppUserRecord> getMe() =>
+      caller.callServerEndpoint<_i12.AppUserRecord>(
         'user',
         'getMe',
         {},
@@ -159,7 +221,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i10.Protocol(),
+         _i13.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -172,6 +234,8 @@ class Client extends _i1.ServerpodClientShared {
     order = EndpointOrder(this);
     pointsClaim = EndpointPointsClaim(this);
     wallet = EndpointWallet(this);
+    redemption = EndpointRedemption(this);
+    rewards = EndpointRewards(this);
     user = EndpointUser(this);
   }
 
@@ -183,6 +247,10 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointWallet wallet;
 
+  late final EndpointRedemption redemption;
+
+  late final EndpointRewards rewards;
+
   late final EndpointUser user;
 
   @override
@@ -191,6 +259,8 @@ class Client extends _i1.ServerpodClientShared {
     'order': order,
     'pointsClaim': pointsClaim,
     'wallet': wallet,
+    'redemption': redemption,
+    'rewards': rewards,
     'user': user,
   };
 

@@ -1,0 +1,17 @@
+### A completed reward redemption: [pointsCostSnapshot] was deducted from
+### [customerUser]'s cashback balance by [staffUser] scanning their wallet
+### QR. Snapshots the reward's name/cost at time of redemption so later
+### catalog edits never corrupt history.
+class: RedemptionRecord
+table: redemption
+fields:
+  customerUser: AppUserRecord?, relation(onDelete=Restrict)
+  staffUser: AppUserRecord?, relation(onDelete=Restrict)
+  rewardItem: RewardItemRecord?, relation(onDelete=Restrict)
+
+  rewardNameSnapshot: String
+  pointsCostSnapshot: int
+
+  status: RedemptionStatus, default=completed
+
+  createdAt: DateTime, default=now

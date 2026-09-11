@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/money/millimes_formatting.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../rewards/presentation/pages/rewards_catalog_page.dart';
 import '../../../scanner/presentation/pages/qr_scanner_page.dart';
 import '../../data/wallet_providers.dart';
 import '../controllers/claim_controller.dart';
 import 'points_history_page.dart';
+import 'wallet_qr_page.dart';
 
 class WalletHomePage extends ConsumerWidget {
   const WalletHomePage({super.key});
@@ -53,6 +55,15 @@ class WalletHomePage extends ConsumerWidget {
         titleSpacing: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.card_giftcard),
+            tooltip: 'Rewards',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => const RewardsCatalogPage(),
+              ),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'History',
             onPressed: () => Navigator.of(context).push(
@@ -90,6 +101,16 @@ class WalletHomePage extends ConsumerWidget {
               onPressed: isClaiming ? null : () => _scanReceipt(context, ref),
               icon: const Icon(Icons.qr_code_scanner),
               label: const Text('Scan receipt to earn cashback'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => const WalletQrPage(),
+                ),
+              ),
+              icon: const Icon(Icons.qr_code),
+              label: const Text('Show my QR to redeem'),
             ),
           ],
         ),

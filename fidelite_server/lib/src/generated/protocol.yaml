@@ -7,6 +7,11 @@ pointsClaim:
   - claimOrderPoints:
 wallet:
   - getBalance:
+  - getWalletToken:
   - getPointsHistory:
+redemption:
+  - redeemReward:
+rewards:
+  - getCatalog:
 user:
   - getMe:

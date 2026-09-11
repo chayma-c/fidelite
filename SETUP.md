@@ -140,19 +140,30 @@ fidelite_flutter/lib/
         widgets/     # MenuItemCard, CartPanel
     scanner/
       presentation/  # QrScannerPage — shared camera scanner, returns a raw string
+    rewards/
+      data/          # rewardsCatalogProvider
+      presentation/  # RewardsCatalogPage (customer browsing)
+    redemption/
+      presentation/
+        controllers/ # RedemptionController
+        pages/       # RewardPickerPage (staff, after scanning a wallet QR)
+        start_redemption_flow.dart # scan -> parse -> push RewardPickerPage
     wallet/
       data/          # balanceProvider, pointsHistoryProvider
       presentation/
-        controllers/ # ClaimController (parses a scanned QR, redeems it)
-        pages/       # WalletHomePage, PointsHistoryPage
+        controllers/ # ClaimController, WalletQrController (rotating redemption QR)
+        pages/       # WalletHomePage, PointsHistoryPage, WalletQrPage
 
 fidelite_server/lib/src/
-  auth/    # KeycloakJwtValidator, keycloakAuthenticationHandler
-  config/  # AppConfig — reads env vars, fails fast if missing
-  users/   # AppUserRecord model + UserEndpoint (getMe)
-  menu/    # MenuItemRecord model, MenuEndpoint, menu_seed.dart
-  orders/  # OrderRecord/OrderItemRecord models, OrderEndpoint, InvalidOrderException
-  points/  # PointsLedgerEntryRecord, OrderClaimTokenRecord, PointsClaimEndpoint, WalletEndpoint
+  auth/       # KeycloakJwtValidator, keycloakAuthenticationHandler
+  config/     # AppConfig — reads env vars, fails fast if missing
+  users/      # AppUserRecord model + UserEndpoint (getMe)
+  menu/       # MenuItemRecord model, MenuEndpoint, menu_seed.dart
+  orders/     # OrderRecord/OrderItemRecord models, OrderEndpoint, InvalidOrderException
+  points/     # PointsLedgerEntryRecord, OrderClaimTokenRecord, WalletTokenRecord,
+              # PointsClaimEndpoint, WalletEndpoint, points_balance.dart (shared balance/lock helpers)
+  rewards/    # RewardItemRecord model, RewardsEndpoint, rewards_seed.dart
+  redemption/ # RedemptionRecord model, RedemptionEndpoint, RedemptionException
 ```
 
 - **State management**: Riverpod (`Notifier`/`NotifierProvider`, no code
@@ -233,9 +244,44 @@ fidelite_server/lib/src/
   the server-side default will compile-error on the client, or silently
   fail with "Missing required query parameter" if called via raw HTTP.
 
-## 9. What's intentionally not built yet
+## 9. Rewards & redemption (Phase 3)
 
-The rewards catalog and redemption flow (Phase 3 — spending cashback on a
-menu item, the other half of the loop this phase only builds the earning
-side of). Order history/reprint (`OrderEndpoint.getOrderHistory` exists
-server-side but has no UI yet) and real printer integration are also open.
+- **A separate catalog, not points-as-discount**: `RewardItemRecord` is its
+  own table, decoupled from `MenuItemRecord` — confirmed as the intended
+  design up front. Currently seeded (`rewards_seed.dart`, runs after the
+  menu seed) as a straight mirror of the menu at the same DT prices, since
+  no distinct reward list existed yet; editing a reward afterward never
+  touches menu pricing or vice versa.
+- **The wallet QR is short-lived on purpose**: unlike the order-claim QR
+  (Phase 2, where single-use *is* the whole defense and expiry is just a
+  cleanup horizon), a customer's wallet QR encodes their own identity, so a
+  screenshot of a long-lived one would be directly replayable. `WalletToken
+  Record` tokens expire in ~90s, and `WalletQrController` silently re-issues
+  one every 60s while the QR screen is open — comfortably inside that
+  window — so the code on screen is always close to freshly issued.
+- **Two different atomicity techniques, deliberately**: `PointsClaimEndpoint`
+  (Phase 2) uses a conditional `UPDATE ... WHERE status = 'pending'` because
+  consuming the token *is* the success signal there. `RedemptionEndpoint`
+  can't use that — a valid wallet token can still fail to redeem for a
+  business reason (insufficient balance), and in that case the token must
+  stay usable for an immediate retry with a cheaper reward. So it instead
+  takes a `SELECT ... FOR UPDATE` row lock on the token, decides success or
+  failure inside the transaction, and only writes `consumedAt` on success;
+  on `insufficientBalance` the exception is thrown before anything is
+  written, so the transaction contributes no change and the token is
+  untouched. Verified directly: an expensive reward correctly fails without
+  consuming the token, and a follow-up cheap reward against the *same*
+  token then succeeds.
+- **Redemption is staff-scoped, claim is customer-scoped**: `Redemption
+  Endpoint.redeemReward` requires `role:staff` and takes the customer's
+  `walletUserId` explicitly from the scanned QR (the caller is the cashier,
+  not the customer) — mirrored in the UI: `RewardPickerPage` lives under
+  `redemption/`, reached from the staff order screen's app bar, not from
+  the wallet.
+
+## 10. What's intentionally not built yet
+
+Order history/reprint (`OrderEndpoint.getOrderHistory` exists server-side
+but has no UI yet), real printer integration, and menu/reward admin CRUD
+tooling (currently both are edited by hand in their respective `*_seed.dart`
+files).

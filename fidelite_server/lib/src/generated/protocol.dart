@@ -28,13 +28,22 @@ import 'points/exceptions/order_claim_exception_reason.dart' as _i14;
 import 'points/order_claim_token.dart' as _i15;
 import 'points/points_ledger_entry.dart' as _i16;
 import 'points/points_ledger_reason.dart' as _i17;
-import 'users/app_user.dart' as _i18;
-import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i19;
+import 'points/wallet_token.dart' as _i18;
+import 'points/wallet_token_response.dart' as _i19;
+import 'redemption/exceptions/redemption_exception.dart' as _i20;
+import 'redemption/exceptions/redemption_exception_reason.dart' as _i21;
+import 'redemption/redemption.dart' as _i22;
+import 'redemption/redemption_result.dart' as _i23;
+import 'redemption/redemption_status.dart' as _i24;
+import 'rewards/reward_item.dart' as _i25;
+import 'users/app_user.dart' as _i26;
+import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i27;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
-    as _i20;
-import 'package:fidelite_server/src/generated/orders/order.dart' as _i21;
+    as _i28;
+import 'package:fidelite_server/src/generated/orders/order.dart' as _i29;
 import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
-    as _i22;
+    as _i30;
+import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i31;
 export 'menu/menu_item.dart';
 export 'orders/exceptions/invalid_order_exception.dart';
 export 'orders/exceptions/invalid_order_exception_reason.dart';
@@ -50,6 +59,14 @@ export 'points/exceptions/order_claim_exception_reason.dart';
 export 'points/order_claim_token.dart';
 export 'points/points_ledger_entry.dart';
 export 'points/points_ledger_reason.dart';
+export 'points/wallet_token.dart';
+export 'points/wallet_token_response.dart';
+export 'redemption/exceptions/redemption_exception.dart';
+export 'redemption/exceptions/redemption_exception_reason.dart';
+export 'redemption/redemption.dart';
+export 'redemption/redemption_result.dart';
+export 'redemption/redemption_status.dart';
+export 'rewards/reward_item.dart';
 export 'users/app_user.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
@@ -507,8 +524,14 @@ class Protocol extends _i1.SerializationManagerServer {
         _i2.ColumnDefinition(
           name: 'relatedOrderId',
           columnType: _i2.ColumnType.bigint,
-          isNullable: false,
-          dartType: 'int',
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'relatedRedemptionId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
         ),
         _i2.ColumnDefinition(
           name: 'balanceAfterMillimes',
@@ -553,6 +576,16 @@ class Protocol extends _i1.SerializationManagerServer {
         ),
         _i2.ForeignKeyDefinition(
           constraintName: 'points_ledger_entry_fk_2',
+          columns: ['relatedRedemptionId'],
+          referenceTable: 'redemption',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'points_ledger_entry_fk_3',
           columns: ['createdByUserId'],
           referenceTable: 'app_user',
           referenceTableSchema: 'public',
@@ -565,6 +598,287 @@ class Protocol extends _i1.SerializationManagerServer {
       indexes: [
         _i2.IndexDefinition(
           indexName: 'points_ledger_entry_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'redemption',
+      dartName: 'RedemptionRecord',
+      schema: 'public',
+      module: 'fidelite',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'redemption_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'customerUserId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'staffUserId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'rewardItemId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'rewardNameSnapshot',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'pointsCostSnapshot',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'status',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:RedemptionStatus',
+          columnDefault: '\'completed\'::text',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'redemption_fk_0',
+          columns: ['customerUserId'],
+          referenceTable: 'app_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'redemption_fk_1',
+          columns: ['staffUserId'],
+          referenceTable: 'app_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'redemption_fk_2',
+          columns: ['rewardItemId'],
+          referenceTable: 'reward_item',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'redemption_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'reward_item',
+      dartName: 'RewardItemRecord',
+      schema: 'public',
+      module: 'fidelite',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'reward_item_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'name',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'description',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'pointsCost',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isActive',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _i2.ColumnDefinition(
+          name: 'stock',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sortOrder',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '0',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'reward_item_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'wallet_token',
+      dartName: 'WalletTokenRecord',
+      schema: 'public',
+      module: 'fidelite',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'wallet_token_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'tokenHash',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'issuedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+        _i2.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'consumedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'consumedByRedemptionId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'wallet_token_fk_0',
+          columns: ['userId'],
+          referenceTable: 'app_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'wallet_token_fk_1',
+          columns: ['consumedByRedemptionId'],
+          referenceTable: 'redemption',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'wallet_token_pkey',
           tableSpace: null,
           elements: [
             _i2.IndexElementDefinition(
@@ -654,8 +968,32 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i17.PointsLedgerReason) {
       return _i17.PointsLedgerReason.fromJson(data) as T;
     }
-    if (t == _i18.AppUserRecord) {
-      return _i18.AppUserRecord.fromJson(data) as T;
+    if (t == _i18.WalletTokenRecord) {
+      return _i18.WalletTokenRecord.fromJson(data) as T;
+    }
+    if (t == _i19.WalletTokenResponse) {
+      return _i19.WalletTokenResponse.fromJson(data) as T;
+    }
+    if (t == _i20.RedemptionException) {
+      return _i20.RedemptionException.fromJson(data) as T;
+    }
+    if (t == _i21.RedemptionExceptionReason) {
+      return _i21.RedemptionExceptionReason.fromJson(data) as T;
+    }
+    if (t == _i22.RedemptionRecord) {
+      return _i22.RedemptionRecord.fromJson(data) as T;
+    }
+    if (t == _i23.RedemptionResult) {
+      return _i23.RedemptionResult.fromJson(data) as T;
+    }
+    if (t == _i24.RedemptionStatus) {
+      return _i24.RedemptionStatus.fromJson(data) as T;
+    }
+    if (t == _i25.RewardItemRecord) {
+      return _i25.RewardItemRecord.fromJson(data) as T;
+    }
+    if (t == _i26.AppUserRecord) {
+      return _i26.AppUserRecord.fromJson(data) as T;
     }
     if (t == _i1.getType<_i3.MenuItemRecord?>()) {
       return (data != null ? _i3.MenuItemRecord.fromJson(data) : null) as T;
@@ -713,33 +1051,68 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data != null ? _i17.PointsLedgerReason.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i18.AppUserRecord?>()) {
-      return (data != null ? _i18.AppUserRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i18.WalletTokenRecord?>()) {
+      return (data != null ? _i18.WalletTokenRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.WalletTokenResponse?>()) {
+      return (data != null ? _i19.WalletTokenResponse.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i20.RedemptionException?>()) {
+      return (data != null ? _i20.RedemptionException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i21.RedemptionExceptionReason?>()) {
+      return (data != null
+              ? _i21.RedemptionExceptionReason.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _i1.getType<_i22.RedemptionRecord?>()) {
+      return (data != null ? _i22.RedemptionRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i23.RedemptionResult?>()) {
+      return (data != null ? _i23.RedemptionResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i24.RedemptionStatus?>()) {
+      return (data != null ? _i24.RedemptionStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i25.RewardItemRecord?>()) {
+      return (data != null ? _i25.RewardItemRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i26.AppUserRecord?>()) {
+      return (data != null ? _i26.AppUserRecord.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i19.MenuItemRecord>) {
+    if (t == List<_i27.MenuItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i19.MenuItemRecord>(e))
+              .map((e) => deserialize<_i27.MenuItemRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.OrderItemInput>) {
+    if (t == List<_i28.OrderItemInput>) {
       return (data as List)
-              .map((e) => deserialize<_i20.OrderItemInput>(e))
+              .map((e) => deserialize<_i28.OrderItemInput>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.OrderRecord>) {
+    if (t == List<_i29.OrderRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i21.OrderRecord>(e))
+              .map((e) => deserialize<_i29.OrderRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i22.PointsLedgerEntryRecord>) {
+    if (t == List<_i30.PointsLedgerEntryRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i22.PointsLedgerEntryRecord>(e))
+              .map((e) => deserialize<_i30.PointsLedgerEntryRecord>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i31.RewardItemRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_i31.RewardItemRecord>(e))
               .toList()
           as T;
     }
@@ -766,7 +1139,15 @@ class Protocol extends _i1.SerializationManagerServer {
       _i15.OrderClaimTokenRecord => 'OrderClaimTokenRecord',
       _i16.PointsLedgerEntryRecord => 'PointsLedgerEntryRecord',
       _i17.PointsLedgerReason => 'PointsLedgerReason',
-      _i18.AppUserRecord => 'AppUserRecord',
+      _i18.WalletTokenRecord => 'WalletTokenRecord',
+      _i19.WalletTokenResponse => 'WalletTokenResponse',
+      _i20.RedemptionException => 'RedemptionException',
+      _i21.RedemptionExceptionReason => 'RedemptionExceptionReason',
+      _i22.RedemptionRecord => 'RedemptionRecord',
+      _i23.RedemptionResult => 'RedemptionResult',
+      _i24.RedemptionStatus => 'RedemptionStatus',
+      _i25.RewardItemRecord => 'RewardItemRecord',
+      _i26.AppUserRecord => 'AppUserRecord',
       _ => null,
     };
   }
@@ -811,7 +1192,23 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'PointsLedgerEntryRecord';
       case _i17.PointsLedgerReason():
         return 'PointsLedgerReason';
-      case _i18.AppUserRecord():
+      case _i18.WalletTokenRecord():
+        return 'WalletTokenRecord';
+      case _i19.WalletTokenResponse():
+        return 'WalletTokenResponse';
+      case _i20.RedemptionException():
+        return 'RedemptionException';
+      case _i21.RedemptionExceptionReason():
+        return 'RedemptionExceptionReason';
+      case _i22.RedemptionRecord():
+        return 'RedemptionRecord';
+      case _i23.RedemptionResult():
+        return 'RedemptionResult';
+      case _i24.RedemptionStatus():
+        return 'RedemptionStatus';
+      case _i25.RewardItemRecord():
+        return 'RewardItemRecord';
+      case _i26.AppUserRecord():
         return 'AppUserRecord';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -872,8 +1269,32 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'PointsLedgerReason') {
       return deserialize<_i17.PointsLedgerReason>(data['data']);
     }
+    if (dataClassName == 'WalletTokenRecord') {
+      return deserialize<_i18.WalletTokenRecord>(data['data']);
+    }
+    if (dataClassName == 'WalletTokenResponse') {
+      return deserialize<_i19.WalletTokenResponse>(data['data']);
+    }
+    if (dataClassName == 'RedemptionException') {
+      return deserialize<_i20.RedemptionException>(data['data']);
+    }
+    if (dataClassName == 'RedemptionExceptionReason') {
+      return deserialize<_i21.RedemptionExceptionReason>(data['data']);
+    }
+    if (dataClassName == 'RedemptionRecord') {
+      return deserialize<_i22.RedemptionRecord>(data['data']);
+    }
+    if (dataClassName == 'RedemptionResult') {
+      return deserialize<_i23.RedemptionResult>(data['data']);
+    }
+    if (dataClassName == 'RedemptionStatus') {
+      return deserialize<_i24.RedemptionStatus>(data['data']);
+    }
+    if (dataClassName == 'RewardItemRecord') {
+      return deserialize<_i25.RewardItemRecord>(data['data']);
+    }
     if (dataClassName == 'AppUserRecord') {
-      return deserialize<_i18.AppUserRecord>(data['data']);
+      return deserialize<_i26.AppUserRecord>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -901,8 +1322,14 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i15.OrderClaimTokenRecord.t;
       case _i16.PointsLedgerEntryRecord:
         return _i16.PointsLedgerEntryRecord.t;
-      case _i18.AppUserRecord:
-        return _i18.AppUserRecord.t;
+      case _i18.WalletTokenRecord:
+        return _i18.WalletTokenRecord.t;
+      case _i22.RedemptionRecord:
+        return _i22.RedemptionRecord.t;
+      case _i25.RewardItemRecord:
+        return _i25.RewardItemRecord.t;
+      case _i26.AppUserRecord:
+        return _i26.AppUserRecord.t;
     }
     return null;
   }

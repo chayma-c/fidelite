@@ -15,7 +15,8 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import '../users/app_user.dart' as _i2;
 import '../points/points_ledger_reason.dart' as _i3;
 import '../orders/order.dart' as _i4;
-import 'package:fidelite_server/src/generated/protocol.dart' as _i5;
+import '../redemption/redemption.dart' as _i5;
+import 'package:fidelite_server/src/generated/protocol.dart' as _i6;
 
 /// An append-only record of a cashback balance change. The running balance
 /// is always the sum of every entry for a user -- this table is the
@@ -29,8 +30,10 @@ abstract class PointsLedgerEntryRecord
     this.user,
     required this.deltaMillimes,
     required this.reason,
-    required this.relatedOrderId,
+    this.relatedOrderId,
     this.relatedOrder,
+    this.relatedRedemptionId,
+    this.relatedRedemption,
     required this.balanceAfterMillimes,
     required this.createdByUserId,
     this.createdByUser,
@@ -43,8 +46,10 @@ abstract class PointsLedgerEntryRecord
     _i2.AppUserRecord? user,
     required int deltaMillimes,
     required _i3.PointsLedgerReason reason,
-    required int relatedOrderId,
+    int? relatedOrderId,
     _i4.OrderRecord? relatedOrder,
+    int? relatedRedemptionId,
+    _i5.RedemptionRecord? relatedRedemption,
     required int balanceAfterMillimes,
     required _i1.UuidValue createdByUserId,
     _i2.AppUserRecord? createdByUser,
@@ -59,18 +64,24 @@ abstract class PointsLedgerEntryRecord
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       user: jsonSerialization['user'] == null
           ? null
-          : _i5.Protocol().deserialize<_i2.AppUserRecord>(
+          : _i6.Protocol().deserialize<_i2.AppUserRecord>(
               jsonSerialization['user'],
             ),
       deltaMillimes: jsonSerialization['deltaMillimes'] as int,
       reason: _i3.PointsLedgerReason.fromJson(
         (jsonSerialization['reason'] as String),
       ),
-      relatedOrderId: jsonSerialization['relatedOrderId'] as int,
+      relatedOrderId: jsonSerialization['relatedOrderId'] as int?,
       relatedOrder: jsonSerialization['relatedOrder'] == null
           ? null
-          : _i5.Protocol().deserialize<_i4.OrderRecord>(
+          : _i6.Protocol().deserialize<_i4.OrderRecord>(
               jsonSerialization['relatedOrder'],
+            ),
+      relatedRedemptionId: jsonSerialization['relatedRedemptionId'] as int?,
+      relatedRedemption: jsonSerialization['relatedRedemption'] == null
+          ? null
+          : _i6.Protocol().deserialize<_i5.RedemptionRecord>(
+              jsonSerialization['relatedRedemption'],
             ),
       balanceAfterMillimes: jsonSerialization['balanceAfterMillimes'] as int,
       createdByUserId: _i1.UuidValueJsonExtension.fromJson(
@@ -78,7 +89,7 @@ abstract class PointsLedgerEntryRecord
       ),
       createdByUser: jsonSerialization['createdByUser'] == null
           ? null
-          : _i5.Protocol().deserialize<_i2.AppUserRecord>(
+          : _i6.Protocol().deserialize<_i2.AppUserRecord>(
               jsonSerialization['createdByUser'],
             ),
       createdAt: jsonSerialization['createdAt'] == null
@@ -106,10 +117,15 @@ abstract class PointsLedgerEntryRecord
 
   _i3.PointsLedgerReason reason;
 
-  int relatedOrderId;
+  int? relatedOrderId;
 
   /// Set when [reason] is orderClaim.
   _i4.OrderRecord? relatedOrder;
+
+  int? relatedRedemptionId;
+
+  /// Set when [reason] is redemption.
+  _i5.RedemptionRecord? relatedRedemption;
 
   /// Running balance immediately after this entry, in millimes.
   int balanceAfterMillimes;
@@ -117,7 +133,7 @@ abstract class PointsLedgerEntryRecord
   _i1.UuidValue createdByUserId;
 
   /// Who caused this entry -- the customer themselves for an order claim;
-  /// will be the staff member for a future redemption/adjustment.
+  /// the staff member for a redemption.
   _i2.AppUserRecord? createdByUser;
 
   DateTime createdAt;
@@ -136,6 +152,8 @@ abstract class PointsLedgerEntryRecord
     _i3.PointsLedgerReason? reason,
     int? relatedOrderId,
     _i4.OrderRecord? relatedOrder,
+    int? relatedRedemptionId,
+    _i5.RedemptionRecord? relatedRedemption,
     int? balanceAfterMillimes,
     _i1.UuidValue? createdByUserId,
     _i2.AppUserRecord? createdByUser,
@@ -150,8 +168,12 @@ abstract class PointsLedgerEntryRecord
       if (user != null) 'user': user?.toJson(),
       'deltaMillimes': deltaMillimes,
       'reason': reason.toJson(),
-      'relatedOrderId': relatedOrderId,
+      if (relatedOrderId != null) 'relatedOrderId': relatedOrderId,
       if (relatedOrder != null) 'relatedOrder': relatedOrder?.toJson(),
+      if (relatedRedemptionId != null)
+        'relatedRedemptionId': relatedRedemptionId,
+      if (relatedRedemption != null)
+        'relatedRedemption': relatedRedemption?.toJson(),
       'balanceAfterMillimes': balanceAfterMillimes,
       'createdByUserId': createdByUserId.toJson(),
       if (createdByUser != null) 'createdByUser': createdByUser?.toJson(),
@@ -168,9 +190,13 @@ abstract class PointsLedgerEntryRecord
       if (user != null) 'user': user?.toJsonForProtocol(),
       'deltaMillimes': deltaMillimes,
       'reason': reason.toJson(),
-      'relatedOrderId': relatedOrderId,
+      if (relatedOrderId != null) 'relatedOrderId': relatedOrderId,
       if (relatedOrder != null)
         'relatedOrder': relatedOrder?.toJsonForProtocol(),
+      if (relatedRedemptionId != null)
+        'relatedRedemptionId': relatedRedemptionId,
+      if (relatedRedemption != null)
+        'relatedRedemption': relatedRedemption?.toJsonForProtocol(),
       'balanceAfterMillimes': balanceAfterMillimes,
       'createdByUserId': createdByUserId.toJson(),
       if (createdByUser != null)
@@ -182,11 +208,13 @@ abstract class PointsLedgerEntryRecord
   static PointsLedgerEntryRecordInclude include({
     _i2.AppUserRecordInclude? user,
     _i4.OrderRecordInclude? relatedOrder,
+    _i5.RedemptionRecordInclude? relatedRedemption,
     _i2.AppUserRecordInclude? createdByUser,
   }) {
     return PointsLedgerEntryRecordInclude._(
       user: user,
       relatedOrder: relatedOrder,
+      relatedRedemption: relatedRedemption,
       createdByUser: createdByUser,
     );
   }
@@ -226,8 +254,10 @@ class _PointsLedgerEntryRecordImpl extends PointsLedgerEntryRecord {
     _i2.AppUserRecord? user,
     required int deltaMillimes,
     required _i3.PointsLedgerReason reason,
-    required int relatedOrderId,
+    int? relatedOrderId,
     _i4.OrderRecord? relatedOrder,
+    int? relatedRedemptionId,
+    _i5.RedemptionRecord? relatedRedemption,
     required int balanceAfterMillimes,
     required _i1.UuidValue createdByUserId,
     _i2.AppUserRecord? createdByUser,
@@ -240,6 +270,8 @@ class _PointsLedgerEntryRecordImpl extends PointsLedgerEntryRecord {
          reason: reason,
          relatedOrderId: relatedOrderId,
          relatedOrder: relatedOrder,
+         relatedRedemptionId: relatedRedemptionId,
+         relatedRedemption: relatedRedemption,
          balanceAfterMillimes: balanceAfterMillimes,
          createdByUserId: createdByUserId,
          createdByUser: createdByUser,
@@ -256,8 +288,10 @@ class _PointsLedgerEntryRecordImpl extends PointsLedgerEntryRecord {
     Object? user = _Undefined,
     int? deltaMillimes,
     _i3.PointsLedgerReason? reason,
-    int? relatedOrderId,
+    Object? relatedOrderId = _Undefined,
     Object? relatedOrder = _Undefined,
+    Object? relatedRedemptionId = _Undefined,
+    Object? relatedRedemption = _Undefined,
     int? balanceAfterMillimes,
     _i1.UuidValue? createdByUserId,
     Object? createdByUser = _Undefined,
@@ -269,10 +303,18 @@ class _PointsLedgerEntryRecordImpl extends PointsLedgerEntryRecord {
       user: user is _i2.AppUserRecord? ? user : this.user?.copyWith(),
       deltaMillimes: deltaMillimes ?? this.deltaMillimes,
       reason: reason ?? this.reason,
-      relatedOrderId: relatedOrderId ?? this.relatedOrderId,
+      relatedOrderId: relatedOrderId is int?
+          ? relatedOrderId
+          : this.relatedOrderId,
       relatedOrder: relatedOrder is _i4.OrderRecord?
           ? relatedOrder
           : this.relatedOrder?.copyWith(),
+      relatedRedemptionId: relatedRedemptionId is int?
+          ? relatedRedemptionId
+          : this.relatedRedemptionId,
+      relatedRedemption: relatedRedemption is _i5.RedemptionRecord?
+          ? relatedRedemption
+          : this.relatedRedemption?.copyWith(),
       balanceAfterMillimes: balanceAfterMillimes ?? this.balanceAfterMillimes,
       createdByUserId: createdByUserId ?? this.createdByUserId,
       createdByUser: createdByUser is _i2.AppUserRecord?
@@ -305,8 +347,13 @@ class PointsLedgerEntryRecordUpdateTable
     value,
   );
 
-  _i1.ColumnValue<int, int> relatedOrderId(int value) => _i1.ColumnValue(
+  _i1.ColumnValue<int, int> relatedOrderId(int? value) => _i1.ColumnValue(
     table.relatedOrderId,
+    value,
+  );
+
+  _i1.ColumnValue<int, int> relatedRedemptionId(int? value) => _i1.ColumnValue(
+    table.relatedRedemptionId,
     value,
   );
 
@@ -350,6 +397,10 @@ class PointsLedgerEntryRecordTable extends _i1.Table<int?> {
       'relatedOrderId',
       this,
     );
+    relatedRedemptionId = _i1.ColumnInt(
+      'relatedRedemptionId',
+      this,
+    );
     balanceAfterMillimes = _i1.ColumnInt(
       'balanceAfterMillimes',
       this,
@@ -384,13 +435,18 @@ class PointsLedgerEntryRecordTable extends _i1.Table<int?> {
   /// Set when [reason] is orderClaim.
   _i4.OrderRecordTable? _relatedOrder;
 
+  late final _i1.ColumnInt relatedRedemptionId;
+
+  /// Set when [reason] is redemption.
+  _i5.RedemptionRecordTable? _relatedRedemption;
+
   /// Running balance immediately after this entry, in millimes.
   late final _i1.ColumnInt balanceAfterMillimes;
 
   late final _i1.ColumnUuid createdByUserId;
 
   /// Who caused this entry -- the customer themselves for an order claim;
-  /// will be the staff member for a future redemption/adjustment.
+  /// the staff member for a redemption.
   _i2.AppUserRecordTable? _createdByUser;
 
   late final _i1.ColumnDateTime createdAt;
@@ -421,6 +477,19 @@ class PointsLedgerEntryRecordTable extends _i1.Table<int?> {
     return _relatedOrder!;
   }
 
+  _i5.RedemptionRecordTable get relatedRedemption {
+    if (_relatedRedemption != null) return _relatedRedemption!;
+    _relatedRedemption = _i1.createRelationTable(
+      relationFieldName: 'relatedRedemption',
+      field: PointsLedgerEntryRecord.t.relatedRedemptionId,
+      foreignField: _i5.RedemptionRecord.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.RedemptionRecordTable(tableRelation: foreignTableRelation),
+    );
+    return _relatedRedemption!;
+  }
+
   _i2.AppUserRecordTable get createdByUser {
     if (_createdByUser != null) return _createdByUser!;
     _createdByUser = _i1.createRelationTable(
@@ -441,6 +510,7 @@ class PointsLedgerEntryRecordTable extends _i1.Table<int?> {
     deltaMillimes,
     reason,
     relatedOrderId,
+    relatedRedemptionId,
     balanceAfterMillimes,
     createdByUserId,
     createdAt,
@@ -454,6 +524,9 @@ class PointsLedgerEntryRecordTable extends _i1.Table<int?> {
     if (relationField == 'relatedOrder') {
       return relatedOrder;
     }
+    if (relationField == 'relatedRedemption') {
+      return relatedRedemption;
+    }
     if (relationField == 'createdByUser') {
       return createdByUser;
     }
@@ -465,10 +538,12 @@ class PointsLedgerEntryRecordInclude extends _i1.IncludeObject {
   PointsLedgerEntryRecordInclude._({
     _i2.AppUserRecordInclude? user,
     _i4.OrderRecordInclude? relatedOrder,
+    _i5.RedemptionRecordInclude? relatedRedemption,
     _i2.AppUserRecordInclude? createdByUser,
   }) {
     _user = user;
     _relatedOrder = relatedOrder;
+    _relatedRedemption = relatedRedemption;
     _createdByUser = createdByUser;
   }
 
@@ -476,12 +551,15 @@ class PointsLedgerEntryRecordInclude extends _i1.IncludeObject {
 
   _i4.OrderRecordInclude? _relatedOrder;
 
+  _i5.RedemptionRecordInclude? _relatedRedemption;
+
   _i2.AppUserRecordInclude? _createdByUser;
 
   @override
   Map<String, _i1.Include?> get includes => {
     'user': _user,
     'relatedOrder': _relatedOrder,
+    'relatedRedemption': _relatedRedemption,
     'createdByUser': _createdByUser,
   };
 
@@ -513,6 +591,8 @@ class PointsLedgerEntryRecordRepository {
   const PointsLedgerEntryRecordRepository._();
 
   final attachRow = const PointsLedgerEntryRecordAttachRowRepository._();
+
+  final detachRow = const PointsLedgerEntryRecordDetachRowRepository._();
 
   /// Returns a list of [PointsLedgerEntryRecord]s matching the given query parameters.
   ///
@@ -859,6 +939,31 @@ class PointsLedgerEntryRecordAttachRowRepository {
     );
   }
 
+  /// Creates a relation between the given [PointsLedgerEntryRecord] and [RedemptionRecord]
+  /// by setting the [PointsLedgerEntryRecord]'s foreign key `relatedRedemptionId` to refer to the [RedemptionRecord].
+  Future<void> relatedRedemption(
+    _i1.DatabaseSession session,
+    PointsLedgerEntryRecord pointsLedgerEntryRecord,
+    _i5.RedemptionRecord relatedRedemption, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (pointsLedgerEntryRecord.id == null) {
+      throw ArgumentError.notNull('pointsLedgerEntryRecord.id');
+    }
+    if (relatedRedemption.id == null) {
+      throw ArgumentError.notNull('relatedRedemption.id');
+    }
+
+    var $pointsLedgerEntryRecord = pointsLedgerEntryRecord.copyWith(
+      relatedRedemptionId: relatedRedemption.id,
+    );
+    await session.db.updateRow<PointsLedgerEntryRecord>(
+      $pointsLedgerEntryRecord,
+      columns: [PointsLedgerEntryRecord.t.relatedRedemptionId],
+      transaction: transaction,
+    );
+  }
+
   /// Creates a relation between the given [PointsLedgerEntryRecord] and [AppUserRecord]
   /// by setting the [PointsLedgerEntryRecord]'s foreign key `createdByUserId` to refer to the [AppUserRecord].
   Future<void> createdByUser(
@@ -880,6 +985,58 @@ class PointsLedgerEntryRecordAttachRowRepository {
     await session.db.updateRow<PointsLedgerEntryRecord>(
       $pointsLedgerEntryRecord,
       columns: [PointsLedgerEntryRecord.t.createdByUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class PointsLedgerEntryRecordDetachRowRepository {
+  const PointsLedgerEntryRecordDetachRowRepository._();
+
+  /// Detaches the relation between this [PointsLedgerEntryRecord] and the [OrderRecord] set in `relatedOrder`
+  /// by setting the [PointsLedgerEntryRecord]'s foreign key `relatedOrderId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> relatedOrder(
+    _i1.DatabaseSession session,
+    PointsLedgerEntryRecord pointsLedgerEntryRecord, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (pointsLedgerEntryRecord.id == null) {
+      throw ArgumentError.notNull('pointsLedgerEntryRecord.id');
+    }
+
+    var $pointsLedgerEntryRecord = pointsLedgerEntryRecord.copyWith(
+      relatedOrderId: null,
+    );
+    await session.db.updateRow<PointsLedgerEntryRecord>(
+      $pointsLedgerEntryRecord,
+      columns: [PointsLedgerEntryRecord.t.relatedOrderId],
+      transaction: transaction,
+    );
+  }
+
+  /// Detaches the relation between this [PointsLedgerEntryRecord] and the [RedemptionRecord] set in `relatedRedemption`
+  /// by setting the [PointsLedgerEntryRecord]'s foreign key `relatedRedemptionId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> relatedRedemption(
+    _i1.DatabaseSession session,
+    PointsLedgerEntryRecord pointsLedgerEntryRecord, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (pointsLedgerEntryRecord.id == null) {
+      throw ArgumentError.notNull('pointsLedgerEntryRecord.id');
+    }
+
+    var $pointsLedgerEntryRecord = pointsLedgerEntryRecord.copyWith(
+      relatedRedemptionId: null,
+    );
+    await session.db.updateRow<PointsLedgerEntryRecord>(
+      $pointsLedgerEntryRecord,
+      columns: [PointsLedgerEntryRecord.t.relatedRedemptionId],
       transaction: transaction,
     );
   }

@@ -21,9 +21,14 @@ import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
     as _i6;
 import 'package:fidelite_server/src/generated/orders/order.dart' as _i7;
 import 'package:fidelite_server/src/generated/points/claim_result.dart' as _i8;
-import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
+import 'package:fidelite_server/src/generated/points/wallet_token_response.dart'
     as _i9;
-import 'package:fidelite_server/src/generated/users/app_user.dart' as _i10;
+import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
+    as _i10;
+import 'package:fidelite_server/src/generated/redemption/redemption_result.dart'
+    as _i11;
+import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i12;
+import 'package:fidelite_server/src/generated/users/app_user.dart' as _i13;
 import 'package:fidelite_server/src/generated/protocol.dart';
 import 'package:fidelite_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -146,6 +151,10 @@ class TestEndpoints {
 
   late final _WalletEndpoint wallet;
 
+  late final _RedemptionEndpoint redemption;
+
+  late final _RewardsEndpoint rewards;
+
   late final _UserEndpoint user;
 }
 
@@ -169,6 +178,14 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     wallet = _WalletEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    redemption = _RedemptionEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    rewards = _RewardsEndpoint(
       endpoints,
       serializationManager,
     );
@@ -377,7 +394,37 @@ class _WalletEndpoint {
     });
   }
 
-  _i3.Future<List<_i9.PointsLedgerEntryRecord>> getPointsHistory(
+  _i3.Future<_i9.WalletTokenResponse> getWalletToken(
+    _i1.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'wallet',
+            method: 'getWalletToken',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'wallet',
+          methodName: 'getWalletToken',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i9.WalletTokenResponse>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<List<_i10.PointsLedgerEntryRecord>> getPointsHistory(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
   }) async {
@@ -400,7 +447,96 @@ class _WalletEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i9.PointsLedgerEntryRecord>>);
+                as _i3.Future<List<_i10.PointsLedgerEntryRecord>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _RedemptionEndpoint {
+  _RedemptionEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<_i11.RedemptionResult> redeemReward(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i2.UuidValue walletUserId,
+    String walletToken,
+    int rewardItemId,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'redemption',
+            method: 'redeemReward',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'redemption',
+          methodName: 'redeemReward',
+          parameters: _i1.testObjectToJson({
+            'walletUserId': walletUserId,
+            'walletToken': walletToken,
+            'rewardItemId': rewardItemId,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i11.RedemptionResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _RewardsEndpoint {
+  _RewardsEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<List<_i12.RewardItemRecord>> getCatalog(
+    _i1.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'rewards',
+            method: 'getCatalog',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'rewards',
+          methodName: 'getCatalog',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i12.RewardItemRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -419,7 +555,7 @@ class _UserEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i10.AppUserRecord> getMe(
+  _i3.Future<_i13.AppUserRecord> getMe(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -441,7 +577,7 @@ class _UserEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i10.AppUserRecord>);
+                as _i3.Future<_i13.AppUserRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

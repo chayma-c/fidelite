@@ -1,0 +1,6 @@
+### Lifecycle of a redemption.
+enum: RedemptionStatus
+serialized: byName
+default: completed
+values:
+  - completed

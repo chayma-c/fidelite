@@ -18,6 +18,9 @@ enum PointsLedgerReason implements _i1.SerializableModel {
   /// Cashback earned by a customer claiming a confirmed order's receipt QR.
   orderClaim,
 
+  /// Cashback spent redeeming a reward (staff-scanned wallet QR).
+  redemption,
+
   /// Manual correction. Nothing creates this yet -- reserved for a future
   /// admin action.
   adjustment;
@@ -26,6 +29,8 @@ enum PointsLedgerReason implements _i1.SerializableModel {
     switch (name) {
       case 'orderClaim':
         return PointsLedgerReason.orderClaim;
+      case 'redemption':
+        return PointsLedgerReason.redemption;
       case 'adjustment':
         return PointsLedgerReason.adjustment;
       default:

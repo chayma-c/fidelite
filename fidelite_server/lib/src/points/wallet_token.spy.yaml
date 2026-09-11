@@ -1,0 +1,21 @@
+### A short-lived, single-use token behind the customer's wallet QR (shown
+### on their phone, scanned by staff to redeem a reward). Short expiry here
+### is the actual defense (unlike OrderClaimTokenRecord) -- a static,
+### never-expiring wallet QR would be a screenshot/replay risk, so the
+### wallet screen re-issues a fresh token roughly every 60s while visible.
+class: WalletTokenRecord
+table: wallet_token
+fields:
+  user: AppUserRecord?, relation(onDelete=Restrict)
+
+  tokenHash: String
+
+  issuedAt: DateTime, default=now
+  expiresAt: DateTime
+
+  ### Left null (token stays valid) if a redemption attempt fails for a
+  ### business reason (e.g. insufficient balance) rather than an invalid
+  ### token -- lets the cashier immediately retry a cheaper reward against
+  ### the same still-displayed QR.
+  consumedAt: DateTime?
+  consumedByRedemption: RedemptionRecord?, relation(optional, onDelete=Restrict)
