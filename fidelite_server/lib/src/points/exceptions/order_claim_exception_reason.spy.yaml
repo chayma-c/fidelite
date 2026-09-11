@@ -1,0 +1,12 @@
+### Why PointsClaimEndpoint.claimOrderPoints was rejected.
+enum: OrderClaimExceptionReason
+serialized: byName
+default: unknown
+values:
+  ### This exact token has already been used to claim points.
+  - alreadyClaimed
+  ### The token existed but is past its cleanup horizon.
+  - expired
+  ### No matching pending token for this order/token combination.
+  - invalidToken
+  - unknown

@@ -1,0 +1,9 @@
+### Thrown by OrderEndpoint.submitOrder when the requested items can't form
+### a valid order. Inspect [reason] to show a specific message instead of a
+### generic failure.
+exception: InvalidOrderException
+fields:
+  reason: InvalidOrderExceptionReason
+
+  ### Set when [reason] is `menuItemUnavailable`: the offending menu item id.
+  menuItemId: int?

@@ -1,0 +1,28 @@
+### An append-only record of a cashback balance change. The running balance
+### is always the sum of every entry for a user -- this table is the
+### source of truth, not a convenience cache alongside a separate mutable
+### balance column, so it's inherently auditable and reconcilable.
+class: PointsLedgerEntryRecord
+table: points_ledger_entry
+fields:
+  ### The customer whose balance this entry affects.
+  user: AppUserRecord?, relation(onDelete=Restrict)
+
+  ### In millimes, the same unit as order prices -- this is cashback, not
+  ### an abstract points currency (8% of an order's total, confirmed by
+  ### the owner). Positive = earned, negative = spent.
+  deltaMillimes: int
+
+  reason: PointsLedgerReason
+
+  ### Set when [reason] is orderClaim.
+  relatedOrder: OrderRecord?, relation(onDelete=Restrict)
+
+  ### Running balance immediately after this entry, in millimes.
+  balanceAfterMillimes: int
+
+  ### Who caused this entry -- the customer themselves for an order claim;
+  ### will be the staff member for a future redemption/adjustment.
+  createdByUser: AppUserRecord?, relation(onDelete=Restrict)
+
+  createdAt: DateTime, default=now

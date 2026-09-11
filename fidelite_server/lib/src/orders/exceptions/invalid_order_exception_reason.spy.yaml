@@ -1,0 +1,12 @@
+### Why an order submission was rejected.
+enum: InvalidOrderExceptionReason
+serialized: byName
+default: unknown
+values:
+  ### The submitted item list was empty.
+  - emptyCart
+  ### One or more requested quantities was less than 1.
+  - invalidQuantity
+  ### A referenced menu item id doesn't exist or is no longer active.
+  - menuItemUnavailable
+  - unknown

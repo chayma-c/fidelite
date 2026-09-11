@@ -1,0 +1,7 @@
+### What OrderEndpoint.submitOrder hands back: the confirmed order plus the
+### one-time QR payload for its points claim token (the raw token itself
+### is never persisted -- this is the only time the client ever sees it).
+class: OrderConfirmation
+fields:
+  order: OrderRecord
+  claimQrPayload: String

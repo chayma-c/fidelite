@@ -1,0 +1,12 @@
+menu:
+  - getMenu:
+order:
+  - submitOrder:
+  - getOrderHistory:
+pointsClaim:
+  - claimOrderPoints:
+wallet:
+  - getBalance:
+  - getPointsHistory:
+user:
+  - getMe:

@@ -1,0 +1,21 @@
+### A single-use claim token for an order's points-earning QR. The raw
+### token is only ever returned once (at issuance, from
+### OrderEndpoint.submitOrder) -- only its hash is persisted here, so a
+### full DB dump can't be used to forge a claim. Single-use is enforced via
+### an atomic conditional UPDATE (see PointsClaimEndpoint.claimOrderPoints),
+### not by short expiry -- the generous [expiresAt] window below is just a
+### cleanup horizon, not the real defense.
+class: OrderClaimTokenRecord
+table: order_claim_token
+fields:
+  order: OrderRecord?, relation(onDelete=Restrict)
+
+  tokenHash: String
+
+  status: ClaimTokenStatus, default=pending
+
+  issuedAt: DateTime, default=now
+  expiresAt: DateTime
+
+  claimedAt: DateTime?
+  claimedByUser: AppUserRecord?, relation(optional, onDelete=Restrict)

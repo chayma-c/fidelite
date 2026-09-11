@@ -1,0 +1,5 @@
+### Result of a successful points claim.
+class: ClaimResult
+fields:
+  pointsEarnedMillimes: int
+  newBalanceMillimes: int

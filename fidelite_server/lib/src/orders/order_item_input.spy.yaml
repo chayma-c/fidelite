@@ -1,0 +1,8 @@
+### One requested line when submitting an order. Deliberately carries no
+### price -- the server always looks up the current [MenuItemRecord] price
+### itself and computes totals server-side, so a client can never submit a
+### manipulated price.
+class: OrderItemInput
+fields:
+  menuItemId: int
+  quantity: int

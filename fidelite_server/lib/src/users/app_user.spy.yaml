@@ -1,0 +1,24 @@
+### An app user, mirrored from Keycloak on login. Keycloak remains the only
+### identity provider and source of truth for credentials/roles per request
+### (see keycloak_authentication_handler.dart) — this table exists so other
+### records (orders, points ledger, redemptions) have something to relate to,
+### plus lightweight denormalized fields for convenience (e.g. an admin
+### listing "all customers" without calling out to Keycloak).
+class: AppUserRecord
+table: app_user
+fields:
+  ### Equal to the Keycloak subject ("sub" claim) — always set explicitly
+  ### from Keycloak in code, never actually DB-generated. The generator
+  ### requires a default for any UuidValue id field regardless.
+  id: UuidValue?, defaultPersist=random_v7
+
+  username: String
+  email: String?
+  fullName: String?
+
+  ### Snapshot of the Keycloak realm roles at last login. Not the
+  ### authorization source of truth — the JWT is, checked per request.
+  roles: List<String>
+
+  createdAt: DateTime
+  updatedAt: DateTime

@@ -1,0 +1,87 @@
+{
+  "realm": "fidelite",
+  "enabled": true,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      { "name": "customer", "description": "Restaurant client earning/spending loyalty points" },
+      { "name": "staff", "description": "Restaurant staff managing the loyalty program" }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-fidelite",
+    "composite": true,
+    "composites": {
+      "realm": ["offline_access", "uma_authorization", "customer"]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "fidelite-app",
+      "name": "Fidelite Flutter App",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "com.example.fidelite:/oauthredirect",
+        "com.example.fidelite:/*",
+        "http://localhost:5173/auth.html",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "com.example.fidelite:/oauthredirect##http://localhost:5173/auth.html"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles (id token)",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "demo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "demo@fidelite.local",
+      "firstName": "Demo",
+      "lastName": "Customer",
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["customer"]
+    },
+    {
+      "username": "staffdemo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "staff@fidelite.local",
+      "firstName": "Staff",
+      "lastName": "Demo",
+      "credentials": [
+        { "type": "password", "value": "staff1234", "temporary": false }
+      ],
+      "realmRoles": ["staff"]
+    }
+  ]
+}

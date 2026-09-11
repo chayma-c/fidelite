@@ -1,0 +1,6 @@
+# Each package (fidelite_flutter/, fidelite_server/, fidelite_client/) has
+# its own .gitignore for build artifacts and package-local secrets. This
+# file only covers things genuinely at the repo root.
+.DS_Store
+.env
+.dart_tool/

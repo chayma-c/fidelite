@@ -1,0 +1,7 @@
+### Lifecycle of an order's points-claim QR token.
+enum: ClaimTokenStatus
+serialized: byName
+default: pending
+values:
+  - pending
+  - claimed

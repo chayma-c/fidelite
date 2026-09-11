@@ -1,0 +1,10 @@
+### Lifecycle status of an order.
+enum: OrderStatus
+serialized: byName
+default: confirmed
+values:
+  ### The order was placed and paid for at the counter.
+  - confirmed
+  ### Voided/cancelled after being placed (e.g. mistake at the till).
+  ### Reserved for a future admin action; nothing sets this yet.
+  - voided

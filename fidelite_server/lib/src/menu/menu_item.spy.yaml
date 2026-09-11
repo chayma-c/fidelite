@@ -1,0 +1,25 @@
+### A purchasable item on the restaurant's menu.
+class: MenuItemRecord
+table: menu_item
+fields:
+  name: String
+  description: String?
+
+  ### Price in millimes (1 Tunisian Dinar = 1000 millimes), matching the
+  ### 3-decimal pricing on the physical menu (e.g. "3.000 DT").
+  priceMillimes: int
+
+  ### Menu section, e.g. "Chapati", "Sandwich", "Plats". Plain string for
+  ### now rather than a separate category table -- the menu is still
+  ### settling, and this keeps re-labelling cheap.
+  category: String
+
+  ### Soft-disable instead of delete, so historical orders keep valid
+  ### references (see OrderItemRecord's name/price snapshot fields).
+  isActive: bool, default=true
+
+  ### Display order within a category.
+  sortOrder: int, default=0
+
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now

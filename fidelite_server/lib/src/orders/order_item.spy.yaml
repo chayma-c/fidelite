@@ -1,0 +1,14 @@
+### One line item within an order. Snapshots the menu item's name and price
+### at time of sale so later menu edits/repricing never corrupt historical
+### receipts.
+class: OrderItemRecord
+table: order_item
+fields:
+  order: OrderRecord?, relation(onDelete=Restrict)
+  menuItem: MenuItemRecord?, relation(onDelete=Restrict)
+
+  menuItemNameSnapshot: String
+  unitPriceMillimesSnapshot: int
+
+  quantity: int
+  lineTotalMillimes: int

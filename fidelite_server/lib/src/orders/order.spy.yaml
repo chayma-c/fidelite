@@ -1,0 +1,20 @@
+### A confirmed counter order. Created already-confirmed in one atomic call
+### (OrderEndpoint.submitOrder) -- the cart is client-local state until that
+### single "confirm" tap, so there's no separate "pending" order concept in
+### the schema. Named `fidelite_order`/`OrderRecord` (not `order`/`Order`)
+### since "order" is a reserved SQL keyword and collides with Serverpod's
+### own `Order` (see database/concepts/order.dart) used for query sorting.
+class: OrderRecord
+table: fidelite_order
+fields:
+  ### The staff member who took this order.
+  staffUser: AppUserRecord?, relation(onDelete=Restrict)
+
+  status: OrderStatus, default=confirmed
+
+  ### Split from totalMillimes now so a discount/tax line can be introduced
+  ### later without a schema change; currently always equal.
+  subtotalMillimes: int
+  totalMillimes: int
+
+  createdAt: DateTime, default=now

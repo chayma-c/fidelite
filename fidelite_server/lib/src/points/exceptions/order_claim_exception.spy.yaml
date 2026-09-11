@@ -1,0 +1,6 @@
+### Thrown by PointsClaimEndpoint.claimOrderPoints when the scanned QR
+### can't be redeemed for points. Inspect [reason] to show a specific
+### message instead of a generic failure.
+exception: OrderClaimException
+fields:
+  reason: OrderClaimExceptionReason

@@ -1,0 +1,10 @@
+### Why a points ledger entry exists.
+enum: PointsLedgerReason
+serialized: byName
+default: adjustment
+values:
+  ### Cashback earned by a customer claiming a confirmed order's receipt QR.
+  - orderClaim
+  ### Manual correction. Nothing creates this yet -- reserved for a future
+  ### admin action.
+  - adjustment
