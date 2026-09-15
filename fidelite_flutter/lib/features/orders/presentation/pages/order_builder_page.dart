@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
+import '../../../../core/theme/theme_mode_menu_button.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../menu/data/menu_providers.dart';
 import '../../../redemption/presentation/start_redemption_flow.dart';
@@ -46,6 +47,7 @@ class OrderBuilderPage extends ConsumerWidget {
         title: const Text('Fidélité — Order', overflow: TextOverflow.ellipsis),
         titleSpacing: 0,
         actions: [
+          const ThemeModeMenuButton(),
           IconButton(
             icon: const Icon(Icons.card_giftcard),
             tooltip: 'Redeem a reward',

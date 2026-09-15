@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/money/millimes_formatting.dart';
 import '../../../../core/printing/printing_providers.dart';
+import '../../../../core/printing/rawbt_receipt_printer.dart';
 import '../../../../core/printing/receipt.dart';
 import '../controllers/order_submission_controller.dart';
 
@@ -130,20 +131,7 @@ class OrderConfirmationPage extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () async {
-                      await ref
-                          .read(receiptPrinterProvider)
-                          .printReceipt(receipt);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'No printer configured yet — receipt shown above only.',
-                            ),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: () => _print(context, ref, receipt),
                     icon: const Icon(Icons.print),
                     label: const Text('Print ticket'),
                   ),
@@ -154,5 +142,18 @@ class OrderConfirmationPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _print(
+    BuildContext context,
+    WidgetRef ref,
+    Receipt receipt,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(receiptPrinterProvider).printReceipt(receipt);
+    } on ReceiptPrintException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }

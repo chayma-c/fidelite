@@ -1,15 +1,15 @@
 import 'receipt.dart';
 
-/// Sends a [Receipt] to whatever hardware the restaurant ends up using.
-/// Deliberately abstract: the printer model isn't chosen yet (Bluetooth
-/// ESC/POS, paper width, etc. all TBD -- see SETUP.md), so the rest of the
-/// order-taking flow is built and testable against this interface now, and
-/// only [NoOpReceiptPrinter] needs replacing once hardware is picked.
+/// Sends a [Receipt] to whatever hardware the restaurant uses. Kept as an
+/// interface (rather than calling [RawBtReceiptPrinter] directly) so the
+/// order-taking flow doesn't depend on a specific printing app -- see
+/// SETUP.md for why RawBT was chosen.
 abstract interface class ReceiptPrinter {
   Future<void> printReceipt(Receipt receipt);
 }
 
-/// Placeholder used until real printer hardware is wired up. The order
+/// No-op fallback for platforms/builds with no printer integration (e.g.
+/// running the app on a non-Android device, or in tests). The order
 /// confirmation screen already shows the full receipt content on-screen,
 /// so this intentionally does nothing rather than simulate output.
 class NoOpReceiptPrinter implements ReceiptPrinter {

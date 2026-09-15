@@ -76,6 +76,15 @@ dependencies:
   # Runtime camera permission prompts before opening the scanner.
   permission_handler: ^13.0.2
 
+  # Persists the user's manual light/dark/system theme choice across app
+  # restarts (a UI preference, not a secret -- flutter_secure_storage is
+  # reserved for tokens).
+  shared_preferences: ^2.5.5
+
+  # Launches the `rawbt:` URL intent that hands a receipt's raw ESC/POS
+  # bytes off to the RawBT printing app (see core/printing).
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -98,10 +107,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/branding/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

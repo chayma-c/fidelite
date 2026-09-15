@@ -10,7 +10,8 @@ Private project — not published, not for external use.
 ## How it works
 
 1. **Staff** logs in, builds an order from the menu, confirms it. A ticket
-   prints with a QR code (printer hardware TBD — see [SETUP.md](SETUP.md)).
+   prints with a QR code, via [RawBT](https://www.rawbt.ru/) — see
+   [SETUP.md](SETUP.md).
 2. **Customer** logs in on their own phone and scans that QR code. Their
    cashback balance goes up.
 3. Once they've got enough, the customer shows their own wallet QR (from
@@ -67,10 +68,13 @@ Demo accounts (local dev realm only): `demo` / `demo1234` (customer),
   reward. Verified: an unaffordable reward correctly fails without
   invalidating the QR, so the cashier can immediately retry a cheaper one
   on the same code.
-- ⏳ Not started: printer hardware integration (the app already generates
-  what should print; only the physical transport is missing), menu/reward
-  admin CRUD tooling (both are hand-edited seed files for now), order
-  history/reprint UI.
+- ✅ **Phase 4** — Branding: real gold/cream/ink colors sampled from the
+  logo, distinct light and dark themes (auto-follows the system setting),
+  logo on the login and splash screens.
+- ✅ **Printing** — receipts print via RawBT (`core/printing/`), including
+  the cashback-claim QR code on the ticket itself.
+- ⏳ Not started: menu/reward admin CRUD tooling (both are hand-edited seed
+  files for now), order history/reprint UI.
 
 See [SETUP.md](SETUP.md) for the full architecture writeup, including the
 security model behind both QR flows and a couple of Serverpod codegen

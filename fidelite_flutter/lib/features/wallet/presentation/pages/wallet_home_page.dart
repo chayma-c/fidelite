@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/money/millimes_formatting.dart';
+import '../../../../core/theme/theme_mode_menu_button.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../rewards/presentation/pages/rewards_catalog_page.dart';
 import '../../../scanner/presentation/pages/qr_scanner_page.dart';
@@ -54,6 +55,7 @@ class WalletHomePage extends ConsumerWidget {
         title: const Text('Fidélité', overflow: TextOverflow.ellipsis),
         titleSpacing: 0,
         actions: [
+          const ThemeModeMenuButton(),
           IconButton(
             icon: const Icon(Icons.card_giftcard),
             tooltip: 'Rewards',

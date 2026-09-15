@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/auth_state.dart';
 import '../controllers/auth_controller.dart';
 
@@ -22,17 +23,28 @@ class LoginPage extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.loyalty,
-                    size: 72,
-                    color: Theme.of(context).colorScheme.primary,
+                  // The logo's own backdrop isn't transparent, so it's
+                  // framed in its native ink-black habitat here rather than
+                  // placed directly on the page background, which shifts
+                  // between light/dark mode.
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: ColoredBox(
+                      color: AppColors.ink,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Image.asset(
+                          'assets/branding/logo.png',
+                          width: 260,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Fidélité',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
                   Text(
                     'Sign in to track your rewards',
                     style: Theme.of(context).textTheme.bodyMedium,

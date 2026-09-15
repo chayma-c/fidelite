@@ -13,6 +13,6 @@ void main() {
     );
 
     expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Fidélité'), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
   });
 }

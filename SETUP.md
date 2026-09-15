@@ -122,10 +122,10 @@ fidelite_flutter/lib/
   core/
     config/     # AppConfig — reads --dart-define values, fails fast if missing
     money/      # millimes -> "X.XXX DT" formatting (see currency note below)
-    printing/   # ReceiptPrinter interface + NoOpReceiptPrinter (see printing note below)
+    printing/   # ReceiptPrinter interface + RawBtReceiptPrinter (see printing note below)
     router/     # go_router, redirects based on AuthState + role
     serverpod/  # Client wiring: KeycloakAuthKeyProvider, meProvider
-    theme/      # AppColors (brand mustard/charcoal), AppTheme
+    theme/      # AppColors (real brand gold/cream/ink, sampled from the logo), AppTheme (see branding note below)
   features/
     auth/
       domain/       # AppUser, AuthTokens, AuthState, AuthRepository (interface)
@@ -204,13 +204,28 @@ fidelite_server/lib/src/
   submitOrder` looks up each item's *current* price server-side and computes
   the total itself, so a compromised/buggy client can't submit a manipulated
   total.
-- **Printing**: deliberately abstract (`core/printing/ReceiptPrinter`) since
-  the printer hardware isn't chosen yet. `NoOpReceiptPrinter` is the only
-  implementation for now — the order confirmation screen shows the full
-  receipt on-screen regardless, so nothing is lost by not printing yet. Once
-  hardware is picked, swap the implementation registered in
-  `core/printing/printing_providers.dart`; nothing else in the order flow
-  needs to change.
+- **Printing**: goes through [RawBT](https://www.rawbt.ru/), an Android app
+  that owns the actual Bluetooth/USB connection to the printer and accepts a
+  raw ESC/POS byte stream via a `rawbt:base64,<...>` URL intent. The app
+  itself stays printer-model-agnostic — `RawBtReceiptPrinter`
+  (`core/printing/rawbt_receipt_printer.dart`) builds the ESC/POS bytes
+  (header, itemized lines, total, then a QR code via the standard Epson
+  `GS ( k` 2D-symbol command set) and hands them to RawBT through
+  `url_launcher`; RawBT is configured separately (on the staff tablet) with
+  whichever printer is actually connected. Base64 is used rather than plain
+  percent-encoded text because the QR "store data" command is
+  length-prefixed binary, not text. **RawBT is Android-only** — the `<queries>`
+  entry for it lives in `android/app/src/main/AndroidManifest.xml` (required
+  for Android 11+ package-visibility). If the staff tablet ends up running
+  the app via a mobile browser instead of the installed APK, the bare
+  `rawbt:` scheme may not reliably launch the app from Chrome on Android; an
+  `intent://...#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end` link
+  would be needed instead — not implemented, since the native app is the
+  expected deployment target. `NoOpReceiptPrinter` remains as a no-op
+  fallback (tests, non-Android platforms); swap the implementation
+  registered in `core/printing/printing_providers.dart` if that's ever
+  needed. The order confirmation screen still shows the full receipt
+  on-screen regardless of print success.
 
 ## 8. Cashback / points ledger (Phase 2)
 
@@ -279,9 +294,39 @@ fidelite_server/lib/src/
   `redemption/`, reached from the staff order screen's app bar, not from
   the wallet.
 
-## 10. What's intentionally not built yet
+## 10. Branding (Phase 4)
+
+- **Colors are sampled from the real logo** (`fidelite_flutter/assets/
+  branding/logo.png`, registered as a Flutter asset): a saturated gold
+  (`AppColors.gold`, `#F5B800`) and a warm cream (`AppColors.cream`,
+  `#F6EED9`), both designed to glow against the near-black `AppColors.ink`
+  (`#16130F`) — that pairing is the logo's "native habitat", not a
+  placeholder guess.
+- **Light and dark mode are both real, distinct themes** (`AppTheme.light`
+  / `.dark`): the page background and body text swap between a warm
+  off-white/ink-text (light) and near-black/cream-text (dark) pairing. The
+  app bar and brand-colored buttons deliberately *don't* swap with the
+  theme — they stay gold-on-ink in both modes, since that pairing is the
+  strongest, most recognizable piece of the brand and flipping it
+  per-theme would dilute it.
+- **The user can override the OS/browser theme setting from inside the
+  app**: a theme picker (`ThemeModeMenuButton`, in the app bar of both
+  home screens) lets them pick System/Light/Dark explicitly.
+  `ThemeModeController` persists the choice via `shared_preferences`
+  (a plain UI preference, not a secret — kept separate from
+  `flutter_secure_storage`, which is reserved for tokens) so it survives
+  an app restart.
+- **The logo PNG has its own baked-in gray gradient backdrop** (it's not a
+  transparent cutout) — `LoginPage` and `SplashPage` frame it in a rounded
+  `AppColors.ink` container rather than placing it directly on the page
+  background, so it reads as a deliberate badge in both themes instead of
+  a mismatched rectangle. If a transparent-background version of the logo
+  becomes available later, that framing can be dropped.
+
+## 11. What's intentionally not built yet
 
 Order history/reprint (`OrderEndpoint.getOrderHistory` exists server-side
-but has no UI yet), real printer integration, and menu/reward admin CRUD
-tooling (currently both are edited by hand in their respective `*_seed.dart`
-files).
+but has no UI yet), a branded/decorative printed-receipt layout (the current
+ticket is plain-text ESC/POS — see §7 for what's printed), and menu/reward
+admin CRUD tooling (currently both are edited by hand in their respective
+`*_seed.dart` files).
