@@ -1,40 +1,46 @@
-# This is the configuration file for your production environment.
-# Typically, you will want to route the traffic through a load balancer
-# which adds SSL security through https. If you use Serverpod's standard
-# Terraform scripts to deploy your server, all you need to change in
-# this file is the examplepod.com domain name.
+# This is the configuration file for the production environment: a single
+# Docker Compose stack on the OVH VPS (see docker-compose.prod.yml at the
+# repo root and SETUP.md for the full deployment writeup). Traffic reaches
+# this container through the *other* project's existing Caddy instance,
+# which already owns host ports 80/443 for sansalearning.com -- Fidélité
+# is a second, independent site block on that same Caddy, not its own
+# reverse proxy.
 
-# Configuration for the main API server.
+# Configuration for the main API server -- the only one actually exposed
+# to the internet (via Caddy). This is the one URL the Flutter app talks to.
 apiServer:
   port: 8080
-  publicHost: api.examplepod.com
+  publicHost: fidelite.sansalearning.com
   publicPort: 443
   publicScheme: https
 
-# Configuration for the Insights server.
+# Insights and the web server are deliberately NOT proxied publicly --
+# Insights exposes session/error logs, which shouldn't sit on the open
+# internet without auth in front of it. Revisit if remote Insights access
+# is ever actually needed (e.g. behind its own protected route).
 insightsServer:
   port: 8081
-  publicHost: insights.examplepod.com
-  publicPort: 443
-  publicScheme: https
+  publicHost: localhost
+  publicPort: 8081
+  publicScheme: http
 
-# Configuration for the web server.
 webServer:
   port: 8082
-  publicHost: app.examplepod.com
-  publicPort: 443
-  publicScheme: https
+  publicHost: localhost
+  publicPort: 8082
+  publicScheme: http
 
-# This is the database setup for your servers. The default for the Google Cloud
-# Engine Terraform configuration is to connect on a private IP address.
-# If you are connecting on a public IP (e.g. on AWS or Google Cloud Run), you
-# connect on the public IP of the database e.g. database.examplepod.com.
+# "db" is the docker-compose service name for Fidélité's own Postgres
+# container, reachable only from the backend container on the isolated
+# fidelite_internal network -- not the public internet, not the other
+# app's Postgres. requireSsl is off because this traffic never leaves that
+# internal Docker network; TLS here would be theater, not protection.
 database:
-  host: database.private-production.examplepod.com
+  host: db
   port: 5432
-  name: serverpod
-  user: postgres
-  requireSsl: true
+  name: fidelite
+  user: fidelite
+  requireSsl: false
   #isUnixSocket: true # defaults to false
   #maxConnectionCount: 10 # Defaults to 10, a negative or null value removes the limit
 
@@ -53,7 +59,7 @@ maxRequestSize: 524288 # The maximum size of requests allowed in bytes
 
 sessionLogs:
   consoleEnabled: false
-# persistentEnabled: true
+  persistentEnabled: true # queryable via psql/Insights -- see SETUP.md
 # consoleLogFormat: json # Defaults to "json", options are "text" or "json"
 
 # futureCallExecutionEnabled: true # Defaults to true

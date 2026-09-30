@@ -345,3 +345,83 @@ CRUD tooling (currently both are edited by hand in their respective
 reset verification codes (see §6 — currently logged to the server console,
 fine for dev/testing but not production-ready for real customer
 self-registration).
+
+## 12. Production deployment
+
+The backend runs as two containers (`backend`, `db`) via
+`docker-compose.prod.yml` at the repo root, on an OVH Ubuntu VPS that
+**already hosts a separate, unrelated app** (`sansa_learning` — its own
+frontend/backend/Postgres/Keycloak, fronted by a Caddy container that owns
+host ports 80/443 for `sansalearning.com`). Fidélité shares that VPS
+without touching that app's containers, database, or Caddy config beyond
+adding one new site block:
+
+- **Reachable only through the other project's existing Caddy** — Fidélité
+  runs no reverse proxy of its own (ports 80/443 aren't free to take).
+  Caddy natively serves any number of independent domains from one
+  instance, each with its own separately-issued Let's Encrypt cert, so
+  adding `fidelite.sansalearning.com` as a second site block cannot affect
+  the existing `sansalearning.com` site or cert.
+- **Network isolation**: `db` lives on an internal-only `fidelite_internal`
+  network — nothing but `backend` can reach it, not the other app, not the
+  internet. `backend` additionally joins the other project's existing
+  `sansa_learning_default` network (marked `external: true` in the compose
+  file) solely so that Caddy can reach it by container name; no ports are
+  published to the host at all.
+- **`config/passwords.yaml` is never baked into the image** — it's
+  git-ignored, so a fresh CI checkout never has it, and the Docker image
+  built by CI is the same image regardless of environment. The real
+  production secrets live only in `~/fidelite/secrets/passwords.yaml` on
+  the VPS itself, bind-mounted into the container at deploy time.
+- **Only the API server (port 8080) is publicly exposed.** Insights (8081)
+  and the web server (8082) stay container-internal — Insights shows
+  session/error logs and isn't something to put on the open internet
+  without auth in front of it.
+
+### CI/CD
+
+`.github/workflows/ci.yml` runs `flutter analyze`/`flutter test` and
+`dart analyze` on every push/PR — fast feedback, no secrets, no deploy.
+
+`.github/workflows/deploy.yml` runs on push to `main` only, three jobs in
+sequence, each gated on the last succeeding:
+1. Re-run the same checks (the exact commit being deployed is what's
+   actually verified, not whatever an earlier CI run happened to check).
+2. Build the image from `fidelite_server/Dockerfile` (context:
+   `fidelite_server/` — this package has no path dependencies on the rest
+   of the monorepo, so it needs nothing outside that folder) and push
+   `chayma096/fidelite:latest` + `:<commit-sha>` to Docker Hub.
+3. SSH into the VPS and `docker compose -f docker-compose.prod.yml pull &&
+   ... up -d`.
+
+Required GitHub repo secrets (Settings → Secrets and variables → Actions):
+`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (an access token, not the account
+password), `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (a **dedicated** deploy
+keypair — not the developer's personal SSH key — so deploy access is
+scoped and independently revocable).
+
+### One-time VPS setup (not automated — done once, by hand)
+
+1. Generate a dedicated SSH keypair for deploys; add the public half to
+   the VPS's `~/.ssh/authorized_keys`, the private half as the
+   `VPS_SSH_KEY` secret above.
+2. On the VPS: `mkdir -p ~/fidelite/secrets`, then create
+   `~/fidelite/.env` (`POSTGRES_PASSWORD=...`) and
+   `~/fidelite/secrets/passwords.yaml` (the `production:` block from the
+   local `fidelite_server/config/passwords.yaml`, with `resendApiKey`
+   added — it's present under `development`/`test` but was never added
+   under `production`). Neither file is ever created by git or CI.
+3. Copy `docker-compose.prod.yml` to `~/fidelite/` on the VPS (future
+   deploys only change the image tag it pulls, not this file).
+4. Add a new site block to the *existing* Caddyfile (wherever the
+   `sansa_learning` compose stack mounts it from) and reload that Caddy
+   container:
+   ```
+   fidelite.sansalearning.com {
+       reverse_proxy backend:8080
+   }
+   ```
+5. Add the DNS A record `fidelite.sansalearning.com` → the VPS's IP.
+6. Once traffic is confirmed working, rebuild the Flutter release APK with
+   `fidelite_flutter/env/prod.json` — the first build that doesn't depend
+   on the developer's laptop or an ngrok tunnel at all.

@@ -1,0 +1,59 @@
+name: fidelite-prod
+
+# Deployed on the OVH VPS, which already runs a different app (sansa_learning)
+# under its own Docker Compose stack, fronted by a Caddy container that owns
+# host ports 80/443 for sansalearning.com. This stack deliberately:
+#   - never publishes any port to the host -- the only way in is through that
+#     existing Caddy, which reaches `backend` over the shared external
+#     network below, exactly the way it already reaches the other app's
+#     containers.
+#   - keeps `db` on an isolated internal-only network -- nothing but
+#     `backend` can ever reach it.
+# See SETUP.md for the one-time VPS setup this depends on (the two files
+# referenced below, the Caddy site block, and the external network already
+# existing).
+
+services:
+  backend:
+    image: chayma096/fidelite:latest
+    restart: unless-stopped
+    environment:
+      runmode: production
+    volumes:
+      # The one secret this container needs, supplied only on the VPS --
+      # never baked into the image, never in git (config/passwords.yaml is
+      # gitignored, so a fresh CI checkout never has it anyway).
+      - ./secrets/passwords.yaml:/app/config/passwords.yaml:ro
+    networks:
+      - fidelite_internal
+      - sansa_learning_default
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fidelite
+      POSTGRES_USER: fidelite
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - fidelite_db_data:/var/lib/postgresql/data
+    networks:
+      - fidelite_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fidelite"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  fidelite_internal:
+  # Already created by the other project's docker-compose stack -- this
+  # just joins it, doesn't create or own it.
+  sansa_learning_default:
+    external: true
+
+volumes:
+  fidelite_db_data:

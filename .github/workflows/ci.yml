@@ -1,0 +1,35 @@
+name: CI
+
+# Fast feedback on every branch and PR -- no secrets, no deploy. The same
+# checks re-run in deploy.yml before anything actually ships, so this is
+# purely for catching problems early while working on a branch.
+on:
+  push:
+  pull_request:
+
+jobs:
+  flutter:
+    name: Flutter analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - working-directory: fidelite_flutter
+        run: flutter pub get
+      - working-directory: fidelite_flutter
+        run: flutter analyze
+      - working-directory: fidelite_flutter
+        run: flutter test
+
+  server:
+    name: Server analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - working-directory: fidelite_server
+        run: dart pub get
+      - working-directory: fidelite_server
+        run: dart analyze
