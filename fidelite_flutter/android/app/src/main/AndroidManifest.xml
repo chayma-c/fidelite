@@ -44,5 +44,12 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Lets url_launcher find the RawBT printing app (see
+             core/printing/rawbt_receipt_printer.dart) despite Android 11+
+             package-visibility restrictions. -->
+        <package android:name="ru.a402d.rawbtprinter"/>
+        <intent>
+            <data android:scheme="rawbt"/>
+        </intent>
     </queries>
 </manifest>

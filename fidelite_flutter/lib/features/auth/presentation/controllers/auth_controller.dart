@@ -1,55 +1,57 @@
 import 'dart:async';
 
+import 'package:fidelite_client/fidelite_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
-import '../../data/auth_providers.dart';
+import '../../../../core/serverpod/serverpod_client_provider.dart';
+import '../../domain/entities/app_user.dart';
 import '../../domain/entities/auth_state.dart';
 
-/// Orchestrates sign-in / sign-out / session restoration and exposes the
-/// current [AuthState] to the router and UI.
+/// Mirrors the Serverpod client's auth session into an [AuthState] the
+/// router and UI can react to. `FlutterAuthSessionManager` (see
+/// serverpod_client_provider.dart) already does the real work -- restoring
+/// a persisted session, refreshing tokens, and updating itself after a
+/// successful login/registration/sign-out (each driven directly by
+/// `EmailAuthController` in the auth UI, not through this class) -- so this
+/// is just a thin reactive bridge, not an orchestrator.
 class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() {
-    unawaited(_restoreSession());
+    final client = ref.watch(serverpodClientProvider);
+
+    void listener() => _syncFromAuthInfo(client.auth.authInfo);
+    client.auth.authInfoListenable.addListener(listener);
+    ref.onDispose(() => client.auth.authInfoListenable.removeListener(listener));
+
+    unawaited(_restore(client));
     return const AuthInitial();
   }
 
-  Future<void> _restoreSession() async {
+  Future<void> _restore(Client client) async {
     try {
-      final user = await ref.read(authRepositoryProvider).restoreSession();
-      state = user != null
-          ? AuthAuthenticated(user)
-          : const AuthUnauthenticated();
+      await client.auth.initialize();
     } catch (_) {
-      state = const AuthUnauthenticated();
+      // `initialize()` both restores the locally persisted session and
+      // then validates it with the server; a network failure on that
+      // second step shouldn't throw away a perfectly good cached session
+      // the first step already loaded -- fall through and sync from
+      // whatever `authInfo` holds either way.
     }
+    _syncFromAuthInfo(client.auth.authInfo);
   }
 
-  Future<void> signIn() async {
-    state = const AuthAuthenticating();
-    try {
-      final user = await ref.read(authRepositoryProvider).signIn();
-      state = AuthAuthenticated(user);
-    } catch (e) {
-      state = AuthFailure(_messageFor(e));
-    }
+  void _syncFromAuthInfo(AuthSuccess? authInfo) {
+    state = authInfo == null
+        ? const AuthUnauthenticated()
+        : AuthAuthenticated(AppUser.fromAuthSuccess(authInfo));
   }
 
   Future<void> signOut() async {
     state = const AuthAuthenticating();
-    try {
-      await ref.read(authRepositoryProvider).signOut();
-    } finally {
-      state = const AuthUnauthenticated();
-    }
-  }
-
-  String _messageFor(Object error) {
-    final message = error.toString().toLowerCase();
-    if (message.contains('cancel')) {
-      return 'Sign-in was cancelled.';
-    }
-    return 'Sign-in failed. Please try again.';
+    // Always leaves the device signed out locally, even on failure -- the
+    // listener above will pick up the resulting null auth info.
+    await ref.read(serverpodClientProvider).auth.signOutDevice();
   }
 }
 

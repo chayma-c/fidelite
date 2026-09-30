@@ -4,34 +4,25 @@ Monorepo layout:
 
 ```
 fidelite/
-├── docker-compose.yml     # Postgres (shared) + Keycloak
-├── keycloak/               # realm-export.json
+├── docker-compose.yml     # Postgres
 ├── fidelite_flutter/        # the app
 ├── fidelite_server/         # Serverpod backend
 └── fidelite_client/          # generated Serverpod client (committed, don't hand-edit)
 ```
 
-## 1. Start Postgres + Keycloak
+## 1. Start Postgres
 
 ```bash
 cp .env.example .env        # set your own passwords
 docker compose up -d
 ```
 
-This starts Postgres + Keycloak and auto-imports `keycloak/realm-export.json`:
-realm **fidelite**, public client **fidelite-app** (Authorization Code + PKCE,
-no client secret), a `customer` / `staff` role pair, and two demo users
-(`demo` / `demo1234`, role `customer`; `staffdemo` / `staff1234`, role
-`staff`). Admin console: http://localhost:8080 (`admin` / the password you
-set in `.env`).
-
-**Gotcha:** `--import-realm` only imports on the *first* boot of a fresh
-Postgres volume — Keycloak logs `Realm 'fidelite' already exists. Import
-skipped` on every later restart. If you edit `keycloak/realm-export.json`
-after your first `docker compose up`, either apply the same change by hand
-via the admin console/API, or wipe the volume (`docker compose down -v`,
-which also deletes the `fidelite` Postgres database below) to re-import from
-scratch.
+The `postgres` service's DB/user/volume are still named "keycloak" —
+historical, from when this container also ran Keycloak as the identity
+provider (removed; auth is now self-hosted in the Serverpod backend itself,
+see §6). Renaming them would mean Docker attaching a brand-new empty volume
+instead of the one that actually holds the data, so they're left as-is
+rather than "cleaned up".
 
 ## 2. Create the backend's database
 
@@ -49,19 +40,26 @@ Put the same password in `fidelite_server/config/passwords.yaml` under
 
 ## 3. Run the Serverpod backend
 
-Nothing Keycloak-specific is hard-coded in the server either — it reads two
-required environment variables:
+No external identity provider and no environment variables to set for auth
+— the JWT signing key and email-verification-code hash pepper already live
+in `fidelite_server/config/passwords.yaml` (`jwtHmacSha512PrivateKey`,
+`emailSecretHashPepper`), following the same convention as the database
+password.
 
 ```bash
 cd fidelite_server
 dart pub get
-KEYCLOAK_ISSUER="http://localhost:8080/realms/fidelite" KEYCLOAK_CLIENT_ID="fidelite-app" dart bin/main.dart --apply-migrations
+dart bin/main.dart --apply-migrations
 ```
 
-(On Windows PowerShell: `$env:KEYCLOAK_ISSUER = "..."; $env:KEYCLOAK_CLIENT_ID = "..."; dart bin/main.dart --apply-migrations`.)
+The API server listens on **8083** (Serverpod's default 8080 was avoided to
+leave it free for local tooling; see `fidelite_server/config/development.yaml`).
 
-The API server listens on **8083** (not Serverpod's default 8080 — that
-port's already taken by Keycloak; see `fidelite_server/config/development.yaml`).
+On first boot, a demo staff account is seeded automatically (see §6) —
+**`staff@fidelite.local` / `staff1234`**. There's no seeded customer account
+since customers self-register from the app; see §6 for how registration's
+email-verification code is delivered in dev (there's no real email sending
+yet).
 
 After changing any model in `fidelite_server/lib/src/**/*.spy.yaml`, regenerate
 and create a migration before restarting the server:
@@ -85,35 +83,29 @@ flutter run --dart-define-from-file=env/dev.json
 
 **Android emulator only:** the emulator can't reach the host's `localhost`.
 Either run on a physical device on the same network (use your machine's LAN
-IP in `KEYCLOAK_BASE_URL` and `SERVERPOD_BASE_URL`), or use
-`env/dev.android.json` (already set up with the `10.0.2.2` host alias) —
+IP in `SERVERPOD_BASE_URL`), or use `env/dev.android.json` (already set up
+with the `10.0.2.2` host alias) —
 `flutter run --dart-define-from-file=env/dev.android.json`.
 
-**Web:** run on a fixed port so it matches the registered redirect URI:
+**Web:**
 
 ```bash
 flutter run -d chrome --web-port=5173 --dart-define-from-file=env/dev.json
 ```
 
-## 5. Platform-specific redirect wiring (already done, for reference)
+## 5. Promoting a self-registered user to staff
 
-- **Android**: `fidelite_flutter/android/app/build.gradle.kts` sets
-  `manifestPlaceholders["appAuthRedirectScheme"]`, which `flutter_web_auth_2`
-  uses to register the callback activity.
-- **iOS**: `fidelite_flutter/ios/Runner/Info.plist` declares the same custom
-  URL scheme under `CFBundleURLTypes`.
-- **Web**: `fidelite_flutter/web/auth.html` is the static page Keycloak
-  redirects back to; it posts the result back to the app via `postMessage`
-  (when opened with `window.opener`) or `localStorage` (the actual path
-  used here, since `url_launcher_web` opens the popup with `noopener`). If
-  you bump `flutter_web_auth_2` to a much newer major version, diff this
-  file against that version's own `example/web/auth.html` — the exact
-  fallback logic is that package's contract, not ours.
+There's no admin console. Look up the account's id, then grant it the
+`staff` scope directly:
 
-If you ever change the app's bundle ID / applicationId away from
-`com.example.fidelite`, update `OAUTH_REDIRECT_SCHEME_MOBILE` in your env
-file, the Android/iOS files above, and the client's redirect URIs in
-`keycloak/realm-export.json` (or the Keycloak admin console) to match.
+```bash
+docker compose exec postgres psql -U fidelite -d fidelite -c "SELECT id, email FROM app_user WHERE email = 'someone@example.com';"
+docker compose exec postgres psql -U fidelite -d fidelite -c "UPDATE serverpod_auth_core_user SET \"scopeNames\" = \"scopeNames\" || '{role:staff}' WHERE id = 'PASTE_ID_HERE';"
+```
+
+(Also worth updating `app_user.roles` to match, for the denormalized
+snapshot — it's cosmetic, not the authorization source of truth, but keeps
+the two in sync.)
 
 ## 6. Architecture
 
@@ -122,15 +114,14 @@ fidelite_flutter/lib/
   core/
     config/     # AppConfig — reads --dart-define values, fails fast if missing
     money/      # millimes -> "X.XXX DT" formatting (see currency note below)
-    printing/   # ReceiptPrinter interface + NoOpReceiptPrinter (see printing note below)
+    printing/   # ReceiptPrinter interface + RawBtReceiptPrinter (see printing note below)
     router/     # go_router, redirects based on AuthState + role
-    serverpod/  # Client wiring: KeycloakAuthKeyProvider, meProvider
-    theme/      # AppColors (brand mustard/charcoal), AppTheme
+    serverpod/  # Client wiring: FlutterAuthSessionManager, meProvider
+    theme/      # AppColors (real brand gold/cream/ink, sampled from the logo), AppTheme (see branding note below)
   features/
     auth/
-      domain/       # AppUser, AuthTokens, AuthState, AuthRepository (interface)
-      data/          # TokenStorage, OidcDataSource, AccessTokenProvider
-      presentation/  # AuthController (Riverpod Notifier), LoginPage, SplashPage, NoAccessPage
+      domain/       # AppUser, AuthState
+      presentation/  # AuthController (Riverpod Notifier), AuthPage (login/register/verify/reset), SplashPage, NoAccessPage
     menu/
       data/          # menuProvider (fetches MenuItemRecord list from the backend)
     orders/
@@ -155,9 +146,7 @@ fidelite_flutter/lib/
         pages/       # WalletHomePage, PointsHistoryPage, WalletQrPage
 
 fidelite_server/lib/src/
-  auth/       # KeycloakJwtValidator, keycloakAuthenticationHandler
-  config/     # AppConfig — reads env vars, fails fast if missing
-  users/      # AppUserRecord model + UserEndpoint (getMe)
+  users/      # AppUserRecord model, UserEndpoint (getMe), EmailAuthEndpoint, user_seed.dart (staff account)
   menu/       # MenuItemRecord model, MenuEndpoint, menu_seed.dart
   orders/     # OrderRecord/OrderItemRecord models, OrderEndpoint, InvalidOrderException
   points/     # PointsLedgerEntryRecord, OrderClaimTokenRecord, WalletTokenRecord,
@@ -168,25 +157,48 @@ fidelite_server/lib/src/
 
 - **State management**: Riverpod (`Notifier`/`NotifierProvider`, no code
   generation — keeps the project runnable with just `flutter pub get`).
-- **Auth flow**: OIDC Authorization Code + PKCE against Keycloak (see prior
-  section of this doc for the client-side flow — unchanged).
-- **Backend auth**: Keycloak remains the *only* identity provider — the
-  Serverpod backend never issues its own tokens. Every request's bearer
-  token is validated as a Keycloak-issued JWT against the realm's JWKS
-  (`KeycloakJwtValidator`, using the `jose` package), and on success the
-  realm roles are mapped 1:1 to Serverpod `Scope`s (`role:staff`,
-  `role:customer`) that endpoints declare via `requiredScopes`. A local
-  `AppUserRecord` is upserted (keyed by the Keycloak `sub`, a UUID) on every
-  request so other backend records have something to relate to.
-- **Client → server auth**: `KeycloakAuthKeyProvider` (in
-  `core/serverpod/`) attaches the current access token to every Serverpod
-  call, refreshing it first via the *same* `AccessTokenProvider` the
-  `AuthController` uses to restore a session on app start — one refresh
-  implementation, two consumers.
+- **Auth is self-hosted, not an external identity provider**: originally
+  Keycloak (OIDC Authorization Code + PKCE via a browser redirect); replaced
+  because testing on a physical Android device over wireless ADB kept
+  breaking the reverse-tunnel the browser flow depended on. Auth now runs
+  entirely inside the Serverpod backend, using Serverpod's own official
+  modules — `serverpod_auth_core` (AuthUser, sessions, JWT issuance/refresh,
+  Argon2 password hashing, `Scope`-based authorization) and
+  `serverpod_auth_idp`'s email provider (registration with email
+  verification, login, password reset) — rather than hand-rolled crypto.
+  The client talks to it via plain RPC (`EmailAuthEndpoint`, exposed by
+  subclassing `EmailIdpBaseEndpoint`), not a browser popup, which is also
+  just a simpler flow.
+- **Server-side authorization is unchanged in shape**: `AuthUser.scopeNames`
+  maps straight onto Serverpod `Scope`s (`role:staff`, `role:customer`) the
+  same way Keycloak realm roles used to — every endpoint's `requiredScopes`
+  override needed zero changes. Self-registration defaults to
+  `role:customer` (`onBeforeAuthUserCreated` in `server.dart`, mirroring
+  Keycloak's old `default-roles-fidelite` composite); the seeded staff
+  account is created explicitly with `role:staff` (`user_seed.dart`). A
+  local `AppUserRecord` (same id as `AuthUser.id`) is populated once at
+  registration time via `onAfterAccountCreated`, for other backend records
+  to relate to — no more per-request JIT upsert, since there's no external
+  claims payload to keep re-syncing from.
+- **No real email sending yet**: `sendRegistrationVerificationCode` /
+  `sendPasswordResetVerificationCode` (`server.dart`) just log the code via
+  `session.log(...)` instead of emailing it — check the server console when
+  testing registration. This needs real email delivery (SMTP or a
+  transactional email API) wired in before customers can self-register in
+  production; tracked alongside the other deferred items in §11.
+- **Client → server auth**: `FlutterAuthSessionManager` (from
+  `serverpod_auth_core_flutter`, wired in `core/serverpod/
+  serverpod_client_provider.dart`) handles session persistence and token
+  refresh natively — no more hand-rolled `TokenStorage`/`AccessTokenProvider`.
+  `AuthController` just mirrors its `authInfoListenable` into Riverpod
+  `AuthState`; `AuthPage` drives `EmailAuthController` (from
+  `serverpod_auth_idp_flutter`) directly for the actual
+  login/register/verify/reset flow, styled with the app's own theme instead
+  of the package's generic widgets.
 - **Routing guard**: `go_router`'s `redirect` sends authenticated users to
-  `/staff` or `/wallet` based on their Keycloak role (decoded client-side
-  from the ID token), and blocks a customer from reaching `/staff/*` (or a
-  staff member from reaching `/wallet/*`) even via direct URL entry on web.
+  `/staff` or `/wallet` based on role (from the current auth session's
+  scopes), and blocks a customer from reaching `/staff/*` (or a staff member
+  from reaching `/wallet/*`) even via direct URL entry on web.
 
 ## 7. Menu, orders & currency (Phase 1)
 
@@ -204,13 +216,28 @@ fidelite_server/lib/src/
   submitOrder` looks up each item's *current* price server-side and computes
   the total itself, so a compromised/buggy client can't submit a manipulated
   total.
-- **Printing**: deliberately abstract (`core/printing/ReceiptPrinter`) since
-  the printer hardware isn't chosen yet. `NoOpReceiptPrinter` is the only
-  implementation for now — the order confirmation screen shows the full
-  receipt on-screen regardless, so nothing is lost by not printing yet. Once
-  hardware is picked, swap the implementation registered in
-  `core/printing/printing_providers.dart`; nothing else in the order flow
-  needs to change.
+- **Printing**: goes through [RawBT](https://www.rawbt.ru/), an Android app
+  that owns the actual Bluetooth/USB connection to the printer and accepts a
+  raw ESC/POS byte stream via a `rawbt:base64,<...>` URL intent. The app
+  itself stays printer-model-agnostic — `RawBtReceiptPrinter`
+  (`core/printing/rawbt_receipt_printer.dart`) builds the ESC/POS bytes
+  (header, itemized lines, total, then a QR code via the standard Epson
+  `GS ( k` 2D-symbol command set) and hands them to RawBT through
+  `url_launcher`; RawBT is configured separately (on the staff tablet) with
+  whichever printer is actually connected. Base64 is used rather than plain
+  percent-encoded text because the QR "store data" command is
+  length-prefixed binary, not text. **RawBT is Android-only** — the `<queries>`
+  entry for it lives in `android/app/src/main/AndroidManifest.xml` (required
+  for Android 11+ package-visibility). If the staff tablet ends up running
+  the app via a mobile browser instead of the installed APK, the bare
+  `rawbt:` scheme may not reliably launch the app from Chrome on Android; an
+  `intent://...#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end` link
+  would be needed instead — not implemented, since the native app is the
+  expected deployment target. `NoOpReceiptPrinter` remains as a no-op
+  fallback (tests, non-Android platforms); swap the implementation
+  registered in `core/printing/printing_providers.dart` if that's ever
+  needed. The order confirmation screen still shows the full receipt
+  on-screen regardless of print success.
 
 ## 8. Cashback / points ledger (Phase 2)
 
@@ -279,9 +306,42 @@ fidelite_server/lib/src/
   `redemption/`, reached from the staff order screen's app bar, not from
   the wallet.
 
-## 10. What's intentionally not built yet
+## 10. Branding (Phase 4)
+
+- **Colors are sampled from the real logo** (`fidelite_flutter/assets/
+  branding/logo.png`, registered as a Flutter asset): a saturated gold
+  (`AppColors.gold`, `#F5B800`) and a warm cream (`AppColors.cream`,
+  `#F6EED9`), both designed to glow against the near-black `AppColors.ink`
+  (`#16130F`) — that pairing is the logo's "native habitat", not a
+  placeholder guess.
+- **Light and dark mode are both real, distinct themes** (`AppTheme.light`
+  / `.dark`): the page background and body text swap between a warm
+  off-white/ink-text (light) and near-black/cream-text (dark) pairing. The
+  app bar and brand-colored buttons deliberately *don't* swap with the
+  theme — they stay gold-on-ink in both modes, since that pairing is the
+  strongest, most recognizable piece of the brand and flipping it
+  per-theme would dilute it.
+- **The user can override the OS/browser theme setting from inside the
+  app**: a theme picker (`ThemeModeMenuButton`, in the app bar of both
+  home screens) lets them pick System/Light/Dark explicitly.
+  `ThemeModeController` persists the choice via `shared_preferences`
+  (a plain UI preference, not a secret — kept separate from
+  `flutter_secure_storage`, which is reserved for tokens) so it survives
+  an app restart.
+- **The logo PNG has its own baked-in gray gradient backdrop** (it's not a
+  transparent cutout) — `AuthPage` and `SplashPage` frame it in a rounded
+  `AppColors.ink` container rather than placing it directly on the page
+  background, so it reads as a deliberate badge in both themes instead of
+  a mismatched rectangle. If a transparent-background version of the logo
+  becomes available later, that framing can be dropped.
+
+## 11. What's intentionally not built yet
 
 Order history/reprint (`OrderEndpoint.getOrderHistory` exists server-side
-but has no UI yet), real printer integration, and menu/reward admin CRUD
-tooling (currently both are edited by hand in their respective `*_seed.dart`
-files).
+but has no UI yet), a branded/decorative printed-receipt layout (the current
+ticket is plain-text ESC/POS — see §7 for what's printed), menu/reward admin
+CRUD tooling (currently both are edited by hand in their respective
+`*_seed.dart` files), and real email delivery for the registration/password-
+reset verification codes (see §6 — currently logged to the server console,
+fine for dev/testing but not production-ready for real customer
+self-registration).

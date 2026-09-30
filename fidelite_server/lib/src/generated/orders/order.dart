@@ -29,10 +29,12 @@ abstract class OrderRecord
     required this.staffUserId,
     this.staffUser,
     _i2.OrderStatus? status,
+    int? ticketNumber,
     required this.subtotalMillimes,
     required this.totalMillimes,
     DateTime? createdAt,
   }) : status = status ?? _i2.OrderStatus.confirmed,
+       ticketNumber = ticketNumber ?? 0,
        createdAt = createdAt ?? DateTime.now();
 
   factory OrderRecord({
@@ -40,6 +42,7 @@ abstract class OrderRecord
     required _i1.UuidValue staffUserId,
     _i3.AppUserRecord? staffUser,
     _i2.OrderStatus? status,
+    int? ticketNumber,
     required int subtotalMillimes,
     required int totalMillimes,
     DateTime? createdAt,
@@ -59,6 +62,7 @@ abstract class OrderRecord
       status: jsonSerialization['status'] == null
           ? null
           : _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
+      ticketNumber: jsonSerialization['ticketNumber'] as int?,
       subtotalMillimes: jsonSerialization['subtotalMillimes'] as int,
       totalMillimes: jsonSerialization['totalMillimes'] as int,
       createdAt: jsonSerialization['createdAt'] == null
@@ -81,6 +85,13 @@ abstract class OrderRecord
 
   _i2.OrderStatus status;
 
+  /// A short, printable customer-facing sequence -- 1..100, wrapping back
+  /// to 1 -- resetting every restaurant-local day. Distinct from `id`
+  /// (which never resets and just keeps growing): this is what's called
+  /// out to a customer and printed large on the ticket. See
+  /// ticket_numbering.dart for how it's assigned.
+  int ticketNumber;
+
   /// Split from totalMillimes now so a discount/tax line can be introduced
   /// later without a schema change; currently always equal.
   int subtotalMillimes;
@@ -100,6 +111,7 @@ abstract class OrderRecord
     _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
     _i2.OrderStatus? status,
+    int? ticketNumber,
     int? subtotalMillimes,
     int? totalMillimes,
     DateTime? createdAt,
@@ -112,6 +124,7 @@ abstract class OrderRecord
       'staffUserId': staffUserId.toJson(),
       if (staffUser != null) 'staffUser': staffUser?.toJson(),
       'status': status.toJson(),
+      'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
       'totalMillimes': totalMillimes,
       'createdAt': createdAt.toJson(),
@@ -126,6 +139,7 @@ abstract class OrderRecord
       'staffUserId': staffUserId.toJson(),
       if (staffUser != null) 'staffUser': staffUser?.toJsonForProtocol(),
       'status': status.toJson(),
+      'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
       'totalMillimes': totalMillimes,
       'createdAt': createdAt.toJson(),
@@ -170,6 +184,7 @@ class _OrderRecordImpl extends OrderRecord {
     required _i1.UuidValue staffUserId,
     _i3.AppUserRecord? staffUser,
     _i2.OrderStatus? status,
+    int? ticketNumber,
     required int subtotalMillimes,
     required int totalMillimes,
     DateTime? createdAt,
@@ -178,6 +193,7 @@ class _OrderRecordImpl extends OrderRecord {
          staffUserId: staffUserId,
          staffUser: staffUser,
          status: status,
+         ticketNumber: ticketNumber,
          subtotalMillimes: subtotalMillimes,
          totalMillimes: totalMillimes,
          createdAt: createdAt,
@@ -192,6 +208,7 @@ class _OrderRecordImpl extends OrderRecord {
     _i1.UuidValue? staffUserId,
     Object? staffUser = _Undefined,
     _i2.OrderStatus? status,
+    int? ticketNumber,
     int? subtotalMillimes,
     int? totalMillimes,
     DateTime? createdAt,
@@ -203,6 +220,7 @@ class _OrderRecordImpl extends OrderRecord {
           ? staffUser
           : this.staffUser?.copyWith(),
       status: status ?? this.status,
+      ticketNumber: ticketNumber ?? this.ticketNumber,
       subtotalMillimes: subtotalMillimes ?? this.subtotalMillimes,
       totalMillimes: totalMillimes ?? this.totalMillimes,
       createdAt: createdAt ?? this.createdAt,
@@ -224,6 +242,11 @@ class OrderRecordUpdateTable extends _i1.UpdateTable<OrderRecordTable> {
     _i2.OrderStatus value,
   ) => _i1.ColumnValue(
     table.status,
+    value,
+  );
+
+  _i1.ColumnValue<int, int> ticketNumber(int value) => _i1.ColumnValue(
+    table.ticketNumber,
     value,
   );
 
@@ -257,6 +280,11 @@ class OrderRecordTable extends _i1.Table<int?> {
       _i1.EnumSerialization.byName,
       hasDefault: true,
     );
+    ticketNumber = _i1.ColumnInt(
+      'ticketNumber',
+      this,
+      hasDefault: true,
+    );
     subtotalMillimes = _i1.ColumnInt(
       'subtotalMillimes',
       this,
@@ -280,6 +308,13 @@ class OrderRecordTable extends _i1.Table<int?> {
   _i3.AppUserRecordTable? _staffUser;
 
   late final _i1.ColumnEnum<_i2.OrderStatus> status;
+
+  /// A short, printable customer-facing sequence -- 1..100, wrapping back
+  /// to 1 -- resetting every restaurant-local day. Distinct from `id`
+  /// (which never resets and just keeps growing): this is what's called
+  /// out to a customer and printed large on the ticket. See
+  /// ticket_numbering.dart for how it's assigned.
+  late final _i1.ColumnInt ticketNumber;
 
   /// Split from totalMillimes now so a discount/tax line can be introduced
   /// later without a schema change; currently always equal.
@@ -307,6 +342,7 @@ class OrderRecordTable extends _i1.Table<int?> {
     id,
     staffUserId,
     status,
+    ticketNumber,
     subtotalMillimes,
     totalMillimes,
     createdAt,

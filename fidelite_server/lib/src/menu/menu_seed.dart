@@ -2,11 +2,14 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 
-/// Inserts the starting A&A menu if the table is empty. Safe to call on
-/// every server startup -- it's a no-op once real data exists. Category
-/// labels here are placeholders for the two unnamed menu-board columns
-/// ("Frites" / "Chawarma & Escalope") pending confirmation from the owner;
-/// trivial to relabel later since [MenuItemRecord.category] is just text.
+/// Inserts the starting A&A menu if the table is empty -- a one-time
+/// bootstrap for a fresh database only. Safe to call on every server
+/// startup, since it's a no-op once real data exists; day-to-day menu
+/// changes go through MenuManagementEndpoint (staff-only, in the app) from
+/// here on, not this file. Category labels here are placeholders for the
+/// two unnamed menu-board columns ("Frites" / "Chawarma & Escalope")
+/// pending confirmation from the owner; trivial to relabel later since
+/// [MenuItemRecord.category] is just text.
 Future<void> ensureMenuSeeded(Session session) async {
   final existingCount = await MenuItemRecord.db.count(session);
   if (existingCount > 0) return;

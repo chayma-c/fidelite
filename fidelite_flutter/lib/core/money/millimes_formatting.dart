@@ -14,3 +14,14 @@ extension MillimesFormatting on int {
     return '${isNegative ? '-' : ''}$wholeDinars.$millimesRemainder DT';
   }
 }
+
+/// The inverse of [MillimesFormatting.asDinars], for price-entry fields
+/// (e.g. the menu item form) -- parses a plain Dinar amount like `8.6` or
+/// `8.600` as typed by staff into millimes.
+extension MillimesParsing on String {
+  int? toMillimesOrNull() {
+    final value = double.tryParse(trim());
+    if (value == null || value < 0) return null;
+    return (value * 1000).round();
+  }
+}

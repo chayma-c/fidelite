@@ -1,8 +1,15 @@
 menu:
   - getMenu:
+menuManagement:
+  - listAllMenuItems:
+  - getCategories:
+  - createMenuItem:
+  - updateMenuItem:
+  - setMenuItemActive:
 order:
   - submitOrder:
   - getOrderHistory:
+  - getOrdersInRange:
 pointsClaim:
   - claimOrderPoints:
 wallet:
@@ -13,5 +20,16 @@ redemption:
   - redeemReward:
 rewards:
   - getCatalog:
+emailAuth:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtTokens:
+  - refreshAccessToken:
 user:
   - getMe:

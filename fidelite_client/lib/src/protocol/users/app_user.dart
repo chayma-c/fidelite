@@ -14,12 +14,13 @@
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'package:fidelite_client/src/protocol/protocol.dart' as _i2;
 
-/// An app user, mirrored from Keycloak on login. Keycloak remains the only
-/// identity provider and source of truth for credentials/roles per request
-/// (see keycloak_authentication_handler.dart) — this table exists so other
-/// records (orders, points ledger, redemptions) have something to relate to,
-/// plus lightweight denormalized fields for convenience (e.g. an admin
-/// listing "all customers" without calling out to Keycloak).
+/// An app-owned profile row, populated once when the account is created (see
+/// server.dart's auth wiring). Authentication/authorization itself lives in
+/// serverpod_auth_core's AuthUser table (scopeNames is the real source of
+/// truth, checked per request) -- this table exists so other records
+/// (orders, points ledger, redemptions) have something to relate to, plus
+/// lightweight denormalized fields for convenience (e.g. an admin listing
+/// "all customers" without an extra join).
 abstract class AppUserRecord implements _i1.SerializableModel {
   AppUserRecord._({
     this.id,
@@ -61,8 +62,8 @@ abstract class AppUserRecord implements _i1.SerializableModel {
     );
   }
 
-  /// Equal to the Keycloak subject ("sub" claim) — always set explicitly
-  /// from Keycloak in code, never actually DB-generated. The generator
+  /// Equal to serverpod_auth_core's AuthUser.id -- always set explicitly to
+  /// that value in code, never actually DB-generated. The generator
   /// requires a default for any UuidValue id field regardless.
   _i1.UuidValue? id;
 
@@ -72,8 +73,9 @@ abstract class AppUserRecord implements _i1.SerializableModel {
 
   String? fullName;
 
-  /// Snapshot of the Keycloak realm roles at last login. Not the
-  /// authorization source of truth — the JWT is, checked per request.
+  /// Snapshot of the roles assigned at account-creation time. Not the
+  /// authorization source of truth -- AuthUser.scopeNames is, checked per
+  /// request.
   List<String> roles;
 
   DateTime createdAt;

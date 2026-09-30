@@ -2,32 +2,52 @@
 /// (which already has the item names/prices from the menu it fetched) plus
 /// the [OrderRecord] the server actually confirmed, rather than round
 /// -tripping the line items back from the server.
+///
+/// [orderId] and [claimQrPayload] are server-issued and nullable: an order
+/// placed with no connectivity is queued locally and doesn't have either
+/// yet (no DB-assigned id, and the QR is a single-use secret token the
+/// server generates atomically with the order -- it can't exist before
+/// that). [ticketNumber] is different -- it's always available, reserved
+/// locally the moment an offline order is queued (see
+/// LocalTicketNumberTracker), specifically so staff always have a real
+/// number to call out and print, connection or not.
 class Receipt {
   const Receipt({
-    required this.orderId,
+    this.orderId,
+    required this.ticketNumber,
     required this.createdAt,
     required this.lines,
     required this.totalMillimes,
-    required this.claimQrPayload,
+    this.claimQrPayload,
   });
 
-  final int orderId;
+  final int? orderId;
+
+  /// The short, printable number called out to the customer -- 1..100,
+  /// resetting daily -- as opposed to [orderId] (the database id, which
+  /// never resets and is for internal/staff reference).
+  final int ticketNumber;
   final DateTime createdAt;
   final List<ReceiptLine> lines;
   final int totalMillimes;
 
   /// Printed as a QR code on the ticket; scanning it credits the customer
   /// with cashback for this order (see PointsClaimEndpoint on the server).
-  final String claimQrPayload;
+  final String? claimQrPayload;
 }
 
 class ReceiptLine {
   const ReceiptLine({
+    required this.category,
     required this.name,
     required this.quantity,
     required this.lineTotalMillimes,
   });
 
+  /// The menu category, e.g. "Chawarma" -- printed ahead of [name] as the
+  /// item's main/headline name, since [name] alone is often just the
+  /// filling/variant (e.g. "Poulet") and reads ambiguously on its own.
+  final String category;
   final String name;
   final int quantity;
   final int lineTotalMillimes;

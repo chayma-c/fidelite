@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/domain/entities/auth_state.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
-import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/auth/presentation/pages/no_access_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/orders/presentation/pages/order_builder_page.dart';
@@ -46,7 +46,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const LoginPage(),
+        builder: (context, state) => const AuthPage(),
       ),
       GoRoute(
         path: AppRoutes.staffHome,

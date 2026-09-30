@@ -1,25 +1,128 @@
 import 'dart:io';
 
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_auth_idp_server/providers/email.dart';
 
-import 'src/auth/keycloak_authentication_handler.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/menu/menu_seed.dart';
 import 'src/rewards/rewards_seed.dart';
+import 'src/users/resend_email_sender.dart';
+import 'src/users/user_seed.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/root.dart';
+
+const _emailSender = ResendEmailSender();
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
   // Initialize Serverpod and connect it with your generated code.
   final pod = Serverpod(args, Protocol(), Endpoints());
 
-  // Keycloak is the sole identity provider: every request's bearer token is
-  // a Keycloak-issued JWT, validated against Keycloak's JWKS here rather
-  // than through Serverpod's own auth module (which assumes Serverpod
-  // issues its own tokens).
-  pod.authenticationHandler = keycloakAuthenticationHandler;
+  // Self-hosted auth (no external identity provider): AuthUser/session/JWT
+  // issuance and Argon2 password hashing come from serverpod_auth_core;
+  // registration/login/password-reset come from serverpod_auth_idp's email
+  // provider. AuthUser.scopeNames -> AuthenticationInfo.scopes is a drop-in
+  // for the old Keycloak-role -> Scope('role:...') mapping, so every
+  // endpoint's `requiredScopes` needed no changes.
+  pod.initializeAuthServices(
+    tokenManagerBuilders: [JwtConfigFromPasswords()],
+    identityProviderBuilders: [
+      EmailIdpConfigFromPasswords(
+        // Sent via Resend (see resend_email_sender.dart). Its sandbox mode
+        // (no verified domain yet) only delivers to the email the Resend
+        // account itself was created with -- for any other recipient this
+        // throws, so we fall back to logging the code instead of leaving
+        // the user stuck with no way to complete the flow. Remove the
+        // fallback once a domain is verified in Resend.
+        sendRegistrationVerificationCode:
+            (
+              session, {
+              required email,
+              required accountRequestId,
+              required verificationCode,
+              required transaction,
+            }) async {
+              try {
+                await _emailSender.send(
+                  session,
+                  to: email,
+                  subject: 'Your Fidélité verification code',
+                  html:
+                      '<p>Your verification code is: <b>$verificationCode</b></p>',
+                );
+              } catch (e) {
+                session.log(
+                  'Resend send failed ($e); falling back to console log. '
+                  'Registration verification code for $email: $verificationCode',
+                  level: LogLevel.warning,
+                );
+              }
+            },
+        sendPasswordResetVerificationCode:
+            (
+              session, {
+              required email,
+              required passwordResetRequestId,
+              required verificationCode,
+              required transaction,
+            }) async {
+              try {
+                await _emailSender.send(
+                  session,
+                  to: email,
+                  subject: 'Your Fidélité password reset code',
+                  html:
+                      '<p>Your password reset code is: <b>$verificationCode</b></p>',
+                );
+              } catch (e) {
+                session.log(
+                  'Resend send failed ($e); falling back to console log. '
+                  'Password reset verification code for $email: $verificationCode',
+                  level: LogLevel.warning,
+                );
+              }
+            },
+        // Mirrors the app-owned profile row that used to be JIT-upserted
+        // from Keycloak claims on every request -- now populated once, here,
+        // at registration time.
+        onAfterAccountCreated:
+            (
+              session, {
+              required email,
+              required authUserId,
+              required emailAccountId,
+              required transaction,
+            }) async {
+              final now = DateTime.now().toUtc();
+              await AppUserRecord.db.insertRow(
+                session,
+                AppUserRecord(
+                  id: authUserId,
+                  email: email,
+                  username: email.split('@').first,
+                  roles: const ['customer'],
+                  createdAt: now,
+                  updatedAt: now,
+                ),
+                transaction: transaction,
+              );
+            },
+      ),
+    ],
+    authUsersConfig: AuthUsersConfig(
+      // Self-registration (always called with no explicit scopes) defaults
+      // to "customer" -- mirrors the old Keycloak realm's
+      // default-roles-fidelite composite. Staff accounts are always created
+      // explicitly with their scope already set (see user_seed.dart), so
+      // this only ever fills in the empty case.
+      onBeforeAuthUserCreated: (session, scopes, blocked, {required transaction}) async {
+        if (scopes.isNotEmpty) return (scopes: scopes, blocked: blocked);
+        return (scopes: {const Scope('role:customer')}, blocked: blocked);
+      },
+    ),
+  );
 
   // Setup a default page at the web root.
   // These are used by the default page.
@@ -72,6 +175,7 @@ void run(List<String> args) async {
   try {
     await ensureMenuSeeded(seedSession);
     await ensureRewardsSeeded(seedSession);
+    await ensureStaffUserSeeded(seedSession);
   } finally {
     await seedSession.close();
   }

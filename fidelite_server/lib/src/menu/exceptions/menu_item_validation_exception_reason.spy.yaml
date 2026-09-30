@@ -1,0 +1,16 @@
+### Why a menu item create/update/setActive request was rejected.
+enum: MenuItemValidationExceptionReason
+serialized: byName
+default: unknown
+values:
+  ### The submitted name was empty (after trimming).
+  - nameRequired
+  ### The submitted category was empty (after trimming).
+  - categoryRequired
+  ### The submitted price was zero or negative.
+  - invalidPrice
+  ### Another active item in the same category already has this name.
+  - duplicateName
+  ### No menu item exists for the given id.
+  - notFound
+  - unknown

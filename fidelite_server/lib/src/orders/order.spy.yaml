@@ -12,6 +12,13 @@ fields:
 
   status: OrderStatus, default=confirmed
 
+  ### A short, printable customer-facing sequence -- 1..100, wrapping back
+  ### to 1 -- resetting every restaurant-local day. Distinct from `id`
+  ### (which never resets and just keeps growing): this is what's called
+  ### out to a customer and printed large on the ticket. See
+  ### ticket_numbering.dart for how it's assigned.
+  ticketNumber: int, default=0
+
   ### Split from totalMillimes now so a discount/tax line can be introduced
   ### later without a schema change; currently always equal.
   subtotalMillimes: int

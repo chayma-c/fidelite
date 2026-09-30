@@ -2,10 +2,10 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 
-/// Proves the Keycloak auth chain end-to-end during Phase 0 integration
-/// testing (JWT validation -> JIT user provisioning -> role scopes). Not
-/// load-bearing for the app itself, since the client already knows its own
-/// roles from the decoded ID token.
+/// Returns the caller's own app-owned profile row. Not load-bearing for
+/// routing/authorization -- the client already has its own id/roles from
+/// the auth session -- this is only for screens that want to display
+/// account details (see meProvider on the Flutter side).
 class UserEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;

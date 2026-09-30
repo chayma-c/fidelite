@@ -6,7 +6,10 @@ plugins {
 
 android {
     namespace = "com.example.fidelite"
-    compileSdk = flutter.compileSdkVersion
+    // Flutter's own default (36) is behind what a couple of plugins
+    // (flutter_secure_storage, permission_handler_android) require; they're
+    // backward compatible, so compiling against the higher version is safe.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -27,11 +30,6 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        // Registers the OAuth redirect scheme (must match
-        // OAUTH_REDIRECT_SCHEME_MOBILE in env/*.json) so flutter_web_auth_2 can
-        // capture Keycloak's redirect back into the app.
-        manifestPlaceholders["appAuthRedirectScheme"] = "com.example.fidelite"
     }
 
     buildTypes {

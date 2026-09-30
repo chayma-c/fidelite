@@ -10,7 +10,8 @@ Private project — not published, not for external use.
 ## How it works
 
 1. **Staff** logs in, builds an order from the menu, confirms it. A ticket
-   prints with a QR code (printer hardware TBD — see [SETUP.md](SETUP.md)).
+   prints with a QR code, via [RawBT](https://www.rawbt.ru/) — see
+   [SETUP.md](SETUP.md).
 2. **Customer** logs in on their own phone and scans that QR code. Their
    cashback balance goes up.
 3. Once they've got enough, the customer shows their own wallet QR (from
@@ -23,17 +24,16 @@ Private project — not published, not for external use.
   routes based on the signed-in user's role. Riverpod for state, `go_router`
   for navigation.
 - **Backend**: [Serverpod](https://serverpod.dev) (Dart), Postgres.
-- **Auth**: [Keycloak](https://www.keycloak.org), the sole identity
-  provider — the backend validates Keycloak-issued JWTs directly rather than
-  running its own auth system.
-- **Local dev infra**: Docker Compose (Postgres + Keycloak).
+- **Auth**: self-hosted in the Serverpod backend via Serverpod's own
+  `serverpod_auth_core`/`serverpod_auth_idp` modules (email/password,
+  JWT sessions, Argon2 hashing) — no external identity provider.
+- **Local dev infra**: Docker Compose (Postgres).
 
 ## Project layout
 
 ```
 fidelite/
-├── docker-compose.yml   # Postgres (shared) + Keycloak, for local dev
-├── keycloak/             # realm-export.json — realm/roles/client, auto-imported
+├── docker-compose.yml   # Postgres, for local dev
 ├── fidelite_flutter/     # the app
 ├── fidelite_server/      # Serverpod backend
 └── fidelite_client/      # generated Serverpod client (committed, don't hand-edit)
@@ -41,8 +41,8 @@ fidelite/
 
 ## Getting started
 
-Full instructions — Docker, Keycloak, the backend's database, running the
-server, running the app on Android/iOS/web — are in **[SETUP.md](SETUP.md)**.
+Full instructions — Docker, the backend's database, running the server,
+running the app on Android/iOS/web — are in **[SETUP.md](SETUP.md)**.
 Short version, once you've followed that once:
 
 ```bash
@@ -51,12 +51,14 @@ cd fidelite_server && dart bin/main.dart --apply-migrations
 cd fidelite_flutter && flutter run --dart-define-from-file=env/dev.json
 ```
 
-Demo accounts (local dev realm only): `demo` / `demo1234` (customer),
-`staffdemo` / `staff1234` (staff).
+Demo staff account (local dev only, seeded automatically): `staff@fidelite.local`
+/ `staff1234`. Customers self-register from the app — see SETUP.md §3 for
+how the email-verification code is delivered in dev (no real email sending
+yet).
 
 ## Status
 
-- ✅ **Phase 0** — Keycloak login, role-based routing (staff vs customer).
+- ✅ **Phase 0** — Login, role-based routing (staff vs customer).
 - ✅ **Phase 1** — Menu, order-taking, pricing integrity (server always
   recomputes totals from the live menu, never trusts the client).
 - ✅ **Phase 2** — Cashback: order QR → scan → earn, backed by an
@@ -67,10 +69,16 @@ Demo accounts (local dev realm only): `demo` / `demo1234` (customer),
   reward. Verified: an unaffordable reward correctly fails without
   invalidating the QR, so the cashier can immediately retry a cheaper one
   on the same code.
-- ⏳ Not started: printer hardware integration (the app already generates
-  what should print; only the physical transport is missing), menu/reward
-  admin CRUD tooling (both are hand-edited seed files for now), order
-  history/reprint UI.
+- ✅ **Phase 4** — Branding: real gold/cream/ink colors sampled from the
+  logo, distinct light and dark themes (auto-follows the system setting),
+  logo on the login and splash screens.
+- ✅ **Printing** — receipts print via RawBT (`core/printing/`), including
+  the cashback-claim QR code on the ticket itself.
+- ✅ **Self-hosted auth** — replaced Keycloak with Serverpod's own auth
+  modules (email/password, no external identity provider); see SETUP.md §6.
+- ⏳ Not started: menu/reward admin CRUD tooling (both are hand-edited seed
+  files for now), order history/reprint UI, real email delivery for
+  registration/password-reset codes (currently logged to the server console).
 
 See [SETUP.md](SETUP.md) for the full architecture writeup, including the
 security model behind both QR flows and a couple of Serverpod codegen

@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../points/claim_token_util.dart';
+import 'ticket_numbering.dart';
 
 /// Order-claim tokens are valid for a week -- generous on purpose. Per the
 /// design in OrderClaimTokenRecord, single-use (not short expiry) is what
@@ -22,10 +23,27 @@ class OrderEndpoint extends Endpoint {
   /// issues a single-use points-claim token whose QR goes on the printed
   /// receipt. The cart itself is client-local state up to this point --
   /// there is no separate "pending order" concept in the schema.
+  ///
+  /// [requestedTicketNumber] is set when this order was placed offline and
+  /// the client already showed staff a locally-reserved ticket number --
+  /// see [reserveTicketNumber] for how that's honored (or safely not, on a
+  /// collision).
+  ///
+  /// [placedAt] is the moment staff actually took the order, for the same
+  /// offline case -- distinct from whenever this call happens to reach the
+  /// server, which could be much later if the order sat queued. Without
+  /// this, a synced order would be recorded (and ticket-numbered, and
+  /// bucketed into sales history) as if it happened at sync time instead
+  /// of order time, which is wrong every time there's any gap between the
+  /// two, and actively misleading for an order placed right before
+  /// midnight that doesn't sync until after. Ignored if it's somehow in
+  /// the future (clock skew, or a bug) -- falls back to now instead.
   Future<OrderConfirmation> submitOrder(
     Session session,
-    List<OrderItemInput> items,
-  ) async {
+    List<OrderItemInput> items, {
+    int? requestedTicketNumber,
+    DateTime? placedAt,
+  }) async {
     if (items.isEmpty) {
       throw InvalidOrderException(
         reason: InvalidOrderExceptionReason.emptyCart,
@@ -68,13 +86,25 @@ class OrderEndpoint extends Endpoint {
             sum + menuItemsById[item.menuItemId]!.priceMillimes * item.quantity,
       );
 
+      final now = DateTime.now().toUtc();
+      final createdAt = (placedAt != null && placedAt.isBefore(now))
+          ? placedAt
+          : now;
+      final ticketNumber = await reserveTicketNumber(
+        session,
+        createdAt,
+        transaction,
+        requested: requestedTicketNumber,
+      );
+
       final order = await OrderRecord.db.insertRow(
         session,
         OrderRecord(
           staffUserId: staffUserId,
           subtotalMillimes: totalMillimes,
           totalMillimes: totalMillimes,
-          createdAt: DateTime.now().toUtc(),
+          ticketNumber: ticketNumber,
+          createdAt: createdAt,
         ),
         transaction: transaction,
       );
@@ -125,6 +155,24 @@ class OrderEndpoint extends Endpoint {
       orderBy: (t) => t.createdAt,
       orderDescending: true,
       limit: limit,
+    );
+  }
+
+  /// Orders created within `[start, end)`, most recent first -- backs the
+  /// staff sales-history screen's day view. The boundaries are passed in
+  /// explicitly rather than a single "day" the server would have to
+  /// interpret, so it's always the *caller's* local calendar day being
+  /// queried regardless of what timezone this server happens to run in.
+  Future<List<OrderRecord>> getOrdersInRange(
+    Session session, {
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return OrderRecord.db.find(
+      session,
+      where: (t) => (t.createdAt >= start) & (t.createdAt < end),
+      orderBy: (t) => t.createdAt,
+      orderDescending: true,
     );
   }
 }

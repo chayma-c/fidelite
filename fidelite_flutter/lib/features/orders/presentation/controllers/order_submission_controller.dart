@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:fidelite_client/fidelite_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/serverpod/serverpod_client_provider.dart';
+import '../../data/local_ticket_number_tracker.dart';
+import '../../data/pending_order.dart';
 import 'cart_controller.dart';
+import 'pending_order_queue_controller.dart';
 
 sealed class OrderSubmissionState {
   const OrderSubmissionState();
@@ -21,6 +26,16 @@ class OrderSubmissionSuccess extends OrderSubmissionState {
 
   final OrderConfirmation confirmation;
   final List<CartLine> lines;
+}
+
+/// Couldn't reach the server, so the order was queued locally instead of
+/// rejected outright -- see PendingOrderQueueController. From the staff's
+/// perspective this still counts as "the order is placed": the cart is
+/// cleared the same as a real success.
+class OrderSubmissionQueued extends OrderSubmissionState {
+  const OrderSubmissionQueued(this.order);
+
+  final PendingOrder order;
 }
 
 class OrderSubmissionFailure extends OrderSubmissionState {
@@ -54,12 +69,27 @@ class OrderSubmissionController extends Notifier<OrderSubmissionState> {
           );
       state = OrderSubmissionSuccess(confirmation, cart);
       ref.read(cartControllerProvider.notifier).clear();
+      // Keeps the local counter from ever falling behind, so the next
+      // order placed offline (if connection drops right after this one)
+      // continues from the true last number instead of a stale one.
+      unawaited(
+        ref
+            .read(localTicketNumberTrackerProvider)
+            .recordKnown(confirmation.order.ticketNumber, confirmation.order.createdAt),
+      );
     } on InvalidOrderException catch (e) {
+      // A real business rejection (empty cart, item deactivated, ...) --
+      // actionable right now by adjusting the cart, so surface it instead
+      // of silently queuing something that would just fail again.
       state = OrderSubmissionFailure(_messageFor(e.reason));
     } catch (_) {
-      state = const OrderSubmissionFailure(
-        'Could not submit the order. Check your connection and try again.',
-      );
+      // Anything else (unreachable server, timeout, ...) is treated as a
+      // connectivity problem: queue it instead of losing the order.
+      final queued = await ref
+          .read(pendingOrderQueueControllerProvider.notifier)
+          .enqueue(cart);
+      state = OrderSubmissionQueued(queued);
+      ref.read(cartControllerProvider.notifier).clear();
     }
   }
 

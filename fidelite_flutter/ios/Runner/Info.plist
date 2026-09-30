@@ -22,20 +22,6 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>com.example.fidelite.oauth</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<!-- Must match OAUTH_REDIRECT_SCHEME_MOBILE in env/*.json -->
-				<string>com.example.fidelite</string>
-			</array>
-		</dict>
-	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>

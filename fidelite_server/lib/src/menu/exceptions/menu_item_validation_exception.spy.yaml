@@ -1,0 +1,6 @@
+### Thrown by MenuManagementEndpoint when a create/update/setActive request
+### can't be applied. Inspect [reason] to show a specific message instead of
+### a generic failure.
+exception: MenuItemValidationException
+fields:
+  reason: MenuItemValidationExceptionReason

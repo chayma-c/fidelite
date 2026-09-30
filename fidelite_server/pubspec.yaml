@@ -8,9 +8,16 @@ environment:
 
 dependencies:
   serverpod: 3.4.13
-  http: ^1.2.2 # fetching Keycloak's JWKS
-  jose: ^0.3.5+2 # verifying Keycloak's RS256-signed JWTs against the JWKS
   crypto: ^3.0.5 # hashing order-claim tokens (store hash only, never the raw token)
+  http: ^1.2.2 # sending emails via the Resend API
+
+  # Self-hosted auth: AuthUser/session/JWT issuance/Argon2 password hashing,
+  # Scope-based authorization (drop-in for the Keycloak-role -> Scope mapping
+  # every endpoint's `requiredScopes` already depends on).
+  serverpod_auth_core_server: 3.4.13
+  # Email/password identity provider: registration w/ email verification,
+  # login, password reset.
+  serverpod_auth_idp_server: 3.4.13
 
 dev_dependencies:
   lints: '>=3.0.0 <7.0.0'

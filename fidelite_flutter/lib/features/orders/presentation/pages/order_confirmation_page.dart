@@ -4,13 +4,14 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/money/millimes_formatting.dart';
 import '../../../../core/printing/printing_providers.dart';
+import '../../../../core/printing/rawbt_receipt_printer.dart';
 import '../../../../core/printing/receipt.dart';
 import '../controllers/order_submission_controller.dart';
 
-/// Shown right after a successful [OrderSubmissionController.submit] call.
-/// Reads the result straight from the controller's state rather than via
-/// route parameters -- the state already holds everything needed and stays
-/// valid for exactly as long as this page is relevant.
+/// Shown right after a successful or queued [OrderSubmissionController.
+/// submit] call. Reads the result straight from the controller's state
+/// rather than via route parameters -- the state already holds everything
+/// needed and stays valid for exactly as long as this page is relevant.
 class OrderConfirmationPage extends ConsumerWidget {
   const OrderConfirmationPage({super.key});
 
@@ -18,50 +19,90 @@ class OrderConfirmationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final submission = ref.watch(orderSubmissionControllerProvider);
 
-    if (submission is! OrderSubmissionSuccess) {
-      // Reached directly (e.g. browser back/forward) without a live result.
-      return Scaffold(
-        appBar: AppBar(title: const Text('Order')),
-        body: Center(
-          child: TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Back to order screen'),
+    final Receipt receipt;
+    final bool isQueued;
+    switch (submission) {
+      case OrderSubmissionSuccess():
+        final order = submission.confirmation.order;
+        receipt = Receipt(
+          orderId: order.id!,
+          ticketNumber: order.ticketNumber,
+          createdAt: order.createdAt,
+          totalMillimes: order.totalMillimes,
+          claimQrPayload: submission.confirmation.claimQrPayload,
+          lines: [
+            for (final line in submission.lines)
+              ReceiptLine(
+                category: line.menuItem.category,
+                name: line.menuItem.name,
+                quantity: line.quantity,
+                lineTotalMillimes: line.lineTotalMillimes,
+              ),
+          ],
+        );
+        isQueued = false;
+      case OrderSubmissionQueued():
+        final order = submission.order;
+        receipt = Receipt(
+          ticketNumber: order.ticketNumber,
+          createdAt: order.createdAt,
+          totalMillimes: order.estimatedTotalMillimes,
+          lines: [
+            for (final line in order.lines)
+              ReceiptLine(
+                category: line.category,
+                name: line.name,
+                quantity: line.quantity,
+                lineTotalMillimes: line.lineTotalMillimes,
+              ),
+          ],
+        );
+        isQueued = true;
+      default:
+        // Reached directly (e.g. browser back/forward) without a live
+        // result.
+        return Scaffold(
+          appBar: AppBar(title: const Text('Order')),
+          body: Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Back to order screen'),
+            ),
           ),
-        ),
-      );
+        );
     }
 
-    final order = submission.confirmation.order;
-    final receipt = Receipt(
-      orderId: order.id!,
-      createdAt: order.createdAt,
-      totalMillimes: order.totalMillimes,
-      claimQrPayload: submission.confirmation.claimQrPayload,
-      lines: [
-        for (final line in submission.lines)
-          ReceiptLine(
-            name: line.menuItem.name,
-            quantity: line.quantity,
-            lineTotalMillimes: line.lineTotalMillimes,
-          ),
-      ],
-    );
-
     return Scaffold(
-      appBar: AppBar(title: Text('Order #${receipt.orderId}')),
+      appBar: AppBar(
+        title: Text(
+          receipt.orderId == null ? 'Order queued' : 'Order #${receipt.orderId}',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Icon(
-              Icons.check_circle,
-              color: Theme.of(context).colorScheme.primary,
+              isQueued ? Icons.cloud_off : Icons.check_circle,
+              color: isQueued
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.primary,
               size: 48,
             ),
             const SizedBox(height: 8),
             Text(
-              'Order confirmed',
+              isQueued
+                  ? 'Order queued -- will sync automatically'
+                  : 'Order confirmed',
               style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Ticket #${receipt.ticketNumber}',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -76,7 +117,9 @@ class OrderConfirmationPage extends ConsumerWidget {
                           child: Row(
                             children: [
                               Expanded(
-                                child: Text('${line.quantity}x ${line.name}'),
+                                child: Text(
+                                  '${line.quantity}x ${line.category}: ${line.name}',
+                                ),
                               ),
                               Text(line.lineTotalMillimes.asDinars),
                             ],
@@ -87,7 +130,7 @@ class OrderConfirmationPage extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Total',
+                            isQueued ? 'Estimated total' : 'Total',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
@@ -99,19 +142,34 @@ class OrderConfirmationPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Center(
-                        child: Column(
-                          children: [
-                            QrImageView(
-                              data: receipt.claimQrPayload,
-                              size: 160,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Customer scans this to earn cashback',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
+                        child: switch (receipt.claimQrPayload) {
+                          final payload? => Column(
+                            children: [
+                              QrImageView(data: payload, size: 160),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Customer scans this to earn cashback',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                          null => Column(
+                            children: [
+                              Icon(
+                                Icons.qr_code_2,
+                                size: 64,
+                                color: Theme.of(context).disabledColor,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Cashback QR pending -- available once this '
+                                'order syncs',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        },
                       ),
                     ],
                   ),
@@ -130,20 +188,7 @@ class OrderConfirmationPage extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () async {
-                      await ref
-                          .read(receiptPrinterProvider)
-                          .printReceipt(receipt);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'No printer configured yet — receipt shown above only.',
-                            ),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: () => _print(context, ref, receipt),
                     icon: const Icon(Icons.print),
                     label: const Text('Print ticket'),
                   ),
@@ -154,5 +199,18 @@ class OrderConfirmationPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _print(
+    BuildContext context,
+    WidgetRef ref,
+    Receipt receipt,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(receiptPrinterProvider).printReceipt(receipt);
+    } on ReceiptPrintException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }
