@@ -1,0 +1,10 @@
+echo "--- backend port ---"
+netstat -ano | grep -E ":8083 " | grep LISTENING
+echo "--- docker ---"
+docker ps --filter "name=fidelite-postgres" --format "{{.Names}}: {{.Status}}" 2>&1
+echo "--- localhost check ---"
+curl -s -o /dev/null -w "localhost -> HTTP %{http_code}\n" http://localhost:8083/
+echo "--- tunnel check ---"
+curl -s -o /dev/null -w "tunnel -> HTTP %{http_code}\n" https://departed-jolly-comfy.ngrok-free.dev/
+echo "--- ngrok tunnel status ---"
+curl -s http://localhost:4040/api/tunnels 2>&1 | head -c 300                                
