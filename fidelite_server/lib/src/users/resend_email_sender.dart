@@ -5,16 +5,13 @@ import 'package:serverpod/serverpod.dart';
 
 /// Sends transactional emails via the [Resend](https://resend.com) API.
 ///
-/// Without a verified sending domain, Resend runs in sandbox mode: it only
-/// accepts sends *to* the address the Resend account itself was created
-/// with, from the shared `onboarding@resend.dev` address. Once A&A has a
-/// domain, verify it in Resend (Domains -> Add Domain, add the DNS records
-/// it gives you) and update [_fromAddress] to something on that domain --
-/// no other code changes needed.
+/// `mail.sansalearning.com` is verified in Resend (SPF + DKIM), so this
+/// sends for real to any recipient -- no more sandbox restriction to just
+/// the account owner's own address.
 class ResendEmailSender {
   const ResendEmailSender();
 
-  static const _fromAddress = 'Fidélité <onboarding@resend.dev>';
+  static const _fromAddress = 'Fidélité <noreply@mail.sansalearning.com>';
   static const _endpoint = 'https://api.resend.com/emails';
 
   Future<void> send(

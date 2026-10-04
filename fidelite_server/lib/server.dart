@@ -30,12 +30,13 @@ void run(List<String> args) async {
     tokenManagerBuilders: [JwtConfigFromPasswords()],
     identityProviderBuilders: [
       EmailIdpConfigFromPasswords(
-        // Sent via Resend (see resend_email_sender.dart). Its sandbox mode
-        // (no verified domain yet) only delivers to the email the Resend
-        // account itself was created with -- for any other recipient this
-        // throws, so we fall back to logging the code instead of leaving
-        // the user stuck with no way to complete the flow. Remove the
-        // fallback once a domain is verified in Resend.
+        // Sent via Resend (see resend_email_sender.dart) -- mail.
+        // sansalearning.com is verified (SPF + DKIM), so this delivers for
+        // real to any recipient. Deliberately no try/catch here: a send
+        // failure must fail the registration/reset call itself, not get
+        // swallowed into a server-console log a real customer has no way
+        // to see -- that would strand them believing a code was sent when
+        // nothing actually reached them.
         sendRegistrationVerificationCode:
             (
               session, {
@@ -43,23 +44,14 @@ void run(List<String> args) async {
               required accountRequestId,
               required verificationCode,
               required transaction,
-            }) async {
-              try {
-                await _emailSender.send(
+            }) =>
+                _emailSender.send(
                   session,
                   to: email,
                   subject: 'Your Fidélité verification code',
                   html:
                       '<p>Your verification code is: <b>$verificationCode</b></p>',
-                );
-              } catch (e) {
-                session.log(
-                  'Resend send failed ($e); falling back to console log. '
-                  'Registration verification code for $email: $verificationCode',
-                  level: LogLevel.warning,
-                );
-              }
-            },
+                ),
         sendPasswordResetVerificationCode:
             (
               session, {
@@ -67,23 +59,14 @@ void run(List<String> args) async {
               required passwordResetRequestId,
               required verificationCode,
               required transaction,
-            }) async {
-              try {
-                await _emailSender.send(
+            }) =>
+                _emailSender.send(
                   session,
                   to: email,
                   subject: 'Your Fidélité password reset code',
                   html:
                       '<p>Your password reset code is: <b>$verificationCode</b></p>',
-                );
-              } catch (e) {
-                session.log(
-                  'Resend send failed ($e); falling back to console log. '
-                  'Password reset verification code for $email: $verificationCode',
-                  level: LogLevel.warning,
-                );
-              }
-            },
+                ),
         // Mirrors the app-owned profile row that used to be JIT-upserted
         // from Keycloak claims on every request -- now populated once, here,
         // at registration time.
