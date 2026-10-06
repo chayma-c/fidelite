@@ -1,0 +1,12 @@
+### Whether the restaurant is currently taking orders -- shown to every
+### customer the moment they open the app, toggled by staff from a
+### dedicated screen (not anywhere near the order-taking flow, on purpose).
+enum: ShopOpenStatus
+serialized: byName
+default: open
+values:
+  - open
+  - closed
+  ### A short pause (e.g. staff stepping away) -- distinct from closed so
+  ### customers know to check back soon rather than assume the day is over.
+  - onBreak

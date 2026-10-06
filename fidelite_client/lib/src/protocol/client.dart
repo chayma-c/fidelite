@@ -27,12 +27,15 @@ import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
 import 'package:fidelite_client/src/protocol/redemption/redemption_result.dart'
     as _i10;
 import 'package:fidelite_client/src/protocol/rewards/reward_item.dart' as _i11;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i12;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+import 'package:fidelite_client/src/protocol/shop/shop_status.dart' as _i12;
+import 'package:fidelite_client/src/protocol/shop/shop_open_status.dart'
     as _i13;
-import 'package:fidelite_client/src/protocol/users/app_user.dart' as _i14;
-import 'protocol.dart' as _i15;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i14;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i15;
+import 'package:fidelite_client/src/protocol/users/app_user.dart' as _i16;
+import 'protocol.dart' as _i17;
 
 /// {@category Endpoint}
 class EndpointMenu extends _i1.EndpointRef {
@@ -303,13 +306,52 @@ class EndpointRewards extends _i1.EndpointRef {
       );
 }
 
+/// Read-only and deliberately public -- a customer deciding whether to
+/// walk over needs to see this the moment they open the app, logged in or
+/// not. Writing the status is a separate, staff-only endpoint (see
+/// ShopStatusManagementEndpoint), the same public-read/staff-write split
+/// already used for the menu (MenuEndpoint vs MenuManagementEndpoint).
+/// {@category Endpoint}
+class EndpointShopStatus extends _i1.EndpointRef {
+  EndpointShopStatus(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'shopStatus';
+
+  _i2.Future<_i12.ShopStatusRecord> getStatus() =>
+      caller.callServerEndpoint<_i12.ShopStatusRecord>(
+        'shopStatus',
+        'getStatus',
+        {},
+      );
+}
+
+/// Staff-only. No locking needed for a single-row toggle like this --
+/// two staff changing it at the same moment is harmless, whichever write
+/// lands last is simply what the sign shows, which is the correct
+/// behavior here (unlike e.g. a balance, there's no invariant to protect).
+/// {@category Endpoint}
+class EndpointShopStatusManagement extends _i1.EndpointRef {
+  EndpointShopStatusManagement(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'shopStatusManagement';
+
+  _i2.Future<_i12.ShopStatusRecord> setStatus(_i13.ShopOpenStatus status) =>
+      caller.callServerEndpoint<_i12.ShopStatusRecord>(
+        'shopStatusManagement',
+        'setStatus',
+        {'status': status},
+      );
+}
+
 /// Exposes serverpod_auth_idp's email/password login, registration, and
 /// password-reset flow to the client. All business logic lives in the
 /// module (`EmailIdpBaseEndpoint`) -- this class only needs to exist so the
 /// endpoint is registered and reachable, per the module's own
 /// "subclass this in your own application" contract.
 /// {@category Endpoint}
-class EndpointEmailAuth extends _i12.EndpointEmailIdpBase {
+class EndpointEmailAuth extends _i14.EndpointEmailIdpBase {
   EndpointEmailAuth(_i1.EndpointCaller caller) : super(caller);
 
   @override
@@ -325,10 +367,10 @@ class EndpointEmailAuth extends _i12.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i2.Future<_i13.AuthSuccess> login({
+  _i2.Future<_i15.AuthSuccess> login({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i13.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i15.AuthSuccess>(
     'emailAuth',
     'login',
     {
@@ -393,10 +435,10 @@ class EndpointEmailAuth extends _i12.EndpointEmailIdpBase {
   ///
   /// Returns a session for the newly created user.
   @override
-  _i2.Future<_i13.AuthSuccess> finishRegistration({
+  _i2.Future<_i15.AuthSuccess> finishRegistration({
     required String registrationToken,
     required String password,
-  }) => caller.callServerEndpoint<_i13.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i15.AuthSuccess>(
     'emailAuth',
     'finishRegistration',
     {
@@ -495,7 +537,7 @@ class EndpointEmailAuth extends _i12.EndpointEmailIdpBase {
 /// `FlutterAuthSessionManager`'s JWT auth key provider to find a refresh
 /// endpoint at all (`client.getEndpointOfType<EndpointRefreshJwtTokens>()`).
 /// {@category Endpoint}
-class EndpointJwtTokens extends _i13.EndpointRefreshJwtTokens {
+class EndpointJwtTokens extends _i15.EndpointRefreshJwtTokens {
   EndpointJwtTokens(_i1.EndpointCaller caller) : super(caller);
 
   @override
@@ -520,9 +562,9 @@ class EndpointJwtTokens extends _i13.EndpointRefreshJwtTokens {
   /// This endpoint is unauthenticated, meaning the client won't include any
   /// authentication information with the call.
   @override
-  _i2.Future<_i13.AuthSuccess> refreshAccessToken({
+  _i2.Future<_i15.AuthSuccess> refreshAccessToken({
     required String refreshToken,
-  }) => caller.callServerEndpoint<_i13.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i15.AuthSuccess>(
     'jwtTokens',
     'refreshAccessToken',
     {'refreshToken': refreshToken},
@@ -541,8 +583,8 @@ class EndpointUser extends _i1.EndpointRef {
   @override
   String get name => 'user';
 
-  _i2.Future<_i14.AppUserRecord> getMe() =>
-      caller.callServerEndpoint<_i14.AppUserRecord>(
+  _i2.Future<_i16.AppUserRecord> getMe() =>
+      caller.callServerEndpoint<_i16.AppUserRecord>(
         'user',
         'getMe',
         {},
@@ -551,13 +593,13 @@ class EndpointUser extends _i1.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    serverpod_auth_core = _i13.Caller(client);
-    serverpod_auth_idp = _i12.Caller(client);
+    serverpod_auth_core = _i15.Caller(client);
+    serverpod_auth_idp = _i14.Caller(client);
   }
 
-  late final _i13.Caller serverpod_auth_core;
+  late final _i15.Caller serverpod_auth_core;
 
-  late final _i12.Caller serverpod_auth_idp;
+  late final _i14.Caller serverpod_auth_idp;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -580,7 +622,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i15.Protocol(),
+         _i17.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -596,6 +638,8 @@ class Client extends _i1.ServerpodClientShared {
     wallet = EndpointWallet(this);
     redemption = EndpointRedemption(this);
     rewards = EndpointRewards(this);
+    shopStatus = EndpointShopStatus(this);
+    shopStatusManagement = EndpointShopStatusManagement(this);
     emailAuth = EndpointEmailAuth(this);
     jwtTokens = EndpointJwtTokens(this);
     user = EndpointUser(this);
@@ -616,6 +660,10 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointRewards rewards;
 
+  late final EndpointShopStatus shopStatus;
+
+  late final EndpointShopStatusManagement shopStatusManagement;
+
   late final EndpointEmailAuth emailAuth;
 
   late final EndpointJwtTokens jwtTokens;
@@ -633,6 +681,8 @@ class Client extends _i1.ServerpodClientShared {
     'wallet': wallet,
     'redemption': redemption,
     'rewards': rewards,
+    'shopStatus': shopStatus,
+    'shopStatusManagement': shopStatusManagement,
     'emailAuth': emailAuth,
     'jwtTokens': jwtTokens,
     'user': user,

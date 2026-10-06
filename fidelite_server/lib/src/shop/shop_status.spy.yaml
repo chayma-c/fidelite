@@ -1,0 +1,8 @@
+### Singleton row (there's only ever one, created lazily on first read/
+### write -- see shop_status_util.dart) tracking the restaurant's current
+### open/closed/break status.
+class: ShopStatusRecord
+table: shop_status
+fields:
+  status: ShopOpenStatus, default=open
+  updatedAt: DateTime, default=now

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/money/millimes_formatting.dart';
+import '../../../../core/printing/printing_providers.dart';
+import '../../../../core/printing/rawbt_receipt_printer.dart';
+import '../../../../core/printing/redemption_receipt.dart';
 import '../../../rewards/data/rewards_providers.dart';
 import '../controllers/redemption_controller.dart';
 
@@ -44,6 +47,11 @@ class RewardPickerPage extends ConsumerWidget {
                     Navigator.of(context).pop();
                   },
                   child: const Text('Done'),
+                ),
+                FilledButton.icon(
+                  onPressed: () => _printRedemption(context, ref, next.result),
+                  icon: const Icon(Icons.print),
+                  label: const Text('Print ticket'),
                 ),
               ],
             ),
@@ -95,5 +103,25 @@ class RewardPickerPage extends ConsumerWidget {
             Center(child: Text('Could not load rewards:\n$error')),
       ),
     );
+  }
+
+  Future<void> _printRedemption(
+    BuildContext context,
+    WidgetRef ref,
+    RedemptionResult result,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(receiptPrinterProvider).printRedemptionReceipt(
+        RedemptionReceipt(
+          rewardName: result.redemption.rewardNameSnapshot,
+          pointsCostMillimes: result.redemption.pointsCostSnapshot,
+          customerNewBalanceMillimes: result.customerNewBalanceMillimes,
+          createdAt: result.redemption.createdAt,
+        ),
+      );
+    } on ReceiptPrintException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }

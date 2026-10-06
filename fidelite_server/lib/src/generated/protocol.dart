@@ -42,14 +42,16 @@ import 'redemption/redemption.dart' as _i26;
 import 'redemption/redemption_result.dart' as _i27;
 import 'redemption/redemption_status.dart' as _i28;
 import 'rewards/reward_item.dart' as _i29;
-import 'users/app_user.dart' as _i30;
-import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i31;
+import 'shop/shop_open_status.dart' as _i30;
+import 'shop/shop_status.dart' as _i31;
+import 'users/app_user.dart' as _i32;
+import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i33;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
-    as _i32;
-import 'package:fidelite_server/src/generated/orders/order.dart' as _i33;
-import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
     as _i34;
-import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i35;
+import 'package:fidelite_server/src/generated/orders/order.dart' as _i35;
+import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
+    as _i36;
+import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i37;
 export 'menu/exceptions/menu_item_validation_exception.dart';
 export 'menu/exceptions/menu_item_validation_exception_reason.dart';
 export 'menu/menu_item.dart';
@@ -75,6 +77,8 @@ export 'redemption/redemption.dart';
 export 'redemption/redemption_result.dart';
 export 'redemption/redemption_status.dart';
 export 'rewards/reward_item.dart';
+export 'shop/shop_open_status.dart';
+export 'shop/shop_status.dart';
 export 'users/app_user.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
@@ -819,6 +823,52 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'shop_status',
+      dartName: 'ShopStatusRecord',
+      schema: 'public',
+      module: 'fidelite',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'shop_status_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'status',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:ShopOpenStatus',
+          columnDefault: '\'open\'::text',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'shop_status_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'wallet_token',
       dartName: 'WalletTokenRecord',
       schema: 'public',
@@ -1015,8 +1065,14 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i29.RewardItemRecord) {
       return _i29.RewardItemRecord.fromJson(data) as T;
     }
-    if (t == _i30.AppUserRecord) {
-      return _i30.AppUserRecord.fromJson(data) as T;
+    if (t == _i30.ShopOpenStatus) {
+      return _i30.ShopOpenStatus.fromJson(data) as T;
+    }
+    if (t == _i31.ShopStatusRecord) {
+      return _i31.ShopStatusRecord.fromJson(data) as T;
+    }
+    if (t == _i32.AppUserRecord) {
+      return _i32.AppUserRecord.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.MenuItemValidationException?>()) {
       return (data != null
@@ -1115,42 +1171,48 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i29.RewardItemRecord?>()) {
       return (data != null ? _i29.RewardItemRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i30.AppUserRecord?>()) {
-      return (data != null ? _i30.AppUserRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i30.ShopOpenStatus?>()) {
+      return (data != null ? _i30.ShopOpenStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i31.ShopStatusRecord?>()) {
+      return (data != null ? _i31.ShopStatusRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i32.AppUserRecord?>()) {
+      return (data != null ? _i32.AppUserRecord.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i31.MenuItemRecord>) {
+    if (t == List<_i33.MenuItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i31.MenuItemRecord>(e))
+              .map((e) => deserialize<_i33.MenuItemRecord>(e))
               .toList()
           as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i32.OrderItemInput>) {
+    if (t == List<_i34.OrderItemInput>) {
       return (data as List)
-              .map((e) => deserialize<_i32.OrderItemInput>(e))
+              .map((e) => deserialize<_i34.OrderItemInput>(e))
               .toList()
           as T;
     }
-    if (t == List<_i33.OrderRecord>) {
+    if (t == List<_i35.OrderRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i33.OrderRecord>(e))
+              .map((e) => deserialize<_i35.OrderRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i34.PointsLedgerEntryRecord>) {
+    if (t == List<_i36.PointsLedgerEntryRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i34.PointsLedgerEntryRecord>(e))
+              .map((e) => deserialize<_i36.PointsLedgerEntryRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i35.RewardItemRecord>) {
+    if (t == List<_i37.RewardItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i35.RewardItemRecord>(e))
+              .map((e) => deserialize<_i37.RewardItemRecord>(e))
               .toList()
           as T;
     }
@@ -1194,7 +1256,9 @@ class Protocol extends _i1.SerializationManagerServer {
       _i27.RedemptionResult => 'RedemptionResult',
       _i28.RedemptionStatus => 'RedemptionStatus',
       _i29.RewardItemRecord => 'RewardItemRecord',
-      _i30.AppUserRecord => 'AppUserRecord',
+      _i30.ShopOpenStatus => 'ShopOpenStatus',
+      _i31.ShopStatusRecord => 'ShopStatusRecord',
+      _i32.AppUserRecord => 'AppUserRecord',
       _ => null,
     };
   }
@@ -1259,7 +1323,11 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'RedemptionStatus';
       case _i29.RewardItemRecord():
         return 'RewardItemRecord';
-      case _i30.AppUserRecord():
+      case _i30.ShopOpenStatus():
+        return 'ShopOpenStatus';
+      case _i31.ShopStatusRecord():
+        return 'ShopStatusRecord';
+      case _i32.AppUserRecord():
         return 'AppUserRecord';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1358,8 +1426,14 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'RewardItemRecord') {
       return deserialize<_i29.RewardItemRecord>(data['data']);
     }
+    if (dataClassName == 'ShopOpenStatus') {
+      return deserialize<_i30.ShopOpenStatus>(data['data']);
+    }
+    if (dataClassName == 'ShopStatusRecord') {
+      return deserialize<_i31.ShopStatusRecord>(data['data']);
+    }
     if (dataClassName == 'AppUserRecord') {
-      return deserialize<_i30.AppUserRecord>(data['data']);
+      return deserialize<_i32.AppUserRecord>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1413,8 +1487,10 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i26.RedemptionRecord.t;
       case _i29.RewardItemRecord:
         return _i29.RewardItemRecord.t;
-      case _i30.AppUserRecord:
-        return _i30.AppUserRecord.t;
+      case _i31.ShopStatusRecord:
+        return _i31.ShopStatusRecord.t;
+      case _i32.AppUserRecord:
+        return _i32.AppUserRecord.t;
     }
     return null;
   }

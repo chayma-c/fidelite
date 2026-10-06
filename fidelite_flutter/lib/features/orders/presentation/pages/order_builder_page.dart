@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../menu/data/menu_providers.dart';
 import '../../../menu/presentation/pages/menu_management_page.dart';
 import '../../../redemption/presentation/start_redemption_flow.dart';
+import '../../../shop/presentation/pages/shop_status_page.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/order_submission_controller.dart';
 import '../controllers/pending_order_queue_controller.dart';
@@ -19,7 +20,7 @@ import '../widgets/menu_item_card.dart';
 import 'pending_orders_page.dart';
 import 'sales_history_page.dart';
 
-enum _StaffMenuAction { manageMenu, pendingOrders, salesHistory }
+enum _StaffMenuAction { manageMenu, pendingOrders, salesHistory, shopStatus }
 
 /// Wide-layout breakpoint: side-by-side menu + cart, matching a tablet held
 /// in landscape (the staff device). Below this, the cart moves into a
@@ -118,6 +119,7 @@ class OrderBuilderPage extends ConsumerWidget {
                 _StaffMenuAction.manageMenu => const MenuManagementPage(),
                 _StaffMenuAction.pendingOrders => const PendingOrdersPage(),
                 _StaffMenuAction.salesHistory => const SalesHistoryPage(),
+                _StaffMenuAction.shopStatus => const ShopStatusPage(),
               };
               Navigator.of(
                 context,
@@ -146,6 +148,13 @@ class OrderBuilderPage extends ConsumerWidget {
                 child: ListTile(
                   leading: Icon(Icons.bar_chart),
                   title: Text('Sales history'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: _StaffMenuAction.shopStatus,
+                child: ListTile(
+                  leading: Icon(Icons.storefront),
+                  title: Text('Shop status'),
                 ),
               ),
             ],

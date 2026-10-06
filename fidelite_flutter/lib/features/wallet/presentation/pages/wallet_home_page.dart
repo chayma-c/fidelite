@@ -6,6 +6,7 @@ import '../../../../core/theme/theme_mode_menu_button.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../rewards/presentation/pages/rewards_catalog_page.dart';
 import '../../../scanner/presentation/pages/qr_scanner_page.dart';
+import '../../../shop/presentation/widgets/shop_status_banner.dart';
 import '../../data/wallet_providers.dart';
 import '../controllers/claim_controller.dart';
 import 'points_history_page.dart';
@@ -86,6 +87,8 @@ class WalletHomePage extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const ShopStatusBanner(),
+            const SizedBox(height: 24),
             Text('Your balance', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             balanceAsync.when(

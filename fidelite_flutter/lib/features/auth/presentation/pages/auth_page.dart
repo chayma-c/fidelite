@@ -4,6 +4,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../../../../core/serverpod/serverpod_client_provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../shop/presentation/widgets/shop_status_banner.dart';
 
 /// Email/password sign-in, registration (with email verification), and
 /// password reset. All flow logic and state come from [EmailAuthController]
@@ -87,7 +88,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  const ShopStatusBanner(),
+                  const SizedBox(height: 16),
                   _buildScreen(context),
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 16),

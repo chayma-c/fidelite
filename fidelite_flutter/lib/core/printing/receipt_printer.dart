@@ -1,11 +1,13 @@
 import 'receipt.dart';
+import 'redemption_receipt.dart';
 
-/// Sends a [Receipt] to whatever hardware the restaurant uses. Kept as an
+/// Sends a receipt to whatever hardware the restaurant uses. Kept as an
 /// interface (rather than calling [RawBtReceiptPrinter] directly) so the
 /// order-taking flow doesn't depend on a specific printing app -- see
 /// SETUP.md for why RawBT was chosen.
 abstract interface class ReceiptPrinter {
   Future<void> printReceipt(Receipt receipt);
+  Future<void> printRedemptionReceipt(RedemptionReceipt receipt);
 }
 
 /// No-op fallback for platforms/builds with no printer integration (e.g.
@@ -17,4 +19,7 @@ class NoOpReceiptPrinter implements ReceiptPrinter {
 
   @override
   Future<void> printReceipt(Receipt receipt) async {}
+
+  @override
+  Future<void> printRedemptionReceipt(RedemptionReceipt receipt) async {}
 }

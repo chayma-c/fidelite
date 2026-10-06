@@ -37,18 +37,20 @@ import 'redemption/redemption.dart' as _i23;
 import 'redemption/redemption_result.dart' as _i24;
 import 'redemption/redemption_status.dart' as _i25;
 import 'rewards/reward_item.dart' as _i26;
-import 'users/app_user.dart' as _i27;
-import 'package:fidelite_client/src/protocol/menu/menu_item.dart' as _i28;
+import 'shop/shop_open_status.dart' as _i27;
+import 'shop/shop_status.dart' as _i28;
+import 'users/app_user.dart' as _i29;
+import 'package:fidelite_client/src/protocol/menu/menu_item.dart' as _i30;
 import 'package:fidelite_client/src/protocol/orders/order_item_input.dart'
-    as _i29;
-import 'package:fidelite_client/src/protocol/orders/order.dart' as _i30;
-import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
     as _i31;
-import 'package:fidelite_client/src/protocol/rewards/reward_item.dart' as _i32;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+import 'package:fidelite_client/src/protocol/orders/order.dart' as _i32;
+import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
     as _i33;
+import 'package:fidelite_client/src/protocol/rewards/reward_item.dart' as _i34;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i35;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i34;
+    as _i36;
 export 'menu/exceptions/menu_item_validation_exception.dart';
 export 'menu/exceptions/menu_item_validation_exception_reason.dart';
 export 'menu/menu_item.dart';
@@ -74,6 +76,8 @@ export 'redemption/redemption.dart';
 export 'redemption/redemption_result.dart';
 export 'redemption/redemption_status.dart';
 export 'rewards/reward_item.dart';
+export 'shop/shop_open_status.dart';
+export 'shop/shop_status.dart';
 export 'users/app_user.dart';
 export 'client.dart';
 
@@ -186,8 +190,14 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i26.RewardItemRecord) {
       return _i26.RewardItemRecord.fromJson(data) as T;
     }
-    if (t == _i27.AppUserRecord) {
-      return _i27.AppUserRecord.fromJson(data) as T;
+    if (t == _i27.ShopOpenStatus) {
+      return _i27.ShopOpenStatus.fromJson(data) as T;
+    }
+    if (t == _i28.ShopStatusRecord) {
+      return _i28.ShopStatusRecord.fromJson(data) as T;
+    }
+    if (t == _i29.AppUserRecord) {
+      return _i29.AppUserRecord.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.MenuItemValidationException?>()) {
       return (data != null
@@ -286,50 +296,56 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i26.RewardItemRecord?>()) {
       return (data != null ? _i26.RewardItemRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i27.AppUserRecord?>()) {
-      return (data != null ? _i27.AppUserRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i27.ShopOpenStatus?>()) {
+      return (data != null ? _i27.ShopOpenStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i28.ShopStatusRecord?>()) {
+      return (data != null ? _i28.ShopStatusRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i29.AppUserRecord?>()) {
+      return (data != null ? _i29.AppUserRecord.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i28.MenuItemRecord>) {
+    if (t == List<_i30.MenuItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i28.MenuItemRecord>(e))
+              .map((e) => deserialize<_i30.MenuItemRecord>(e))
               .toList()
           as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i29.OrderItemInput>) {
+    if (t == List<_i31.OrderItemInput>) {
       return (data as List)
-              .map((e) => deserialize<_i29.OrderItemInput>(e))
+              .map((e) => deserialize<_i31.OrderItemInput>(e))
               .toList()
           as T;
     }
-    if (t == List<_i30.OrderRecord>) {
+    if (t == List<_i32.OrderRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i30.OrderRecord>(e))
+              .map((e) => deserialize<_i32.OrderRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i31.PointsLedgerEntryRecord>) {
+    if (t == List<_i33.PointsLedgerEntryRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i31.PointsLedgerEntryRecord>(e))
+              .map((e) => deserialize<_i33.PointsLedgerEntryRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i32.RewardItemRecord>) {
+    if (t == List<_i34.RewardItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i32.RewardItemRecord>(e))
+              .map((e) => deserialize<_i34.RewardItemRecord>(e))
               .toList()
           as T;
     }
     try {
-      return _i33.Protocol().deserialize<T>(data, t);
+      return _i35.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i34.Protocol().deserialize<T>(data, t);
+      return _i36.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -362,7 +378,9 @@ class Protocol extends _i1.SerializationManager {
       _i24.RedemptionResult => 'RedemptionResult',
       _i25.RedemptionStatus => 'RedemptionStatus',
       _i26.RewardItemRecord => 'RewardItemRecord',
-      _i27.AppUserRecord => 'AppUserRecord',
+      _i27.ShopOpenStatus => 'ShopOpenStatus',
+      _i28.ShopStatusRecord => 'ShopStatusRecord',
+      _i29.AppUserRecord => 'AppUserRecord',
       _ => null,
     };
   }
@@ -427,14 +445,18 @@ class Protocol extends _i1.SerializationManager {
         return 'RedemptionStatus';
       case _i26.RewardItemRecord():
         return 'RewardItemRecord';
-      case _i27.AppUserRecord():
+      case _i27.ShopOpenStatus():
+        return 'ShopOpenStatus';
+      case _i28.ShopStatusRecord():
+        return 'ShopStatusRecord';
+      case _i29.AppUserRecord():
         return 'AppUserRecord';
     }
-    className = _i33.Protocol().getClassNameForObject(data);
+    className = _i35.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
-    className = _i34.Protocol().getClassNameForObject(data);
+    className = _i36.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
@@ -522,16 +544,22 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'RewardItemRecord') {
       return deserialize<_i26.RewardItemRecord>(data['data']);
     }
+    if (dataClassName == 'ShopOpenStatus') {
+      return deserialize<_i27.ShopOpenStatus>(data['data']);
+    }
+    if (dataClassName == 'ShopStatusRecord') {
+      return deserialize<_i28.ShopStatusRecord>(data['data']);
+    }
     if (dataClassName == 'AppUserRecord') {
-      return deserialize<_i27.AppUserRecord>(data['data']);
+      return deserialize<_i29.AppUserRecord>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i33.Protocol().deserializeByClassName(data);
+      return _i35.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i34.Protocol().deserializeByClassName(data);
+      return _i36.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -546,10 +574,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i33.Protocol().mapRecordToJson(record);
+      return _i35.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i34.Protocol().mapRecordToJson(record);
+      return _i36.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

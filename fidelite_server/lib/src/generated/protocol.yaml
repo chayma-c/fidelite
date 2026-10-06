@@ -20,6 +20,10 @@ redemption:
   - redeemReward:
 rewards:
   - getCatalog:
+shopStatus:
+  - getStatus:
+shopStatusManagement:
+  - setStatus:
 emailAuth:
   - login:
   - startRegistration:
