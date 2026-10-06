@@ -6,6 +6,14 @@ menuManagement:
   - createMenuItem:
   - updateMenuItem:
   - setMenuItemActive:
+deviceToken:
+  - registerToken:
+onlineOrder:
+  - placeOrder:
+onlineOrderManagement:
+  - listUnhandled:
+  - getItemsForOrder:
+  - markHandled:
 order:
   - submitOrder:
   - getOrderHistory:
@@ -20,6 +28,9 @@ redemption:
   - redeemReward:
 rewards:
   - getCatalog:
+onlineOrderSettings:
+  - getSettings:
+  - setAutoPrint:
 shopStatus:
   - getStatus:
 shopStatusManagement:

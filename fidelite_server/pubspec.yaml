@@ -10,6 +10,7 @@ dependencies:
   serverpod: 3.4.13
   crypto: ^3.0.5 # hashing order-claim tokens (store hash only, never the raw token)
   http: ^1.2.2 # sending emails via the Resend API
+  googleapis_auth: ^1.6.0 # service-account OAuth2 for sending FCM push notifications
 
   # Self-hosted auth: AuthUser/session/JWT issuance/Argon2 password hashing,
   # Scope-based authorization (drop-in for the Keycloak-role -> Scope mapping

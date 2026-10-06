@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import '../points/claim_token_util.dart';
+import 'order_pricing_util.dart';
 import 'ticket_numbering.dart';
 
 /// Order-claim tokens are valid for a week -- generous on purpose. Per the
@@ -44,34 +45,7 @@ class OrderEndpoint extends Endpoint {
     int? requestedTicketNumber,
     DateTime? placedAt,
   }) async {
-    if (items.isEmpty) {
-      throw InvalidOrderException(
-        reason: InvalidOrderExceptionReason.emptyCart,
-      );
-    }
-    if (items.any((item) => item.quantity < 1)) {
-      throw InvalidOrderException(
-        reason: InvalidOrderExceptionReason.invalidQuantity,
-      );
-    }
-
-    final menuItemIds = items.map((item) => item.menuItemId).toSet();
-    final menuItems = await MenuItemRecord.db.find(
-      session,
-      where: (t) => t.id.inSet(menuItemIds) & t.isActive.equals(true),
-    );
-    final menuItemsById = {
-      for (final menuItem in menuItems) menuItem.id!: menuItem,
-    };
-
-    for (final item in items) {
-      if (!menuItemsById.containsKey(item.menuItemId)) {
-        throw InvalidOrderException(
-          reason: InvalidOrderExceptionReason.menuItemUnavailable,
-          menuItemId: item.menuItemId,
-        );
-      }
-    }
+    final priced = await validateAndPriceOrder(session, items);
 
     final staffUserId = UuidValue.fromString(
       session.authenticated!.userIdentifier,
@@ -80,12 +54,6 @@ class OrderEndpoint extends Endpoint {
     return DatabaseUtil.runInTransactionOrSavepoint(session.db, null, (
       transaction,
     ) async {
-      final totalMillimes = items.fold<int>(
-        0,
-        (sum, item) =>
-            sum + menuItemsById[item.menuItemId]!.priceMillimes * item.quantity,
-      );
-
       final now = DateTime.now().toUtc();
       final createdAt = (placedAt != null && placedAt.isBefore(now))
           ? placedAt
@@ -101,29 +69,20 @@ class OrderEndpoint extends Endpoint {
         session,
         OrderRecord(
           staffUserId: staffUserId,
-          subtotalMillimes: totalMillimes,
-          totalMillimes: totalMillimes,
+          subtotalMillimes: priced.totalMillimes,
+          totalMillimes: priced.totalMillimes,
           ticketNumber: ticketNumber,
           createdAt: createdAt,
+          // Staff creating it in person is handling it -- see
+          // OrderRecord.handledAt.
+          handledAt: createdAt,
         ),
         transaction: transaction,
       );
 
-      final orderItems = items.map((item) {
-        final menuItem = menuItemsById[item.menuItemId]!;
-        return OrderItemRecord(
-          orderId: order.id!,
-          menuItemId: menuItem.id!,
-          menuItemNameSnapshot: menuItem.name,
-          unitPriceMillimesSnapshot: menuItem.priceMillimes,
-          quantity: item.quantity,
-          lineTotalMillimes: menuItem.priceMillimes * item.quantity,
-        );
-      }).toList();
-
       await OrderItemRecord.db.insert(
         session,
-        orderItems,
+        buildOrderItemRecords(order.id!, priced),
         transaction: transaction,
       );
 

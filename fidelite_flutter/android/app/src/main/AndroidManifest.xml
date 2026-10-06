@@ -2,6 +2,9 @@
     <!-- QR scanning (claiming order points, and later redemption). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Android 13+ requires explicit runtime consent to show notifications
+         (the FCM push alerting staff to a new online order). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="fidelite"
         android:name="${applicationName}"

@@ -20,43 +20,49 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import 'menu/exceptions/menu_item_validation_exception.dart' as _i5;
 import 'menu/exceptions/menu_item_validation_exception_reason.dart' as _i6;
 import 'menu/menu_item.dart' as _i7;
-import 'orders/exceptions/invalid_order_exception.dart' as _i8;
-import 'orders/exceptions/invalid_order_exception_reason.dart' as _i9;
-import 'orders/order.dart' as _i10;
-import 'orders/order_confirmation.dart' as _i11;
-import 'orders/order_item.dart' as _i12;
-import 'orders/order_item_input.dart' as _i13;
-import 'orders/order_status.dart' as _i14;
-import 'points/claim_result.dart' as _i15;
-import 'points/claim_token_status.dart' as _i16;
-import 'points/exceptions/order_claim_exception.dart' as _i17;
-import 'points/exceptions/order_claim_exception_reason.dart' as _i18;
-import 'points/order_claim_token.dart' as _i19;
-import 'points/points_ledger_entry.dart' as _i20;
-import 'points/points_ledger_reason.dart' as _i21;
-import 'points/wallet_token.dart' as _i22;
-import 'points/wallet_token_response.dart' as _i23;
-import 'redemption/exceptions/redemption_exception.dart' as _i24;
-import 'redemption/exceptions/redemption_exception_reason.dart' as _i25;
-import 'redemption/redemption.dart' as _i26;
-import 'redemption/redemption_result.dart' as _i27;
-import 'redemption/redemption_status.dart' as _i28;
-import 'rewards/reward_item.dart' as _i29;
-import 'shop/shop_open_status.dart' as _i30;
-import 'shop/shop_status.dart' as _i31;
-import 'users/app_user.dart' as _i32;
-import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i33;
+import 'notifications/device_token.dart' as _i8;
+import 'orders/exceptions/invalid_order_exception.dart' as _i9;
+import 'orders/exceptions/invalid_order_exception_reason.dart' as _i10;
+import 'orders/online_order_confirmation.dart' as _i11;
+import 'orders/order.dart' as _i12;
+import 'orders/order_confirmation.dart' as _i13;
+import 'orders/order_item.dart' as _i14;
+import 'orders/order_item_input.dart' as _i15;
+import 'orders/order_status.dart' as _i16;
+import 'points/claim_result.dart' as _i17;
+import 'points/claim_token_status.dart' as _i18;
+import 'points/exceptions/order_claim_exception.dart' as _i19;
+import 'points/exceptions/order_claim_exception_reason.dart' as _i20;
+import 'points/order_claim_token.dart' as _i21;
+import 'points/points_ledger_entry.dart' as _i22;
+import 'points/points_ledger_reason.dart' as _i23;
+import 'points/wallet_token.dart' as _i24;
+import 'points/wallet_token_response.dart' as _i25;
+import 'redemption/exceptions/redemption_exception.dart' as _i26;
+import 'redemption/exceptions/redemption_exception_reason.dart' as _i27;
+import 'redemption/redemption.dart' as _i28;
+import 'redemption/redemption_result.dart' as _i29;
+import 'redemption/redemption_status.dart' as _i30;
+import 'rewards/reward_item.dart' as _i31;
+import 'shop/online_order_settings.dart' as _i32;
+import 'shop/shop_open_status.dart' as _i33;
+import 'shop/shop_status.dart' as _i34;
+import 'users/app_user.dart' as _i35;
+import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i36;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
-    as _i34;
-import 'package:fidelite_server/src/generated/orders/order.dart' as _i35;
+    as _i37;
+import 'package:fidelite_server/src/generated/orders/order.dart' as _i38;
+import 'package:fidelite_server/src/generated/orders/order_item.dart' as _i39;
 import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
-    as _i36;
-import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i37;
+    as _i40;
+import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i41;
 export 'menu/exceptions/menu_item_validation_exception.dart';
 export 'menu/exceptions/menu_item_validation_exception_reason.dart';
 export 'menu/menu_item.dart';
+export 'notifications/device_token.dart';
 export 'orders/exceptions/invalid_order_exception.dart';
 export 'orders/exceptions/invalid_order_exception_reason.dart';
+export 'orders/online_order_confirmation.dart';
 export 'orders/order.dart';
 export 'orders/order_confirmation.dart';
 export 'orders/order_item.dart';
@@ -77,6 +83,7 @@ export 'redemption/redemption.dart';
 export 'redemption/redemption_result.dart';
 export 'redemption/redemption_status.dart';
 export 'rewards/reward_item.dart';
+export 'shop/online_order_settings.dart';
 export 'shop/shop_open_status.dart';
 export 'shop/shop_status.dart';
 export 'users/app_user.dart';
@@ -158,6 +165,68 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'device_token',
+      dartName: 'DeviceTokenRecord',
+      schema: 'public',
+      module: 'fidelite',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'device_token_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fcmToken',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'device_token_fk_0',
+          columns: ['userId'],
+          referenceTable: 'app_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'device_token_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'fidelite_order',
       dartName: 'OrderRecord',
       schema: 'public',
@@ -173,8 +242,20 @@ class Protocol extends _i1.SerializationManagerServer {
         _i2.ColumnDefinition(
           name: 'staffUserId',
           columnType: _i2.ColumnType.uuid,
-          isNullable: false,
-          dartType: 'UuidValue',
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'customerUserId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'handledAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
         ),
         _i2.ColumnDefinition(
           name: 'status',
@@ -214,6 +295,16 @@ class Protocol extends _i1.SerializationManagerServer {
         _i2.ForeignKeyDefinition(
           constraintName: 'fidelite_order_fk_0',
           columns: ['staffUserId'],
+          referenceTable: 'app_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.restrict,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'fidelite_order_fk_1',
+          columns: ['customerUserId'],
           referenceTable: 'app_user',
           referenceTableSchema: 'public',
           referenceColumns: ['id'],
@@ -309,6 +400,52 @@ class Protocol extends _i1.SerializationManagerServer {
       indexes: [
         _i2.IndexDefinition(
           indexName: 'menu_item_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'online_order_settings',
+      dartName: 'OnlineOrderSettingsRecord',
+      schema: 'public',
+      module: 'fidelite',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'online_order_settings_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'autoPrintEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'online_order_settings_pkey',
           tableSpace: null,
           elements: [
             _i2.IndexElementDefinition(
@@ -999,80 +1136,89 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i7.MenuItemRecord) {
       return _i7.MenuItemRecord.fromJson(data) as T;
     }
-    if (t == _i8.InvalidOrderException) {
-      return _i8.InvalidOrderException.fromJson(data) as T;
+    if (t == _i8.DeviceTokenRecord) {
+      return _i8.DeviceTokenRecord.fromJson(data) as T;
     }
-    if (t == _i9.InvalidOrderExceptionReason) {
-      return _i9.InvalidOrderExceptionReason.fromJson(data) as T;
+    if (t == _i9.InvalidOrderException) {
+      return _i9.InvalidOrderException.fromJson(data) as T;
     }
-    if (t == _i10.OrderRecord) {
-      return _i10.OrderRecord.fromJson(data) as T;
+    if (t == _i10.InvalidOrderExceptionReason) {
+      return _i10.InvalidOrderExceptionReason.fromJson(data) as T;
     }
-    if (t == _i11.OrderConfirmation) {
-      return _i11.OrderConfirmation.fromJson(data) as T;
+    if (t == _i11.OnlineOrderConfirmation) {
+      return _i11.OnlineOrderConfirmation.fromJson(data) as T;
     }
-    if (t == _i12.OrderItemRecord) {
-      return _i12.OrderItemRecord.fromJson(data) as T;
+    if (t == _i12.OrderRecord) {
+      return _i12.OrderRecord.fromJson(data) as T;
     }
-    if (t == _i13.OrderItemInput) {
-      return _i13.OrderItemInput.fromJson(data) as T;
+    if (t == _i13.OrderConfirmation) {
+      return _i13.OrderConfirmation.fromJson(data) as T;
     }
-    if (t == _i14.OrderStatus) {
-      return _i14.OrderStatus.fromJson(data) as T;
+    if (t == _i14.OrderItemRecord) {
+      return _i14.OrderItemRecord.fromJson(data) as T;
     }
-    if (t == _i15.ClaimResult) {
-      return _i15.ClaimResult.fromJson(data) as T;
+    if (t == _i15.OrderItemInput) {
+      return _i15.OrderItemInput.fromJson(data) as T;
     }
-    if (t == _i16.ClaimTokenStatus) {
-      return _i16.ClaimTokenStatus.fromJson(data) as T;
+    if (t == _i16.OrderStatus) {
+      return _i16.OrderStatus.fromJson(data) as T;
     }
-    if (t == _i17.OrderClaimException) {
-      return _i17.OrderClaimException.fromJson(data) as T;
+    if (t == _i17.ClaimResult) {
+      return _i17.ClaimResult.fromJson(data) as T;
     }
-    if (t == _i18.OrderClaimExceptionReason) {
-      return _i18.OrderClaimExceptionReason.fromJson(data) as T;
+    if (t == _i18.ClaimTokenStatus) {
+      return _i18.ClaimTokenStatus.fromJson(data) as T;
     }
-    if (t == _i19.OrderClaimTokenRecord) {
-      return _i19.OrderClaimTokenRecord.fromJson(data) as T;
+    if (t == _i19.OrderClaimException) {
+      return _i19.OrderClaimException.fromJson(data) as T;
     }
-    if (t == _i20.PointsLedgerEntryRecord) {
-      return _i20.PointsLedgerEntryRecord.fromJson(data) as T;
+    if (t == _i20.OrderClaimExceptionReason) {
+      return _i20.OrderClaimExceptionReason.fromJson(data) as T;
     }
-    if (t == _i21.PointsLedgerReason) {
-      return _i21.PointsLedgerReason.fromJson(data) as T;
+    if (t == _i21.OrderClaimTokenRecord) {
+      return _i21.OrderClaimTokenRecord.fromJson(data) as T;
     }
-    if (t == _i22.WalletTokenRecord) {
-      return _i22.WalletTokenRecord.fromJson(data) as T;
+    if (t == _i22.PointsLedgerEntryRecord) {
+      return _i22.PointsLedgerEntryRecord.fromJson(data) as T;
     }
-    if (t == _i23.WalletTokenResponse) {
-      return _i23.WalletTokenResponse.fromJson(data) as T;
+    if (t == _i23.PointsLedgerReason) {
+      return _i23.PointsLedgerReason.fromJson(data) as T;
     }
-    if (t == _i24.RedemptionException) {
-      return _i24.RedemptionException.fromJson(data) as T;
+    if (t == _i24.WalletTokenRecord) {
+      return _i24.WalletTokenRecord.fromJson(data) as T;
     }
-    if (t == _i25.RedemptionExceptionReason) {
-      return _i25.RedemptionExceptionReason.fromJson(data) as T;
+    if (t == _i25.WalletTokenResponse) {
+      return _i25.WalletTokenResponse.fromJson(data) as T;
     }
-    if (t == _i26.RedemptionRecord) {
-      return _i26.RedemptionRecord.fromJson(data) as T;
+    if (t == _i26.RedemptionException) {
+      return _i26.RedemptionException.fromJson(data) as T;
     }
-    if (t == _i27.RedemptionResult) {
-      return _i27.RedemptionResult.fromJson(data) as T;
+    if (t == _i27.RedemptionExceptionReason) {
+      return _i27.RedemptionExceptionReason.fromJson(data) as T;
     }
-    if (t == _i28.RedemptionStatus) {
-      return _i28.RedemptionStatus.fromJson(data) as T;
+    if (t == _i28.RedemptionRecord) {
+      return _i28.RedemptionRecord.fromJson(data) as T;
     }
-    if (t == _i29.RewardItemRecord) {
-      return _i29.RewardItemRecord.fromJson(data) as T;
+    if (t == _i29.RedemptionResult) {
+      return _i29.RedemptionResult.fromJson(data) as T;
     }
-    if (t == _i30.ShopOpenStatus) {
-      return _i30.ShopOpenStatus.fromJson(data) as T;
+    if (t == _i30.RedemptionStatus) {
+      return _i30.RedemptionStatus.fromJson(data) as T;
     }
-    if (t == _i31.ShopStatusRecord) {
-      return _i31.ShopStatusRecord.fromJson(data) as T;
+    if (t == _i31.RewardItemRecord) {
+      return _i31.RewardItemRecord.fromJson(data) as T;
     }
-    if (t == _i32.AppUserRecord) {
-      return _i32.AppUserRecord.fromJson(data) as T;
+    if (t == _i32.OnlineOrderSettingsRecord) {
+      return _i32.OnlineOrderSettingsRecord.fromJson(data) as T;
+    }
+    if (t == _i33.ShopOpenStatus) {
+      return _i33.ShopOpenStatus.fromJson(data) as T;
+    }
+    if (t == _i34.ShopStatusRecord) {
+      return _i34.ShopStatusRecord.fromJson(data) as T;
+    }
+    if (t == _i35.AppUserRecord) {
+      return _i35.AppUserRecord.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.MenuItemValidationException?>()) {
       return (data != null
@@ -1089,130 +1235,149 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i7.MenuItemRecord?>()) {
       return (data != null ? _i7.MenuItemRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i8.InvalidOrderException?>()) {
-      return (data != null ? _i8.InvalidOrderException.fromJson(data) : null)
+    if (t == _i1.getType<_i8.DeviceTokenRecord?>()) {
+      return (data != null ? _i8.DeviceTokenRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i9.InvalidOrderException?>()) {
+      return (data != null ? _i9.InvalidOrderException.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i9.InvalidOrderExceptionReason?>()) {
+    if (t == _i1.getType<_i10.InvalidOrderExceptionReason?>()) {
       return (data != null
-              ? _i9.InvalidOrderExceptionReason.fromJson(data)
+              ? _i10.InvalidOrderExceptionReason.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i10.OrderRecord?>()) {
-      return (data != null ? _i10.OrderRecord.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i11.OrderConfirmation?>()) {
-      return (data != null ? _i11.OrderConfirmation.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i12.OrderItemRecord?>()) {
-      return (data != null ? _i12.OrderItemRecord.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i13.OrderItemInput?>()) {
-      return (data != null ? _i13.OrderItemInput.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i14.OrderStatus?>()) {
-      return (data != null ? _i14.OrderStatus.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i15.ClaimResult?>()) {
-      return (data != null ? _i15.ClaimResult.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i16.ClaimTokenStatus?>()) {
-      return (data != null ? _i16.ClaimTokenStatus.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i17.OrderClaimException?>()) {
-      return (data != null ? _i17.OrderClaimException.fromJson(data) : null)
+    if (t == _i1.getType<_i11.OnlineOrderConfirmation?>()) {
+      return (data != null ? _i11.OnlineOrderConfirmation.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i18.OrderClaimExceptionReason?>()) {
+    if (t == _i1.getType<_i12.OrderRecord?>()) {
+      return (data != null ? _i12.OrderRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i13.OrderConfirmation?>()) {
+      return (data != null ? _i13.OrderConfirmation.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i14.OrderItemRecord?>()) {
+      return (data != null ? _i14.OrderItemRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i15.OrderItemInput?>()) {
+      return (data != null ? _i15.OrderItemInput.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i16.OrderStatus?>()) {
+      return (data != null ? _i16.OrderStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i17.ClaimResult?>()) {
+      return (data != null ? _i17.ClaimResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.ClaimTokenStatus?>()) {
+      return (data != null ? _i18.ClaimTokenStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.OrderClaimException?>()) {
+      return (data != null ? _i19.OrderClaimException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i20.OrderClaimExceptionReason?>()) {
       return (data != null
-              ? _i18.OrderClaimExceptionReason.fromJson(data)
+              ? _i20.OrderClaimExceptionReason.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i19.OrderClaimTokenRecord?>()) {
-      return (data != null ? _i19.OrderClaimTokenRecord.fromJson(data) : null)
+    if (t == _i1.getType<_i21.OrderClaimTokenRecord?>()) {
+      return (data != null ? _i21.OrderClaimTokenRecord.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i20.PointsLedgerEntryRecord?>()) {
-      return (data != null ? _i20.PointsLedgerEntryRecord.fromJson(data) : null)
+    if (t == _i1.getType<_i22.PointsLedgerEntryRecord?>()) {
+      return (data != null ? _i22.PointsLedgerEntryRecord.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i21.PointsLedgerReason?>()) {
-      return (data != null ? _i21.PointsLedgerReason.fromJson(data) : null)
+    if (t == _i1.getType<_i23.PointsLedgerReason?>()) {
+      return (data != null ? _i23.PointsLedgerReason.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i22.WalletTokenRecord?>()) {
-      return (data != null ? _i22.WalletTokenRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i24.WalletTokenRecord?>()) {
+      return (data != null ? _i24.WalletTokenRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i23.WalletTokenResponse?>()) {
-      return (data != null ? _i23.WalletTokenResponse.fromJson(data) : null)
+    if (t == _i1.getType<_i25.WalletTokenResponse?>()) {
+      return (data != null ? _i25.WalletTokenResponse.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i24.RedemptionException?>()) {
-      return (data != null ? _i24.RedemptionException.fromJson(data) : null)
+    if (t == _i1.getType<_i26.RedemptionException?>()) {
+      return (data != null ? _i26.RedemptionException.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i25.RedemptionExceptionReason?>()) {
+    if (t == _i1.getType<_i27.RedemptionExceptionReason?>()) {
       return (data != null
-              ? _i25.RedemptionExceptionReason.fromJson(data)
+              ? _i27.RedemptionExceptionReason.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i26.RedemptionRecord?>()) {
-      return (data != null ? _i26.RedemptionRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i28.RedemptionRecord?>()) {
+      return (data != null ? _i28.RedemptionRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i27.RedemptionResult?>()) {
-      return (data != null ? _i27.RedemptionResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i29.RedemptionResult?>()) {
+      return (data != null ? _i29.RedemptionResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i28.RedemptionStatus?>()) {
-      return (data != null ? _i28.RedemptionStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i30.RedemptionStatus?>()) {
+      return (data != null ? _i30.RedemptionStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i29.RewardItemRecord?>()) {
-      return (data != null ? _i29.RewardItemRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i31.RewardItemRecord?>()) {
+      return (data != null ? _i31.RewardItemRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i30.ShopOpenStatus?>()) {
-      return (data != null ? _i30.ShopOpenStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i32.OnlineOrderSettingsRecord?>()) {
+      return (data != null
+              ? _i32.OnlineOrderSettingsRecord.fromJson(data)
+              : null)
+          as T;
     }
-    if (t == _i1.getType<_i31.ShopStatusRecord?>()) {
-      return (data != null ? _i31.ShopStatusRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i33.ShopOpenStatus?>()) {
+      return (data != null ? _i33.ShopOpenStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i32.AppUserRecord?>()) {
-      return (data != null ? _i32.AppUserRecord.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i34.ShopStatusRecord?>()) {
+      return (data != null ? _i34.ShopStatusRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i35.AppUserRecord?>()) {
+      return (data != null ? _i35.AppUserRecord.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i33.MenuItemRecord>) {
+    if (t == List<_i36.MenuItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i33.MenuItemRecord>(e))
+              .map((e) => deserialize<_i36.MenuItemRecord>(e))
               .toList()
           as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i34.OrderItemInput>) {
+    if (t == List<_i37.OrderItemInput>) {
       return (data as List)
-              .map((e) => deserialize<_i34.OrderItemInput>(e))
+              .map((e) => deserialize<_i37.OrderItemInput>(e))
               .toList()
           as T;
     }
-    if (t == List<_i35.OrderRecord>) {
+    if (t == List<_i38.OrderRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i35.OrderRecord>(e))
+              .map((e) => deserialize<_i38.OrderRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i36.PointsLedgerEntryRecord>) {
+    if (t == List<_i39.OrderItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i36.PointsLedgerEntryRecord>(e))
+              .map((e) => deserialize<_i39.OrderItemRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i37.RewardItemRecord>) {
+    if (t == List<_i40.PointsLedgerEntryRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i37.RewardItemRecord>(e))
+              .map((e) => deserialize<_i40.PointsLedgerEntryRecord>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i41.RewardItemRecord>) {
+      return (data as List)
+              .map((e) => deserialize<_i41.RewardItemRecord>(e))
               .toList()
           as T;
     }
@@ -1234,31 +1399,34 @@ class Protocol extends _i1.SerializationManagerServer {
       _i6.MenuItemValidationExceptionReason =>
         'MenuItemValidationExceptionReason',
       _i7.MenuItemRecord => 'MenuItemRecord',
-      _i8.InvalidOrderException => 'InvalidOrderException',
-      _i9.InvalidOrderExceptionReason => 'InvalidOrderExceptionReason',
-      _i10.OrderRecord => 'OrderRecord',
-      _i11.OrderConfirmation => 'OrderConfirmation',
-      _i12.OrderItemRecord => 'OrderItemRecord',
-      _i13.OrderItemInput => 'OrderItemInput',
-      _i14.OrderStatus => 'OrderStatus',
-      _i15.ClaimResult => 'ClaimResult',
-      _i16.ClaimTokenStatus => 'ClaimTokenStatus',
-      _i17.OrderClaimException => 'OrderClaimException',
-      _i18.OrderClaimExceptionReason => 'OrderClaimExceptionReason',
-      _i19.OrderClaimTokenRecord => 'OrderClaimTokenRecord',
-      _i20.PointsLedgerEntryRecord => 'PointsLedgerEntryRecord',
-      _i21.PointsLedgerReason => 'PointsLedgerReason',
-      _i22.WalletTokenRecord => 'WalletTokenRecord',
-      _i23.WalletTokenResponse => 'WalletTokenResponse',
-      _i24.RedemptionException => 'RedemptionException',
-      _i25.RedemptionExceptionReason => 'RedemptionExceptionReason',
-      _i26.RedemptionRecord => 'RedemptionRecord',
-      _i27.RedemptionResult => 'RedemptionResult',
-      _i28.RedemptionStatus => 'RedemptionStatus',
-      _i29.RewardItemRecord => 'RewardItemRecord',
-      _i30.ShopOpenStatus => 'ShopOpenStatus',
-      _i31.ShopStatusRecord => 'ShopStatusRecord',
-      _i32.AppUserRecord => 'AppUserRecord',
+      _i8.DeviceTokenRecord => 'DeviceTokenRecord',
+      _i9.InvalidOrderException => 'InvalidOrderException',
+      _i10.InvalidOrderExceptionReason => 'InvalidOrderExceptionReason',
+      _i11.OnlineOrderConfirmation => 'OnlineOrderConfirmation',
+      _i12.OrderRecord => 'OrderRecord',
+      _i13.OrderConfirmation => 'OrderConfirmation',
+      _i14.OrderItemRecord => 'OrderItemRecord',
+      _i15.OrderItemInput => 'OrderItemInput',
+      _i16.OrderStatus => 'OrderStatus',
+      _i17.ClaimResult => 'ClaimResult',
+      _i18.ClaimTokenStatus => 'ClaimTokenStatus',
+      _i19.OrderClaimException => 'OrderClaimException',
+      _i20.OrderClaimExceptionReason => 'OrderClaimExceptionReason',
+      _i21.OrderClaimTokenRecord => 'OrderClaimTokenRecord',
+      _i22.PointsLedgerEntryRecord => 'PointsLedgerEntryRecord',
+      _i23.PointsLedgerReason => 'PointsLedgerReason',
+      _i24.WalletTokenRecord => 'WalletTokenRecord',
+      _i25.WalletTokenResponse => 'WalletTokenResponse',
+      _i26.RedemptionException => 'RedemptionException',
+      _i27.RedemptionExceptionReason => 'RedemptionExceptionReason',
+      _i28.RedemptionRecord => 'RedemptionRecord',
+      _i29.RedemptionResult => 'RedemptionResult',
+      _i30.RedemptionStatus => 'RedemptionStatus',
+      _i31.RewardItemRecord => 'RewardItemRecord',
+      _i32.OnlineOrderSettingsRecord => 'OnlineOrderSettingsRecord',
+      _i33.ShopOpenStatus => 'ShopOpenStatus',
+      _i34.ShopStatusRecord => 'ShopStatusRecord',
+      _i35.AppUserRecord => 'AppUserRecord',
       _ => null,
     };
   }
@@ -1279,55 +1447,61 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'MenuItemValidationExceptionReason';
       case _i7.MenuItemRecord():
         return 'MenuItemRecord';
-      case _i8.InvalidOrderException():
+      case _i8.DeviceTokenRecord():
+        return 'DeviceTokenRecord';
+      case _i9.InvalidOrderException():
         return 'InvalidOrderException';
-      case _i9.InvalidOrderExceptionReason():
+      case _i10.InvalidOrderExceptionReason():
         return 'InvalidOrderExceptionReason';
-      case _i10.OrderRecord():
+      case _i11.OnlineOrderConfirmation():
+        return 'OnlineOrderConfirmation';
+      case _i12.OrderRecord():
         return 'OrderRecord';
-      case _i11.OrderConfirmation():
+      case _i13.OrderConfirmation():
         return 'OrderConfirmation';
-      case _i12.OrderItemRecord():
+      case _i14.OrderItemRecord():
         return 'OrderItemRecord';
-      case _i13.OrderItemInput():
+      case _i15.OrderItemInput():
         return 'OrderItemInput';
-      case _i14.OrderStatus():
+      case _i16.OrderStatus():
         return 'OrderStatus';
-      case _i15.ClaimResult():
+      case _i17.ClaimResult():
         return 'ClaimResult';
-      case _i16.ClaimTokenStatus():
+      case _i18.ClaimTokenStatus():
         return 'ClaimTokenStatus';
-      case _i17.OrderClaimException():
+      case _i19.OrderClaimException():
         return 'OrderClaimException';
-      case _i18.OrderClaimExceptionReason():
+      case _i20.OrderClaimExceptionReason():
         return 'OrderClaimExceptionReason';
-      case _i19.OrderClaimTokenRecord():
+      case _i21.OrderClaimTokenRecord():
         return 'OrderClaimTokenRecord';
-      case _i20.PointsLedgerEntryRecord():
+      case _i22.PointsLedgerEntryRecord():
         return 'PointsLedgerEntryRecord';
-      case _i21.PointsLedgerReason():
+      case _i23.PointsLedgerReason():
         return 'PointsLedgerReason';
-      case _i22.WalletTokenRecord():
+      case _i24.WalletTokenRecord():
         return 'WalletTokenRecord';
-      case _i23.WalletTokenResponse():
+      case _i25.WalletTokenResponse():
         return 'WalletTokenResponse';
-      case _i24.RedemptionException():
+      case _i26.RedemptionException():
         return 'RedemptionException';
-      case _i25.RedemptionExceptionReason():
+      case _i27.RedemptionExceptionReason():
         return 'RedemptionExceptionReason';
-      case _i26.RedemptionRecord():
+      case _i28.RedemptionRecord():
         return 'RedemptionRecord';
-      case _i27.RedemptionResult():
+      case _i29.RedemptionResult():
         return 'RedemptionResult';
-      case _i28.RedemptionStatus():
+      case _i30.RedemptionStatus():
         return 'RedemptionStatus';
-      case _i29.RewardItemRecord():
+      case _i31.RewardItemRecord():
         return 'RewardItemRecord';
-      case _i30.ShopOpenStatus():
+      case _i32.OnlineOrderSettingsRecord():
+        return 'OnlineOrderSettingsRecord';
+      case _i33.ShopOpenStatus():
         return 'ShopOpenStatus';
-      case _i31.ShopStatusRecord():
+      case _i34.ShopStatusRecord():
         return 'ShopStatusRecord';
-      case _i32.AppUserRecord():
+      case _i35.AppUserRecord():
         return 'AppUserRecord';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1360,80 +1534,89 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'MenuItemRecord') {
       return deserialize<_i7.MenuItemRecord>(data['data']);
     }
+    if (dataClassName == 'DeviceTokenRecord') {
+      return deserialize<_i8.DeviceTokenRecord>(data['data']);
+    }
     if (dataClassName == 'InvalidOrderException') {
-      return deserialize<_i8.InvalidOrderException>(data['data']);
+      return deserialize<_i9.InvalidOrderException>(data['data']);
     }
     if (dataClassName == 'InvalidOrderExceptionReason') {
-      return deserialize<_i9.InvalidOrderExceptionReason>(data['data']);
+      return deserialize<_i10.InvalidOrderExceptionReason>(data['data']);
+    }
+    if (dataClassName == 'OnlineOrderConfirmation') {
+      return deserialize<_i11.OnlineOrderConfirmation>(data['data']);
     }
     if (dataClassName == 'OrderRecord') {
-      return deserialize<_i10.OrderRecord>(data['data']);
+      return deserialize<_i12.OrderRecord>(data['data']);
     }
     if (dataClassName == 'OrderConfirmation') {
-      return deserialize<_i11.OrderConfirmation>(data['data']);
+      return deserialize<_i13.OrderConfirmation>(data['data']);
     }
     if (dataClassName == 'OrderItemRecord') {
-      return deserialize<_i12.OrderItemRecord>(data['data']);
+      return deserialize<_i14.OrderItemRecord>(data['data']);
     }
     if (dataClassName == 'OrderItemInput') {
-      return deserialize<_i13.OrderItemInput>(data['data']);
+      return deserialize<_i15.OrderItemInput>(data['data']);
     }
     if (dataClassName == 'OrderStatus') {
-      return deserialize<_i14.OrderStatus>(data['data']);
+      return deserialize<_i16.OrderStatus>(data['data']);
     }
     if (dataClassName == 'ClaimResult') {
-      return deserialize<_i15.ClaimResult>(data['data']);
+      return deserialize<_i17.ClaimResult>(data['data']);
     }
     if (dataClassName == 'ClaimTokenStatus') {
-      return deserialize<_i16.ClaimTokenStatus>(data['data']);
+      return deserialize<_i18.ClaimTokenStatus>(data['data']);
     }
     if (dataClassName == 'OrderClaimException') {
-      return deserialize<_i17.OrderClaimException>(data['data']);
+      return deserialize<_i19.OrderClaimException>(data['data']);
     }
     if (dataClassName == 'OrderClaimExceptionReason') {
-      return deserialize<_i18.OrderClaimExceptionReason>(data['data']);
+      return deserialize<_i20.OrderClaimExceptionReason>(data['data']);
     }
     if (dataClassName == 'OrderClaimTokenRecord') {
-      return deserialize<_i19.OrderClaimTokenRecord>(data['data']);
+      return deserialize<_i21.OrderClaimTokenRecord>(data['data']);
     }
     if (dataClassName == 'PointsLedgerEntryRecord') {
-      return deserialize<_i20.PointsLedgerEntryRecord>(data['data']);
+      return deserialize<_i22.PointsLedgerEntryRecord>(data['data']);
     }
     if (dataClassName == 'PointsLedgerReason') {
-      return deserialize<_i21.PointsLedgerReason>(data['data']);
+      return deserialize<_i23.PointsLedgerReason>(data['data']);
     }
     if (dataClassName == 'WalletTokenRecord') {
-      return deserialize<_i22.WalletTokenRecord>(data['data']);
+      return deserialize<_i24.WalletTokenRecord>(data['data']);
     }
     if (dataClassName == 'WalletTokenResponse') {
-      return deserialize<_i23.WalletTokenResponse>(data['data']);
+      return deserialize<_i25.WalletTokenResponse>(data['data']);
     }
     if (dataClassName == 'RedemptionException') {
-      return deserialize<_i24.RedemptionException>(data['data']);
+      return deserialize<_i26.RedemptionException>(data['data']);
     }
     if (dataClassName == 'RedemptionExceptionReason') {
-      return deserialize<_i25.RedemptionExceptionReason>(data['data']);
+      return deserialize<_i27.RedemptionExceptionReason>(data['data']);
     }
     if (dataClassName == 'RedemptionRecord') {
-      return deserialize<_i26.RedemptionRecord>(data['data']);
+      return deserialize<_i28.RedemptionRecord>(data['data']);
     }
     if (dataClassName == 'RedemptionResult') {
-      return deserialize<_i27.RedemptionResult>(data['data']);
+      return deserialize<_i29.RedemptionResult>(data['data']);
     }
     if (dataClassName == 'RedemptionStatus') {
-      return deserialize<_i28.RedemptionStatus>(data['data']);
+      return deserialize<_i30.RedemptionStatus>(data['data']);
     }
     if (dataClassName == 'RewardItemRecord') {
-      return deserialize<_i29.RewardItemRecord>(data['data']);
+      return deserialize<_i31.RewardItemRecord>(data['data']);
+    }
+    if (dataClassName == 'OnlineOrderSettingsRecord') {
+      return deserialize<_i32.OnlineOrderSettingsRecord>(data['data']);
     }
     if (dataClassName == 'ShopOpenStatus') {
-      return deserialize<_i30.ShopOpenStatus>(data['data']);
+      return deserialize<_i33.ShopOpenStatus>(data['data']);
     }
     if (dataClassName == 'ShopStatusRecord') {
-      return deserialize<_i31.ShopStatusRecord>(data['data']);
+      return deserialize<_i34.ShopStatusRecord>(data['data']);
     }
     if (dataClassName == 'AppUserRecord') {
-      return deserialize<_i32.AppUserRecord>(data['data']);
+      return deserialize<_i35.AppUserRecord>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1473,24 +1656,28 @@ class Protocol extends _i1.SerializationManagerServer {
     switch (t) {
       case _i7.MenuItemRecord:
         return _i7.MenuItemRecord.t;
-      case _i10.OrderRecord:
-        return _i10.OrderRecord.t;
-      case _i12.OrderItemRecord:
-        return _i12.OrderItemRecord.t;
-      case _i19.OrderClaimTokenRecord:
-        return _i19.OrderClaimTokenRecord.t;
-      case _i20.PointsLedgerEntryRecord:
-        return _i20.PointsLedgerEntryRecord.t;
-      case _i22.WalletTokenRecord:
-        return _i22.WalletTokenRecord.t;
-      case _i26.RedemptionRecord:
-        return _i26.RedemptionRecord.t;
-      case _i29.RewardItemRecord:
-        return _i29.RewardItemRecord.t;
-      case _i31.ShopStatusRecord:
-        return _i31.ShopStatusRecord.t;
-      case _i32.AppUserRecord:
-        return _i32.AppUserRecord.t;
+      case _i8.DeviceTokenRecord:
+        return _i8.DeviceTokenRecord.t;
+      case _i12.OrderRecord:
+        return _i12.OrderRecord.t;
+      case _i14.OrderItemRecord:
+        return _i14.OrderItemRecord.t;
+      case _i21.OrderClaimTokenRecord:
+        return _i21.OrderClaimTokenRecord.t;
+      case _i22.PointsLedgerEntryRecord:
+        return _i22.PointsLedgerEntryRecord.t;
+      case _i24.WalletTokenRecord:
+        return _i24.WalletTokenRecord.t;
+      case _i28.RedemptionRecord:
+        return _i28.RedemptionRecord.t;
+      case _i31.RewardItemRecord:
+        return _i31.RewardItemRecord.t;
+      case _i32.OnlineOrderSettingsRecord:
+        return _i32.OnlineOrderSettingsRecord.t;
+      case _i34.ShopStatusRecord:
+        return _i34.ShopStatusRecord.t;
+      case _i35.AppUserRecord:
+        return _i35.AppUserRecord.t;
     }
     return null;
   }

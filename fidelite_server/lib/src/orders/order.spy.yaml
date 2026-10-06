@@ -1,14 +1,31 @@
-### A confirmed counter order. Created already-confirmed in one atomic call
-### (OrderEndpoint.submitOrder) -- the cart is client-local state until that
-### single "confirm" tap, so there's no separate "pending" order concept in
-### the schema. Named `fidelite_order`/`OrderRecord` (not `order`/`Order`)
-### since "order" is a reserved SQL keyword and collides with Serverpod's
-### own `Order` (see database/concepts/order.dart) used for query sorting.
+### A confirmed order, placed either by staff at the counter or by a
+### customer ordering themselves (see OnlineOrderEndpoint). Created
+### already-confirmed in one atomic call -- the cart is client-local state
+### until that single "confirm"/"place order" tap, so there's no separate
+### "draft" order concept in the schema. Named `fidelite_order`/
+### `OrderRecord` (not `order`/`Order`) since "order" is a reserved SQL
+### keyword and collides with Serverpod's own `Order` (see
+### database/concepts/order.dart) used for query sorting.
 class: OrderRecord
 table: fidelite_order
 fields:
-  ### The staff member who took this order.
-  staffUser: AppUserRecord?, relation(onDelete=Restrict)
+  ### The staff member who took this order at the counter. Null for an
+  ### online order -- see [customerUser].
+  staffUser: AppUserRecord?, relation(optional, onDelete=Restrict)
+
+  ### The customer who placed this order themselves, if it's an online
+  ### order. This (not a separate "source" flag) is what distinguishes an
+  ### online order from a counter one -- exactly one of [staffUser]/
+  ### [customerUser] is ever set.
+  customerUser: AppUserRecord?, relation(optional, onDelete=Restrict)
+
+  ### When staff became aware of/processed this order. Set to [createdAt]
+  ### itself for a counter order -- staff creating it in person *is*
+  ### handling it -- so only an online order is ever actually null here,
+  ### which is what makes a plain `handledAt == null` filter enough to
+  ### drive both the staff notification badge and the Online Orders queue
+  ### (see OnlineOrderManagementEndpoint.listUnhandled).
+  handledAt: DateTime?
 
   status: OrderStatus, default=confirmed
 

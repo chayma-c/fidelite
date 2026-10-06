@@ -4,6 +4,7 @@ import 'package:fidelite_client/fidelite_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
+import '../../../../core/notifications/push_notification_service.dart';
 import '../../../../core/serverpod/serverpod_client_provider.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/auth_state.dart';
@@ -45,6 +46,19 @@ class AuthController extends Notifier<AuthState> {
     state = authInfo == null
         ? const AuthUnauthenticated()
         : AuthAuthenticated(AppUser.fromAuthSuccess(authInfo));
+
+    // Fires on every genuine auth change (sign-in, restore, token refresh),
+    // not on every rebuild -- this listener only runs when
+    // authInfoListenable itself notifies. registerForStaffDevice() is a
+    // no-op off Android and idempotent server-side (upsert by user), so
+    // there's no real cost to it running again on an already-registered
+    // device.
+    if (state case AuthAuthenticated(user: final user)
+        when user.hasRole('staff')) {
+      unawaited(
+        ref.read(pushNotificationServiceProvider).registerForStaffDevice(),
+      );
+    }
   }
 
   Future<void> signOut() async {

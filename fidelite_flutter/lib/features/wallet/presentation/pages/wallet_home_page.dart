@@ -1,11 +1,14 @@
+import 'package:fidelite_client/fidelite_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/money/millimes_formatting.dart';
 import '../../../../core/theme/theme_mode_menu_button.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../orders/presentation/pages/customer_order_page.dart';
 import '../../../rewards/presentation/pages/rewards_catalog_page.dart';
 import '../../../scanner/presentation/pages/qr_scanner_page.dart';
+import '../../../shop/data/shop_status_providers.dart';
 import '../../../shop/presentation/widgets/shop_status_banner.dart';
 import '../../data/wallet_providers.dart';
 import '../controllers/claim_controller.dart';
@@ -50,6 +53,8 @@ class WalletHomePage extends ConsumerWidget {
 
     final balanceAsync = ref.watch(balanceProvider);
     final isClaiming = ref.watch(claimControllerProvider) is ClaimInProgress;
+    final isShopOpen =
+        ref.watch(shopStatusProvider).valueOrNull == ShopOpenStatus.open;
 
     return Scaffold(
       appBar: AppBar(
@@ -103,6 +108,14 @@ class WalletHomePage extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
+              onPressed: isShopOpen ? () => _orderNow(context) : null,
+              icon: const Icon(Icons.restaurant_menu),
+              label: Text(
+                isShopOpen ? 'Order now' : 'Order now (shop is closed)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
               onPressed: isClaiming ? null : () => _scanReceipt(context, ref),
               icon: const Icon(Icons.qr_code_scanner),
               label: const Text('Scan receipt to earn cashback'),
@@ -120,6 +133,12 @@ class WalletHomePage extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _orderNow(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (context) => const CustomerOrderPage()),
     );
   }
 

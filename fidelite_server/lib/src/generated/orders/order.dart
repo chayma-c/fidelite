@@ -16,18 +16,23 @@ import '../orders/order_status.dart' as _i2;
 import '../users/app_user.dart' as _i3;
 import 'package:fidelite_server/src/generated/protocol.dart' as _i4;
 
-/// A confirmed counter order. Created already-confirmed in one atomic call
-/// (OrderEndpoint.submitOrder) -- the cart is client-local state until that
-/// single "confirm" tap, so there's no separate "pending" order concept in
-/// the schema. Named `fidelite_order`/`OrderRecord` (not `order`/`Order`)
-/// since "order" is a reserved SQL keyword and collides with Serverpod's
-/// own `Order` (see database/concepts/order.dart) used for query sorting.
+/// A confirmed order, placed either by staff at the counter or by a
+/// customer ordering themselves (see OnlineOrderEndpoint). Created
+/// already-confirmed in one atomic call -- the cart is client-local state
+/// until that single "confirm"/"place order" tap, so there's no separate
+/// "draft" order concept in the schema. Named `fidelite_order`/
+/// `OrderRecord` (not `order`/`Order`) since "order" is a reserved SQL
+/// keyword and collides with Serverpod's own `Order` (see
+/// database/concepts/order.dart) used for query sorting.
 abstract class OrderRecord
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   OrderRecord._({
     this.id,
-    required this.staffUserId,
+    this.staffUserId,
     this.staffUser,
+    this.customerUserId,
+    this.customerUser,
+    this.handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     required this.subtotalMillimes,
@@ -39,8 +44,11 @@ abstract class OrderRecord
 
   factory OrderRecord({
     int? id,
-    required _i1.UuidValue staffUserId,
+    _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
+    _i1.UuidValue? customerUserId,
+    _i3.AppUserRecord? customerUser,
+    DateTime? handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     required int subtotalMillimes,
@@ -51,14 +59,29 @@ abstract class OrderRecord
   factory OrderRecord.fromJson(Map<String, dynamic> jsonSerialization) {
     return OrderRecord(
       id: jsonSerialization['id'] as int?,
-      staffUserId: _i1.UuidValueJsonExtension.fromJson(
-        jsonSerialization['staffUserId'],
-      ),
+      staffUserId: jsonSerialization['staffUserId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['staffUserId'],
+            ),
       staffUser: jsonSerialization['staffUser'] == null
           ? null
           : _i4.Protocol().deserialize<_i3.AppUserRecord>(
               jsonSerialization['staffUser'],
             ),
+      customerUserId: jsonSerialization['customerUserId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['customerUserId'],
+            ),
+      customerUser: jsonSerialization['customerUser'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppUserRecord>(
+              jsonSerialization['customerUser'],
+            ),
+      handledAt: jsonSerialization['handledAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['handledAt']),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
@@ -78,10 +101,27 @@ abstract class OrderRecord
   @override
   int? id;
 
-  _i1.UuidValue staffUserId;
+  _i1.UuidValue? staffUserId;
 
-  /// The staff member who took this order.
+  /// The staff member who took this order at the counter. Null for an
+  /// online order -- see [customerUser].
   _i3.AppUserRecord? staffUser;
+
+  _i1.UuidValue? customerUserId;
+
+  /// The customer who placed this order themselves, if it's an online
+  /// order. This (not a separate "source" flag) is what distinguishes an
+  /// online order from a counter one -- exactly one of [staffUser]/
+  /// [customerUser] is ever set.
+  _i3.AppUserRecord? customerUser;
+
+  /// When staff became aware of/processed this order. Set to [createdAt]
+  /// itself for a counter order -- staff creating it in person *is*
+  /// handling it -- so only an online order is ever actually null here,
+  /// which is what makes a plain `handledAt == null` filter enough to
+  /// drive both the staff notification badge and the Online Orders queue
+  /// (see OnlineOrderManagementEndpoint.listUnhandled).
+  DateTime? handledAt;
 
   _i2.OrderStatus status;
 
@@ -110,6 +150,9 @@ abstract class OrderRecord
     int? id,
     _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
+    _i1.UuidValue? customerUserId,
+    _i3.AppUserRecord? customerUser,
+    DateTime? handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     int? subtotalMillimes,
@@ -121,8 +164,11 @@ abstract class OrderRecord
     return {
       '__className__': 'OrderRecord',
       if (id != null) 'id': id,
-      'staffUserId': staffUserId.toJson(),
+      if (staffUserId != null) 'staffUserId': staffUserId?.toJson(),
       if (staffUser != null) 'staffUser': staffUser?.toJson(),
+      if (customerUserId != null) 'customerUserId': customerUserId?.toJson(),
+      if (customerUser != null) 'customerUser': customerUser?.toJson(),
+      if (handledAt != null) 'handledAt': handledAt?.toJson(),
       'status': status.toJson(),
       'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
@@ -136,8 +182,12 @@ abstract class OrderRecord
     return {
       '__className__': 'OrderRecord',
       if (id != null) 'id': id,
-      'staffUserId': staffUserId.toJson(),
+      if (staffUserId != null) 'staffUserId': staffUserId?.toJson(),
       if (staffUser != null) 'staffUser': staffUser?.toJsonForProtocol(),
+      if (customerUserId != null) 'customerUserId': customerUserId?.toJson(),
+      if (customerUser != null)
+        'customerUser': customerUser?.toJsonForProtocol(),
+      if (handledAt != null) 'handledAt': handledAt?.toJson(),
       'status': status.toJson(),
       'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
@@ -146,8 +196,14 @@ abstract class OrderRecord
     };
   }
 
-  static OrderRecordInclude include({_i3.AppUserRecordInclude? staffUser}) {
-    return OrderRecordInclude._(staffUser: staffUser);
+  static OrderRecordInclude include({
+    _i3.AppUserRecordInclude? staffUser,
+    _i3.AppUserRecordInclude? customerUser,
+  }) {
+    return OrderRecordInclude._(
+      staffUser: staffUser,
+      customerUser: customerUser,
+    );
   }
 
   static OrderRecordIncludeList includeList({
@@ -181,8 +237,11 @@ class _Undefined {}
 class _OrderRecordImpl extends OrderRecord {
   _OrderRecordImpl({
     int? id,
-    required _i1.UuidValue staffUserId,
+    _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
+    _i1.UuidValue? customerUserId,
+    _i3.AppUserRecord? customerUser,
+    DateTime? handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     required int subtotalMillimes,
@@ -192,6 +251,9 @@ class _OrderRecordImpl extends OrderRecord {
          id: id,
          staffUserId: staffUserId,
          staffUser: staffUser,
+         customerUserId: customerUserId,
+         customerUser: customerUser,
+         handledAt: handledAt,
          status: status,
          ticketNumber: ticketNumber,
          subtotalMillimes: subtotalMillimes,
@@ -205,8 +267,11 @@ class _OrderRecordImpl extends OrderRecord {
   @override
   OrderRecord copyWith({
     Object? id = _Undefined,
-    _i1.UuidValue? staffUserId,
+    Object? staffUserId = _Undefined,
     Object? staffUser = _Undefined,
+    Object? customerUserId = _Undefined,
+    Object? customerUser = _Undefined,
+    Object? handledAt = _Undefined,
     _i2.OrderStatus? status,
     int? ticketNumber,
     int? subtotalMillimes,
@@ -215,10 +280,19 @@ class _OrderRecordImpl extends OrderRecord {
   }) {
     return OrderRecord(
       id: id is int? ? id : this.id,
-      staffUserId: staffUserId ?? this.staffUserId,
+      staffUserId: staffUserId is _i1.UuidValue?
+          ? staffUserId
+          : this.staffUserId,
       staffUser: staffUser is _i3.AppUserRecord?
           ? staffUser
           : this.staffUser?.copyWith(),
+      customerUserId: customerUserId is _i1.UuidValue?
+          ? customerUserId
+          : this.customerUserId,
+      customerUser: customerUser is _i3.AppUserRecord?
+          ? customerUser
+          : this.customerUser?.copyWith(),
+      handledAt: handledAt is DateTime? ? handledAt : this.handledAt,
       status: status ?? this.status,
       ticketNumber: ticketNumber ?? this.ticketNumber,
       subtotalMillimes: subtotalMillimes ?? this.subtotalMillimes,
@@ -232,11 +306,24 @@ class OrderRecordUpdateTable extends _i1.UpdateTable<OrderRecordTable> {
   OrderRecordUpdateTable(super.table);
 
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> staffUserId(
-    _i1.UuidValue value,
+    _i1.UuidValue? value,
   ) => _i1.ColumnValue(
     table.staffUserId,
     value,
   );
+
+  _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> customerUserId(
+    _i1.UuidValue? value,
+  ) => _i1.ColumnValue(
+    table.customerUserId,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> handledAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.handledAt,
+        value,
+      );
 
   _i1.ColumnValue<_i2.OrderStatus, _i2.OrderStatus> status(
     _i2.OrderStatus value,
@@ -274,6 +361,14 @@ class OrderRecordTable extends _i1.Table<int?> {
       'staffUserId',
       this,
     );
+    customerUserId = _i1.ColumnUuid(
+      'customerUserId',
+      this,
+    );
+    handledAt = _i1.ColumnDateTime(
+      'handledAt',
+      this,
+    );
     status = _i1.ColumnEnum(
       'status',
       this,
@@ -304,8 +399,25 @@ class OrderRecordTable extends _i1.Table<int?> {
 
   late final _i1.ColumnUuid staffUserId;
 
-  /// The staff member who took this order.
+  /// The staff member who took this order at the counter. Null for an
+  /// online order -- see [customerUser].
   _i3.AppUserRecordTable? _staffUser;
+
+  late final _i1.ColumnUuid customerUserId;
+
+  /// The customer who placed this order themselves, if it's an online
+  /// order. This (not a separate "source" flag) is what distinguishes an
+  /// online order from a counter one -- exactly one of [staffUser]/
+  /// [customerUser] is ever set.
+  _i3.AppUserRecordTable? _customerUser;
+
+  /// When staff became aware of/processed this order. Set to [createdAt]
+  /// itself for a counter order -- staff creating it in person *is*
+  /// handling it -- so only an online order is ever actually null here,
+  /// which is what makes a plain `handledAt == null` filter enough to
+  /// drive both the staff notification badge and the Online Orders queue
+  /// (see OnlineOrderManagementEndpoint.listUnhandled).
+  late final _i1.ColumnDateTime handledAt;
 
   late final _i1.ColumnEnum<_i2.OrderStatus> status;
 
@@ -337,10 +449,25 @@ class OrderRecordTable extends _i1.Table<int?> {
     return _staffUser!;
   }
 
+  _i3.AppUserRecordTable get customerUser {
+    if (_customerUser != null) return _customerUser!;
+    _customerUser = _i1.createRelationTable(
+      relationFieldName: 'customerUser',
+      field: OrderRecord.t.customerUserId,
+      foreignField: _i3.AppUserRecord.t.id,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.AppUserRecordTable(tableRelation: foreignTableRelation),
+    );
+    return _customerUser!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
     staffUserId,
+    customerUserId,
+    handledAt,
     status,
     ticketNumber,
     subtotalMillimes,
@@ -353,19 +480,31 @@ class OrderRecordTable extends _i1.Table<int?> {
     if (relationField == 'staffUser') {
       return staffUser;
     }
+    if (relationField == 'customerUser') {
+      return customerUser;
+    }
     return null;
   }
 }
 
 class OrderRecordInclude extends _i1.IncludeObject {
-  OrderRecordInclude._({_i3.AppUserRecordInclude? staffUser}) {
+  OrderRecordInclude._({
+    _i3.AppUserRecordInclude? staffUser,
+    _i3.AppUserRecordInclude? customerUser,
+  }) {
     _staffUser = staffUser;
+    _customerUser = customerUser;
   }
 
   _i3.AppUserRecordInclude? _staffUser;
 
+  _i3.AppUserRecordInclude? _customerUser;
+
   @override
-  Map<String, _i1.Include?> get includes => {'staffUser': _staffUser};
+  Map<String, _i1.Include?> get includes => {
+    'staffUser': _staffUser,
+    'customerUser': _customerUser,
+  };
 
   @override
   _i1.Table<int?> get table => OrderRecord.t;
@@ -395,6 +534,8 @@ class OrderRecordRepository {
   const OrderRecordRepository._();
 
   final attachRow = const OrderRecordAttachRowRepository._();
+
+  final detachRow = const OrderRecordDetachRowRepository._();
 
   /// Returns a list of [OrderRecord]s matching the given query parameters.
   ///
@@ -708,6 +849,77 @@ class OrderRecordAttachRowRepository {
     await session.db.updateRow<OrderRecord>(
       $orderRecord,
       columns: [OrderRecord.t.staffUserId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between the given [OrderRecord] and [AppUserRecord]
+  /// by setting the [OrderRecord]'s foreign key `customerUserId` to refer to the [AppUserRecord].
+  Future<void> customerUser(
+    _i1.DatabaseSession session,
+    OrderRecord orderRecord,
+    _i3.AppUserRecord customerUser, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (orderRecord.id == null) {
+      throw ArgumentError.notNull('orderRecord.id');
+    }
+    if (customerUser.id == null) {
+      throw ArgumentError.notNull('customerUser.id');
+    }
+
+    var $orderRecord = orderRecord.copyWith(customerUserId: customerUser.id);
+    await session.db.updateRow<OrderRecord>(
+      $orderRecord,
+      columns: [OrderRecord.t.customerUserId],
+      transaction: transaction,
+    );
+  }
+}
+
+class OrderRecordDetachRowRepository {
+  const OrderRecordDetachRowRepository._();
+
+  /// Detaches the relation between this [OrderRecord] and the [AppUserRecord] set in `staffUser`
+  /// by setting the [OrderRecord]'s foreign key `staffUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> staffUser(
+    _i1.DatabaseSession session,
+    OrderRecord orderRecord, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (orderRecord.id == null) {
+      throw ArgumentError.notNull('orderRecord.id');
+    }
+
+    var $orderRecord = orderRecord.copyWith(staffUserId: null);
+    await session.db.updateRow<OrderRecord>(
+      $orderRecord,
+      columns: [OrderRecord.t.staffUserId],
+      transaction: transaction,
+    );
+  }
+
+  /// Detaches the relation between this [OrderRecord] and the [AppUserRecord] set in `customerUser`
+  /// by setting the [OrderRecord]'s foreign key `customerUserId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> customerUser(
+    _i1.DatabaseSession session,
+    OrderRecord orderRecord, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (orderRecord.id == null) {
+      throw ArgumentError.notNull('orderRecord.id');
+    }
+
+    var $orderRecord = orderRecord.copyWith(customerUserId: null);
+    await session.db.updateRow<OrderRecord>(
+      $orderRecord,
+      columns: [OrderRecord.t.customerUserId],
       transaction: transaction,
     );
   }

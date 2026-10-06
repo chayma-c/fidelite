@@ -23,6 +23,10 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
 
   /// A referenced menu item id doesn't exist or is no longer active.
   menuItemUnavailable,
+
+  /// The shop isn't marked Open right now -- only relevant to an online
+  /// order; a counter order being taken means staff are obviously there.
+  shopNotOpen,
   unknown;
 
   static InvalidOrderExceptionReason fromJson(String name) {
@@ -33,6 +37,8 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
         return InvalidOrderExceptionReason.invalidQuantity;
       case 'menuItemUnavailable':
         return InvalidOrderExceptionReason.menuItemUnavailable;
+      case 'shopNotOpen':
+        return InvalidOrderExceptionReason.shopNotOpen;
       case 'unknown':
         return InvalidOrderExceptionReason.unknown;
       default:

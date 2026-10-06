@@ -1,0 +1,15 @@
+### Singleton row (see online_order_settings_util.dart for the same
+### lazy-create pattern as ShopStatusRecord) holding staff-only operational
+### settings for online orders. Deliberately separate from ShopStatusRecord
+### even though both are "shop settings" -- that one is public (customers
+### read it), this one is staff-internal only.
+class: OnlineOrderSettingsRecord
+table: online_order_settings
+fields:
+  ### Whether a new online order should print automatically the moment
+  ### staff's device notices it, instead of sitting in the Online Orders
+  ### queue for a manual tap. Off by default -- auto-printing everything
+  ### unconditionally is exactly what caused problems when staff were
+  ### already busy taking counter orders.
+  autoPrintEnabled: bool, default=false
+  updatedAt: DateTime, default=now

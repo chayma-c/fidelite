@@ -81,6 +81,12 @@ dependencies:
   # the real signal for that.
   connectivity_plus: ^6.1.0
 
+  # Push notifications for staff when an online order arrives while the app
+  # is closed/backgrounded (see core/notifications). firebase_core is the
+  # required bootstrap every other Firebase plugin depends on.
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

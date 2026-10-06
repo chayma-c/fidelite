@@ -50,3 +50,7 @@ app.*.map.json
 # Local secrets: real values go in these, never in the *.example ones
 env/*.json
 !env/env.example.json
+
+# Firebase project config -- ties the app to a specific Firebase project
+# and its API key; regenerate from the Firebase console rather than commit.
+android/app/google-services.json

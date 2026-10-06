@@ -2,6 +2,12 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 
+/// 8% cashback, confirmed by the owner (a 6.000 DT order earns 0.480 DT).
+/// Shared by both ways a customer earns it -- scanning a counter order's
+/// receipt QR (PointsClaimEndpoint) and placing an online order themselves
+/// (OnlineOrderEndpoint) -- so the rate only ever lives in one place.
+const cashbackRate = 0.08;
+
 /// Serializes every balance-affecting operation for [userId] (an order
 /// claim, and later a redemption/adjustment) so two concurrent writes for
 /// the same customer can't both read the same starting balance and race

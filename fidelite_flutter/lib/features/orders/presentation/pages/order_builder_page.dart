@@ -6,21 +6,32 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/connectivity/connectivity_provider.dart';
 import '../../../../core/connectivity/server_reachability_provider.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/serverpod/serverpod_client_provider.dart';
 import '../../../../core/theme/theme_mode_menu_button.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../menu/data/menu_providers.dart';
 import '../../../menu/presentation/pages/menu_management_page.dart';
 import '../../../redemption/presentation/start_redemption_flow.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../shop/presentation/pages/shop_status_page.dart';
+import '../../data/online_order_providers.dart';
 import '../controllers/cart_controller.dart';
+import '../controllers/online_order_printing_controller.dart';
 import '../controllers/order_submission_controller.dart';
 import '../controllers/pending_order_queue_controller.dart';
 import '../widgets/cart_panel.dart';
 import '../widgets/menu_item_card.dart';
+import 'online_orders_page.dart';
 import 'pending_orders_page.dart';
 import 'sales_history_page.dart';
 
-enum _StaffMenuAction { manageMenu, pendingOrders, salesHistory, shopStatus }
+enum _StaffMenuAction {
+  manageMenu,
+  pendingOrders,
+  salesHistory,
+  shopStatus,
+  settings,
+}
 
 /// Wide-layout breakpoint: side-by-side menu + cart, matching a tablet held
 /// in landscape (the staff device). Below this, the cart moves into a
@@ -87,6 +98,36 @@ class OrderBuilderPage extends ConsumerWidget {
       );
     });
 
+    // Auto-print: whenever the unhandled-online-orders list changes (new
+    // order arrived, or a previous attempt failed and is still sitting
+    // there), try to print+handle each one -- but only if staff has
+    // actually turned this on in Settings. Printing failures are left
+    // alone deliberately (no snackbar spam every 15s) -- a persistently
+    // failing order just stays in the queue, visible via the badge, for
+    // staff to notice and print manually instead.
+    ref.listen<AsyncValue<List<OrderRecord>>>(onlineOrdersProvider, (
+      previous,
+      next,
+    ) async {
+      final orders = next.valueOrNull;
+      if (orders == null || orders.isEmpty) return;
+
+      final settings = await ref
+          .read(serverpodClientProvider)
+          .onlineOrderSettings
+          .getSettings();
+      if (!settings.autoPrintEnabled) return;
+
+      final printing = ref.read(onlineOrderPrintingControllerProvider);
+      for (final order in orders) {
+        try {
+          await printing.printAndMarkHandled(order);
+        } catch (_) {
+          // Stays in the queue; retried next poll tick.
+        }
+      }
+    });
+
     final menuAsync = ref.watch(menuProvider);
     final cartCount = ref.watch(
       cartControllerProvider.select((cart) => cart.length),
@@ -95,6 +136,8 @@ class OrderBuilderPage extends ConsumerWidget {
     final pendingState = ref.watch(pendingOrderQueueControllerProvider);
     final pendingCount =
         pendingState.queued.length + pendingState.readyToPrint.length;
+    final onlineOrderCount =
+        ref.watch(onlineOrdersProvider).valueOrNull?.length ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +148,21 @@ class OrderBuilderPage extends ConsumerWidget {
           _SyncButton(
             queuedCount: pendingState.queued.length,
             isSyncing: pendingState.isSyncing,
+          ),
+          IconButton(
+            icon: Badge(
+              label: Text('$onlineOrderCount'),
+              isLabelVisible: onlineOrderCount > 0,
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            tooltip: onlineOrderCount > 0
+                ? '$onlineOrderCount online order${onlineOrderCount == 1 ? '' : 's'} waiting'
+                : 'Online orders',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => const OnlineOrdersPage(),
+              ),
+            ),
           ),
           const ThemeModeMenuButton(),
           IconButton(
@@ -120,6 +178,7 @@ class OrderBuilderPage extends ConsumerWidget {
                 _StaffMenuAction.pendingOrders => const PendingOrdersPage(),
                 _StaffMenuAction.salesHistory => const SalesHistoryPage(),
                 _StaffMenuAction.shopStatus => const ShopStatusPage(),
+                _StaffMenuAction.settings => const SettingsPage(),
               };
               Navigator.of(
                 context,
@@ -155,6 +214,13 @@ class OrderBuilderPage extends ConsumerWidget {
                 child: ListTile(
                   leading: Icon(Icons.storefront),
                   title: Text('Shop status'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: _StaffMenuAction.settings,
+                child: ListTile(
+                  leading: Icon(Icons.settings_outlined),
+                  title: Text('Settings'),
                 ),
               ),
             ],

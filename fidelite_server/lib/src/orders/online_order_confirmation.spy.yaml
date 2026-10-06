@@ -1,0 +1,9 @@
+### What OnlineOrderEndpoint.placeOrder hands back. No claim QR -- unlike a
+### counter order, cashback here is credited directly in the same call
+### (see OnlineOrderEndpoint), since the orderer is already a known,
+### authenticated account; there's nothing to scan or claim.
+class: OnlineOrderConfirmation
+fields:
+  order: OrderRecord
+  pointsEarnedMillimes: int
+  newBalanceMillimes: int

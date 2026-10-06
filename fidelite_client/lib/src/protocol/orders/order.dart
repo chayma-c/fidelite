@@ -16,17 +16,22 @@ import '../orders/order_status.dart' as _i2;
 import '../users/app_user.dart' as _i3;
 import 'package:fidelite_client/src/protocol/protocol.dart' as _i4;
 
-/// A confirmed counter order. Created already-confirmed in one atomic call
-/// (OrderEndpoint.submitOrder) -- the cart is client-local state until that
-/// single "confirm" tap, so there's no separate "pending" order concept in
-/// the schema. Named `fidelite_order`/`OrderRecord` (not `order`/`Order`)
-/// since "order" is a reserved SQL keyword and collides with Serverpod's
-/// own `Order` (see database/concepts/order.dart) used for query sorting.
+/// A confirmed order, placed either by staff at the counter or by a
+/// customer ordering themselves (see OnlineOrderEndpoint). Created
+/// already-confirmed in one atomic call -- the cart is client-local state
+/// until that single "confirm"/"place order" tap, so there's no separate
+/// "draft" order concept in the schema. Named `fidelite_order`/
+/// `OrderRecord` (not `order`/`Order`) since "order" is a reserved SQL
+/// keyword and collides with Serverpod's own `Order` (see
+/// database/concepts/order.dart) used for query sorting.
 abstract class OrderRecord implements _i1.SerializableModel {
   OrderRecord._({
     this.id,
-    required this.staffUserId,
+    this.staffUserId,
     this.staffUser,
+    this.customerUserId,
+    this.customerUser,
+    this.handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     required this.subtotalMillimes,
@@ -38,8 +43,11 @@ abstract class OrderRecord implements _i1.SerializableModel {
 
   factory OrderRecord({
     int? id,
-    required _i1.UuidValue staffUserId,
+    _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
+    _i1.UuidValue? customerUserId,
+    _i3.AppUserRecord? customerUser,
+    DateTime? handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     required int subtotalMillimes,
@@ -50,14 +58,29 @@ abstract class OrderRecord implements _i1.SerializableModel {
   factory OrderRecord.fromJson(Map<String, dynamic> jsonSerialization) {
     return OrderRecord(
       id: jsonSerialization['id'] as int?,
-      staffUserId: _i1.UuidValueJsonExtension.fromJson(
-        jsonSerialization['staffUserId'],
-      ),
+      staffUserId: jsonSerialization['staffUserId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['staffUserId'],
+            ),
       staffUser: jsonSerialization['staffUser'] == null
           ? null
           : _i4.Protocol().deserialize<_i3.AppUserRecord>(
               jsonSerialization['staffUser'],
             ),
+      customerUserId: jsonSerialization['customerUserId'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(
+              jsonSerialization['customerUserId'],
+            ),
+      customerUser: jsonSerialization['customerUser'] == null
+          ? null
+          : _i4.Protocol().deserialize<_i3.AppUserRecord>(
+              jsonSerialization['customerUser'],
+            ),
+      handledAt: jsonSerialization['handledAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['handledAt']),
       status: jsonSerialization['status'] == null
           ? null
           : _i2.OrderStatus.fromJson((jsonSerialization['status'] as String)),
@@ -75,10 +98,27 @@ abstract class OrderRecord implements _i1.SerializableModel {
   /// the id will be null.
   int? id;
 
-  _i1.UuidValue staffUserId;
+  _i1.UuidValue? staffUserId;
 
-  /// The staff member who took this order.
+  /// The staff member who took this order at the counter. Null for an
+  /// online order -- see [customerUser].
   _i3.AppUserRecord? staffUser;
+
+  _i1.UuidValue? customerUserId;
+
+  /// The customer who placed this order themselves, if it's an online
+  /// order. This (not a separate "source" flag) is what distinguishes an
+  /// online order from a counter one -- exactly one of [staffUser]/
+  /// [customerUser] is ever set.
+  _i3.AppUserRecord? customerUser;
+
+  /// When staff became aware of/processed this order. Set to [createdAt]
+  /// itself for a counter order -- staff creating it in person *is*
+  /// handling it -- so only an online order is ever actually null here,
+  /// which is what makes a plain `handledAt == null` filter enough to
+  /// drive both the staff notification badge and the Online Orders queue
+  /// (see OnlineOrderManagementEndpoint.listUnhandled).
+  DateTime? handledAt;
 
   _i2.OrderStatus status;
 
@@ -104,6 +144,9 @@ abstract class OrderRecord implements _i1.SerializableModel {
     int? id,
     _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
+    _i1.UuidValue? customerUserId,
+    _i3.AppUserRecord? customerUser,
+    DateTime? handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     int? subtotalMillimes,
@@ -115,8 +158,11 @@ abstract class OrderRecord implements _i1.SerializableModel {
     return {
       '__className__': 'OrderRecord',
       if (id != null) 'id': id,
-      'staffUserId': staffUserId.toJson(),
+      if (staffUserId != null) 'staffUserId': staffUserId?.toJson(),
       if (staffUser != null) 'staffUser': staffUser?.toJson(),
+      if (customerUserId != null) 'customerUserId': customerUserId?.toJson(),
+      if (customerUser != null) 'customerUser': customerUser?.toJson(),
+      if (handledAt != null) 'handledAt': handledAt?.toJson(),
       'status': status.toJson(),
       'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
@@ -136,8 +182,11 @@ class _Undefined {}
 class _OrderRecordImpl extends OrderRecord {
   _OrderRecordImpl({
     int? id,
-    required _i1.UuidValue staffUserId,
+    _i1.UuidValue? staffUserId,
     _i3.AppUserRecord? staffUser,
+    _i1.UuidValue? customerUserId,
+    _i3.AppUserRecord? customerUser,
+    DateTime? handledAt,
     _i2.OrderStatus? status,
     int? ticketNumber,
     required int subtotalMillimes,
@@ -147,6 +196,9 @@ class _OrderRecordImpl extends OrderRecord {
          id: id,
          staffUserId: staffUserId,
          staffUser: staffUser,
+         customerUserId: customerUserId,
+         customerUser: customerUser,
+         handledAt: handledAt,
          status: status,
          ticketNumber: ticketNumber,
          subtotalMillimes: subtotalMillimes,
@@ -160,8 +212,11 @@ class _OrderRecordImpl extends OrderRecord {
   @override
   OrderRecord copyWith({
     Object? id = _Undefined,
-    _i1.UuidValue? staffUserId,
+    Object? staffUserId = _Undefined,
     Object? staffUser = _Undefined,
+    Object? customerUserId = _Undefined,
+    Object? customerUser = _Undefined,
+    Object? handledAt = _Undefined,
     _i2.OrderStatus? status,
     int? ticketNumber,
     int? subtotalMillimes,
@@ -170,10 +225,19 @@ class _OrderRecordImpl extends OrderRecord {
   }) {
     return OrderRecord(
       id: id is int? ? id : this.id,
-      staffUserId: staffUserId ?? this.staffUserId,
+      staffUserId: staffUserId is _i1.UuidValue?
+          ? staffUserId
+          : this.staffUserId,
       staffUser: staffUser is _i3.AppUserRecord?
           ? staffUser
           : this.staffUser?.copyWith(),
+      customerUserId: customerUserId is _i1.UuidValue?
+          ? customerUserId
+          : this.customerUserId,
+      customerUser: customerUser is _i3.AppUserRecord?
+          ? customerUser
+          : this.customerUser?.copyWith(),
+      handledAt: handledAt is DateTime? ? handledAt : this.handledAt,
       status: status ?? this.status,
       ticketNumber: ticketNumber ?? this.ticketNumber,
       subtotalMillimes: subtotalMillimes ?? this.subtotalMillimes,

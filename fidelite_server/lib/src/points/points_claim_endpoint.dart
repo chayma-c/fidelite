@@ -4,10 +4,6 @@ import '../generated/protocol.dart';
 import 'claim_token_util.dart';
 import 'points_balance.dart';
 
-/// The order's total is 8% cashback, confirmed by the owner (a 6.000 DT
-/// order earns 0.480 DT). Rounded to the nearest millime.
-const _cashbackRate = 0.08;
-
 class PointsClaimEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
@@ -71,7 +67,7 @@ class PointsClaimEndpoint extends Endpoint {
         );
       }
 
-      final pointsEarned = (order.totalMillimes * _cashbackRate).round();
+      final pointsEarned = (order.totalMillimes * cashbackRate).round();
 
       // Serializes every balance-affecting operation for this customer
       // (this claim, and any future redemption/adjustment) so two

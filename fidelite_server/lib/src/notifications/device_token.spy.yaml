@@ -1,0 +1,12 @@
+### A staff member's current FCM push token -- one row per user, enforced
+### at the application level (see device_token_endpoint.dart) the same way
+### ShopStatusRecord's singleton row is, rather than a DB constraint. A
+### fresh token (reinstall, app data cleared, rotation) overwrites the old
+### one; the previous device simply stops receiving pushes, which is the
+### right behavior for what's effectively one shared staff tablet.
+class: DeviceTokenRecord
+table: device_token
+fields:
+  user: AppUserRecord?, relation(onDelete=Cascade)
+  fcmToken: String
+  updatedAt: DateTime, default=now
