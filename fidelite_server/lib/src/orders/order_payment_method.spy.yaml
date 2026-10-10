@@ -1,0 +1,14 @@
+### How a customer is paying for an online order. Not meaningful for a
+### counter order -- staff collect payment directly, outside the app.
+enum: OrderPaymentMethod
+serialized: byName
+default: cashOnSite
+values:
+  ### Deducted immediately from the customer's Fidélité cashback balance.
+  ### No cashback is earned on an order paid this way (see
+  ### OnlineOrderEndpoint) -- it would otherwise look like generating
+  ### points from spending points.
+  - points
+  ### Paid in cash when the order is picked up or delivered -- not
+  ### collected through the app. Still earns the usual cashback.
+  - cashOnSite

@@ -156,6 +156,28 @@ class RawBtReceiptPrinter implements ReceiptPrinter {
     for (final line in receipt.lines) {
       text('${line.quantity}x ${line.category}: ${line.name}\n');
     }
+
+    _printDeliveryDetails(raw, text, receipt);
+  }
+
+  /// Printed on both the staff and customer copies -- staff need it to
+  /// actually dispatch the order, and the customer gets it as a receipt of
+  /// what they entered. No-op for a pickup or counter order.
+  void _printDeliveryDetails(
+    void Function(List<int>) raw,
+    void Function(String) text,
+    Receipt receipt,
+  ) {
+    final address = receipt.deliveryAddress;
+    final phone = receipt.deliveryPhone;
+    if (!receipt.isOnlineOrder || address == null || phone == null) return;
+
+    text('${'-' * _paperColumns}\n');
+    raw([0x1B, 0x21, 0x08]); // Emphasized (bold).
+    text('DELIVERY\n');
+    raw([0x1B, 0x21, 0x00]); // Normal text.
+    text('$address\n');
+    text('Tel: $phone\n');
   }
 
   /// Customer's copy: their number (so they don't forget it), the priced
@@ -187,24 +209,43 @@ class RawBtReceiptPrinter implements ReceiptPrinter {
       text('${line.lineTotalMillimes.asDinars}\n');
       raw([0x1B, 0x61, 0x00]); // Back to left align.
     }
+    if (receipt.deliveryFeeMillimes > 0) {
+      text('Delivery fee\n');
+      raw([0x1B, 0x61, 0x02]); // Right align.
+      text('${receipt.deliveryFeeMillimes.asDinars}\n');
+      raw([0x1B, 0x61, 0x00]); // Back to left align.
+    }
     text('${'-' * _paperColumns}\n');
 
     raw([0x1B, 0x21, 0x10]); // Double height.
     text('Total: ${receipt.totalMillimes.asDinars}\n');
     raw([0x1B, 0x21, 0x00]); // Normal text.
+
+    if (receipt.isOnlineOrder) {
+      raw([0x1B, 0x61, 0x01]); // Center align.
+      text(
+        receipt.paidWithPoints
+            ? 'PAID WITH POINTS -- nothing due\n'
+            : 'Pay ${receipt.totalMillimes.asDinars} on pickup/delivery\n',
+      );
+    }
     text('\n');
 
     raw([0x1B, 0x61, 0x01]); // Center align.
     if (receipt.claimQrPayload case final payload?) {
       raw(_qrCodeCommand(payload));
       text('\nScan to earn cashback\n');
-    } else {
+    } else if (receipt.orderId == null) {
       // No connectivity at submit time -- the order queued locally and the
       // real single-use QR token doesn't exist until it syncs (see
       // Receipt's doc comment). Print a plain notice instead of a QR that
-      // would just be wrong/missing.
+      // would just be wrong/missing. An online order (always isOnlineOrder)
+      // never has a claim QR by design -- its cashback, if any, is already
+      // credited at placement time -- so it just prints nothing here.
       text('Cashback QR pending -- ask staff once your order syncs\n');
     }
+
+    _printDeliveryDetails(raw, text, receipt);
 
     text('\nThank you for your visit\n');
   }

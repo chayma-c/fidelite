@@ -2,6 +2,11 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 
+/// Flat delivery fee, confirmed by the owner -- added to an online order's
+/// total when OrderFulfillmentMethod.delivery is chosen; pickup orders
+/// (and all counter orders) never pay it.
+const flatDeliveryFeeMillimes = 2000;
+
 /// One validated, priced line -- a snapshot of the menu item at submit
 /// time, before the order itself (and therefore its id) exists. The
 /// caller fills in `orderId` when building the real [OrderItemRecord]s

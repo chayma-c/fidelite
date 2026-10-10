@@ -19,6 +19,11 @@ class Receipt {
     required this.lines,
     required this.totalMillimes,
     this.claimQrPayload,
+    this.isOnlineOrder = false,
+    this.deliveryFeeMillimes = 0,
+    this.deliveryAddress,
+    this.deliveryPhone,
+    this.paidWithPoints = false,
   });
 
   final int? orderId;
@@ -34,6 +39,31 @@ class Receipt {
   /// Printed as a QR code on the ticket; scanning it credits the customer
   /// with cashback for this order (see PointsClaimEndpoint on the server).
   final String? claimQrPayload;
+
+  /// Distinguishes an online order (self-ordered by the customer, see
+  /// OnlineOrderEndpoint) from a counter order -- needed because
+  /// [paidWithPoints] alone can't: it defaults to false for a counter
+  /// order too, where the concept simply doesn't apply (staff handle
+  /// payment directly, outside the app). Gates whether the payment-status
+  /// line and delivery details print at all.
+  final bool isOnlineOrder;
+
+  /// Already included in [totalMillimes] -- broken out here purely so it
+  /// can be itemized on the ticket. 0 for a counter order or an online
+  /// pickup order.
+  final int deliveryFeeMillimes;
+
+  /// Set only for an online delivery order.
+  final String? deliveryAddress;
+
+  /// Set only for an online delivery order.
+  final String? deliveryPhone;
+
+  /// Whether [totalMillimes] was already settled from the customer's
+  /// points balance at order time -- if so, nothing is due on
+  /// pickup/delivery. Always false for a counter order (payment there is
+  /// handled directly by staff, outside the app).
+  final bool paidWithPoints;
 }
 
 class ReceiptLine {

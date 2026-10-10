@@ -55,11 +55,24 @@ class _OnlineOrderTileState extends ConsumerState<_OnlineOrderTile> {
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
+    final isDelivery = order.fulfillmentMethod == OrderFulfillmentMethod.delivery;
+    final paidWithPoints = order.paymentMethod == OrderPaymentMethod.points;
+
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.shopping_bag_outlined),
-        title: Text('Ticket #${order.ticketNumber} -- ${order.totalMillimes.asDinars}'),
-        subtitle: Text(_timeAgo(order.createdAt)),
+        leading: Icon(
+          isDelivery ? Icons.delivery_dining : Icons.shopping_bag_outlined,
+        ),
+        title: Text(
+          'Ticket #${order.ticketNumber} -- ${order.totalMillimes.asDinars}',
+        ),
+        subtitle: Text(
+          '${isDelivery ? 'Delivery' : 'Pickup'} -- '
+          '${paidWithPoints ? 'paid online' : 'cash due'} -- '
+          '${_timeAgo(order.createdAt)}'
+          '${isDelivery ? '\n${order.deliveryAddress} -- ${order.deliveryPhone}' : ''}',
+        ),
+        isThreeLine: isDelivery,
         trailing: _isPrinting
             ? const SizedBox(
                 width: 20,
@@ -93,6 +106,9 @@ class _OnlineOrderTileState extends ConsumerState<_OnlineOrderTile> {
     final diff = DateTime.now().toUtc().difference(dt);
     if (diff.inMinutes < 1) return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    return '${diff.inHours}h ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    final days = diff.inDays;
+    final hours = diff.inHours % 24;
+    return hours == 0 ? '${days}d ago' : '${days}d ${hours}h ago';
   }
 }

@@ -21,6 +21,8 @@ class OnlineOrderConfirmationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final order = confirmation.order;
+    final isDelivery = order.fulfillmentMethod == OrderFulfillmentMethod.delivery;
+    final paidWithPoints = order.paymentMethod == OrderPaymentMethod.points;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Order placed')),
@@ -48,7 +50,9 @@ class OnlineOrderConfirmationPage extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Show this number at the counter when it\'s ready.',
+              isDelivery
+                  ? 'Delivery to: ${order.deliveryAddress}\nTel: ${order.deliveryPhone}'
+                  : 'Show this number at the counter when it\'s ready.',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -74,6 +78,17 @@ class OnlineOrderConfirmationPage extends StatelessWidget {
                           ),
                         ),
                       const Divider(),
+                      if (order.deliveryFeeMillimes > 0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Delivery fee'),
+                              Text(order.deliveryFeeMillimes.asDinars),
+                            ],
+                          ),
+                        ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -100,8 +115,10 @@ class OnlineOrderConfirmationPage extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              '+${confirmation.pointsEarnedMillimes.asDinars} '
-                              'cashback earned',
+                              paidWithPoints
+                                  ? 'Paid with points -- nothing due'
+                                  : '+${confirmation.pointsEarnedMillimes.asDinars} '
+                                        'cashback earned',
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
                             const SizedBox(height: 4),

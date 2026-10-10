@@ -45,6 +45,11 @@ class OnlineOrderPrintingController {
       ticketNumber: order.ticketNumber,
       createdAt: order.createdAt,
       totalMillimes: order.totalMillimes,
+      isOnlineOrder: true,
+      deliveryFeeMillimes: order.deliveryFeeMillimes,
+      deliveryAddress: order.deliveryAddress,
+      deliveryPhone: order.deliveryPhone,
+      paidWithPoints: order.paymentMethod == OrderPaymentMethod.points,
       lines: [
         for (final item in items)
           ReceiptLine(

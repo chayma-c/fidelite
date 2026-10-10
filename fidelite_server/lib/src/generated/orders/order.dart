@@ -14,7 +14,9 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../orders/order_status.dart' as _i2;
 import '../users/app_user.dart' as _i3;
-import 'package:fidelite_server/src/generated/protocol.dart' as _i4;
+import '../orders/order_fulfillment_method.dart' as _i4;
+import '../orders/order_payment_method.dart' as _i5;
+import 'package:fidelite_server/src/generated/protocol.dart' as _i6;
 
 /// A confirmed order, placed either by staff at the counter or by a
 /// customer ordering themselves (see OnlineOrderEndpoint). Created
@@ -37,9 +39,15 @@ abstract class OrderRecord
     int? ticketNumber,
     required this.subtotalMillimes,
     required this.totalMillimes,
+    this.fulfillmentMethod,
+    this.paymentMethod,
+    int? deliveryFeeMillimes,
+    this.deliveryAddress,
+    this.deliveryPhone,
     DateTime? createdAt,
   }) : status = status ?? _i2.OrderStatus.confirmed,
        ticketNumber = ticketNumber ?? 0,
+       deliveryFeeMillimes = deliveryFeeMillimes ?? 0,
        createdAt = createdAt ?? DateTime.now();
 
   factory OrderRecord({
@@ -53,6 +61,11 @@ abstract class OrderRecord
     int? ticketNumber,
     required int subtotalMillimes,
     required int totalMillimes,
+    _i4.OrderFulfillmentMethod? fulfillmentMethod,
+    _i5.OrderPaymentMethod? paymentMethod,
+    int? deliveryFeeMillimes,
+    String? deliveryAddress,
+    String? deliveryPhone,
     DateTime? createdAt,
   }) = _OrderRecordImpl;
 
@@ -66,7 +79,7 @@ abstract class OrderRecord
             ),
       staffUser: jsonSerialization['staffUser'] == null
           ? null
-          : _i4.Protocol().deserialize<_i3.AppUserRecord>(
+          : _i6.Protocol().deserialize<_i3.AppUserRecord>(
               jsonSerialization['staffUser'],
             ),
       customerUserId: jsonSerialization['customerUserId'] == null
@@ -76,7 +89,7 @@ abstract class OrderRecord
             ),
       customerUser: jsonSerialization['customerUser'] == null
           ? null
-          : _i4.Protocol().deserialize<_i3.AppUserRecord>(
+          : _i6.Protocol().deserialize<_i3.AppUserRecord>(
               jsonSerialization['customerUser'],
             ),
       handledAt: jsonSerialization['handledAt'] == null
@@ -88,6 +101,19 @@ abstract class OrderRecord
       ticketNumber: jsonSerialization['ticketNumber'] as int?,
       subtotalMillimes: jsonSerialization['subtotalMillimes'] as int,
       totalMillimes: jsonSerialization['totalMillimes'] as int,
+      fulfillmentMethod: jsonSerialization['fulfillmentMethod'] == null
+          ? null
+          : _i4.OrderFulfillmentMethod.fromJson(
+              (jsonSerialization['fulfillmentMethod'] as String),
+            ),
+      paymentMethod: jsonSerialization['paymentMethod'] == null
+          ? null
+          : _i5.OrderPaymentMethod.fromJson(
+              (jsonSerialization['paymentMethod'] as String),
+            ),
+      deliveryFeeMillimes: jsonSerialization['deliveryFeeMillimes'] as int?,
+      deliveryAddress: jsonSerialization['deliveryAddress'] as String?,
+      deliveryPhone: jsonSerialization['deliveryPhone'] as String?,
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -132,11 +158,30 @@ abstract class OrderRecord
   /// ticket_numbering.dart for how it's assigned.
   int ticketNumber;
 
-  /// Split from totalMillimes now so a discount/tax line can be introduced
-  /// later without a schema change; currently always equal.
+  /// Food/items total, before [deliveryFeeMillimes]. Split from
+  /// totalMillimes so a discount/tax line can also be introduced later
+  /// without a schema change.
   int subtotalMillimes;
 
   int totalMillimes;
+
+  /// Only meaningful for an online order -- null for a counter order
+  /// (nothing to choose; staff are already physically there).
+  _i4.OrderFulfillmentMethod? fulfillmentMethod;
+
+  /// Only meaningful for an online order -- see [fulfillmentMethod].
+  _i5.OrderPaymentMethod? paymentMethod;
+
+  /// Added to [subtotalMillimes] to make [totalMillimes] when
+  /// [fulfillmentMethod] is delivery; 0 for pickup and for counter orders.
+  int deliveryFeeMillimes;
+
+  /// Where to deliver -- set only when [fulfillmentMethod] is delivery.
+  String? deliveryAddress;
+
+  /// A phone number staff can reach the customer on -- set only when
+  /// [fulfillmentMethod] is delivery.
+  String? deliveryPhone;
 
   DateTime createdAt;
 
@@ -157,6 +202,11 @@ abstract class OrderRecord
     int? ticketNumber,
     int? subtotalMillimes,
     int? totalMillimes,
+    _i4.OrderFulfillmentMethod? fulfillmentMethod,
+    _i5.OrderPaymentMethod? paymentMethod,
+    int? deliveryFeeMillimes,
+    String? deliveryAddress,
+    String? deliveryPhone,
     DateTime? createdAt,
   });
   @override
@@ -173,6 +223,12 @@ abstract class OrderRecord
       'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
       'totalMillimes': totalMillimes,
+      if (fulfillmentMethod != null)
+        'fulfillmentMethod': fulfillmentMethod?.toJson(),
+      if (paymentMethod != null) 'paymentMethod': paymentMethod?.toJson(),
+      'deliveryFeeMillimes': deliveryFeeMillimes,
+      if (deliveryAddress != null) 'deliveryAddress': deliveryAddress,
+      if (deliveryPhone != null) 'deliveryPhone': deliveryPhone,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -192,6 +248,12 @@ abstract class OrderRecord
       'ticketNumber': ticketNumber,
       'subtotalMillimes': subtotalMillimes,
       'totalMillimes': totalMillimes,
+      if (fulfillmentMethod != null)
+        'fulfillmentMethod': fulfillmentMethod?.toJson(),
+      if (paymentMethod != null) 'paymentMethod': paymentMethod?.toJson(),
+      'deliveryFeeMillimes': deliveryFeeMillimes,
+      if (deliveryAddress != null) 'deliveryAddress': deliveryAddress,
+      if (deliveryPhone != null) 'deliveryPhone': deliveryPhone,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -246,6 +308,11 @@ class _OrderRecordImpl extends OrderRecord {
     int? ticketNumber,
     required int subtotalMillimes,
     required int totalMillimes,
+    _i4.OrderFulfillmentMethod? fulfillmentMethod,
+    _i5.OrderPaymentMethod? paymentMethod,
+    int? deliveryFeeMillimes,
+    String? deliveryAddress,
+    String? deliveryPhone,
     DateTime? createdAt,
   }) : super._(
          id: id,
@@ -258,6 +325,11 @@ class _OrderRecordImpl extends OrderRecord {
          ticketNumber: ticketNumber,
          subtotalMillimes: subtotalMillimes,
          totalMillimes: totalMillimes,
+         fulfillmentMethod: fulfillmentMethod,
+         paymentMethod: paymentMethod,
+         deliveryFeeMillimes: deliveryFeeMillimes,
+         deliveryAddress: deliveryAddress,
+         deliveryPhone: deliveryPhone,
          createdAt: createdAt,
        );
 
@@ -276,6 +348,11 @@ class _OrderRecordImpl extends OrderRecord {
     int? ticketNumber,
     int? subtotalMillimes,
     int? totalMillimes,
+    Object? fulfillmentMethod = _Undefined,
+    Object? paymentMethod = _Undefined,
+    int? deliveryFeeMillimes,
+    Object? deliveryAddress = _Undefined,
+    Object? deliveryPhone = _Undefined,
     DateTime? createdAt,
   }) {
     return OrderRecord(
@@ -297,6 +374,19 @@ class _OrderRecordImpl extends OrderRecord {
       ticketNumber: ticketNumber ?? this.ticketNumber,
       subtotalMillimes: subtotalMillimes ?? this.subtotalMillimes,
       totalMillimes: totalMillimes ?? this.totalMillimes,
+      fulfillmentMethod: fulfillmentMethod is _i4.OrderFulfillmentMethod?
+          ? fulfillmentMethod
+          : this.fulfillmentMethod,
+      paymentMethod: paymentMethod is _i5.OrderPaymentMethod?
+          ? paymentMethod
+          : this.paymentMethod,
+      deliveryFeeMillimes: deliveryFeeMillimes ?? this.deliveryFeeMillimes,
+      deliveryAddress: deliveryAddress is String?
+          ? deliveryAddress
+          : this.deliveryAddress,
+      deliveryPhone: deliveryPhone is String?
+          ? deliveryPhone
+          : this.deliveryPhone,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -347,6 +437,36 @@ class OrderRecordUpdateTable extends _i1.UpdateTable<OrderRecordTable> {
     value,
   );
 
+  _i1.ColumnValue<_i4.OrderFulfillmentMethod, _i4.OrderFulfillmentMethod>
+  fulfillmentMethod(_i4.OrderFulfillmentMethod? value) => _i1.ColumnValue(
+    table.fulfillmentMethod,
+    value,
+  );
+
+  _i1.ColumnValue<_i5.OrderPaymentMethod, _i5.OrderPaymentMethod> paymentMethod(
+    _i5.OrderPaymentMethod? value,
+  ) => _i1.ColumnValue(
+    table.paymentMethod,
+    value,
+  );
+
+  _i1.ColumnValue<int, int> deliveryFeeMillimes(int value) => _i1.ColumnValue(
+    table.deliveryFeeMillimes,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> deliveryAddress(String? value) =>
+      _i1.ColumnValue(
+        table.deliveryAddress,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> deliveryPhone(String? value) =>
+      _i1.ColumnValue(
+        table.deliveryPhone,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -386,6 +506,29 @@ class OrderRecordTable extends _i1.Table<int?> {
     );
     totalMillimes = _i1.ColumnInt(
       'totalMillimes',
+      this,
+    );
+    fulfillmentMethod = _i1.ColumnEnum(
+      'fulfillmentMethod',
+      this,
+      _i1.EnumSerialization.byName,
+    );
+    paymentMethod = _i1.ColumnEnum(
+      'paymentMethod',
+      this,
+      _i1.EnumSerialization.byName,
+    );
+    deliveryFeeMillimes = _i1.ColumnInt(
+      'deliveryFeeMillimes',
+      this,
+      hasDefault: true,
+    );
+    deliveryAddress = _i1.ColumnString(
+      'deliveryAddress',
+      this,
+    );
+    deliveryPhone = _i1.ColumnString(
+      'deliveryPhone',
       this,
     );
     createdAt = _i1.ColumnDateTime(
@@ -428,11 +571,30 @@ class OrderRecordTable extends _i1.Table<int?> {
   /// ticket_numbering.dart for how it's assigned.
   late final _i1.ColumnInt ticketNumber;
 
-  /// Split from totalMillimes now so a discount/tax line can be introduced
-  /// later without a schema change; currently always equal.
+  /// Food/items total, before [deliveryFeeMillimes]. Split from
+  /// totalMillimes so a discount/tax line can also be introduced later
+  /// without a schema change.
   late final _i1.ColumnInt subtotalMillimes;
 
   late final _i1.ColumnInt totalMillimes;
+
+  /// Only meaningful for an online order -- null for a counter order
+  /// (nothing to choose; staff are already physically there).
+  late final _i1.ColumnEnum<_i4.OrderFulfillmentMethod> fulfillmentMethod;
+
+  /// Only meaningful for an online order -- see [fulfillmentMethod].
+  late final _i1.ColumnEnum<_i5.OrderPaymentMethod> paymentMethod;
+
+  /// Added to [subtotalMillimes] to make [totalMillimes] when
+  /// [fulfillmentMethod] is delivery; 0 for pickup and for counter orders.
+  late final _i1.ColumnInt deliveryFeeMillimes;
+
+  /// Where to deliver -- set only when [fulfillmentMethod] is delivery.
+  late final _i1.ColumnString deliveryAddress;
+
+  /// A phone number staff can reach the customer on -- set only when
+  /// [fulfillmentMethod] is delivery.
+  late final _i1.ColumnString deliveryPhone;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -472,6 +634,11 @@ class OrderRecordTable extends _i1.Table<int?> {
     ticketNumber,
     subtotalMillimes,
     totalMillimes,
+    fulfillmentMethod,
+    paymentMethod,
+    deliveryFeeMillimes,
+    deliveryAddress,
+    deliveryPhone,
     createdAt,
   ];
 

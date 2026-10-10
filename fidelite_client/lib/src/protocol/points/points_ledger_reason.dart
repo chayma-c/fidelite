@@ -26,6 +26,11 @@ enum PointsLedgerReason implements _i1.SerializableModel {
   /// Cashback spent redeeming a reward (staff-scanned wallet QR).
   redemption,
 
+  /// Points spent paying for an online order directly, at placement time
+  /// (not a catalog reward redemption). No cashback is earned on the same
+  /// order when this is how it's paid for -- see OrderPaymentMethod.points.
+  onlineOrderPayment,
+
   /// Manual correction. Nothing creates this yet -- reserved for a future
   /// admin action.
   adjustment;
@@ -38,6 +43,8 @@ enum PointsLedgerReason implements _i1.SerializableModel {
         return PointsLedgerReason.onlineOrder;
       case 'redemption':
         return PointsLedgerReason.redemption;
+      case 'onlineOrderPayment':
+        return PointsLedgerReason.onlineOrderPayment;
       case 'adjustment':
         return PointsLedgerReason.adjustment;
       default:

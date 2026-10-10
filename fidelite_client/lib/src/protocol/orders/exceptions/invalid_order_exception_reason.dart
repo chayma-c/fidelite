@@ -27,6 +27,14 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
   /// The shop isn't marked Open right now -- only relevant to an online
   /// order; a counter order being taken means staff are obviously there.
   shopNotOpen,
+
+  /// Chose to pay with points, but the balance doesn't cover the order
+  /// total (including any delivery fee).
+  insufficientPointsBalance,
+
+  /// Chose delivery but didn't provide a (non-empty) address and phone
+  /// number.
+  missingDeliveryDetails,
   unknown;
 
   static InvalidOrderExceptionReason fromJson(String name) {
@@ -39,6 +47,10 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
         return InvalidOrderExceptionReason.menuItemUnavailable;
       case 'shopNotOpen':
         return InvalidOrderExceptionReason.shopNotOpen;
+      case 'insufficientPointsBalance':
+        return InvalidOrderExceptionReason.insufficientPointsBalance;
+      case 'missingDeliveryDetails':
+        return InvalidOrderExceptionReason.missingDeliveryDetails;
       case 'unknown':
         return InvalidOrderExceptionReason.unknown;
       default:

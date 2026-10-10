@@ -40,7 +40,12 @@ class OnlineOrderSubmissionController
   @override
   OnlineOrderSubmissionState build() => const OnlineOrderSubmissionIdle();
 
-  Future<void> submit() async {
+  Future<void> submit({
+    required OrderFulfillmentMethod fulfillmentMethod,
+    required OrderPaymentMethod paymentMethod,
+    String? deliveryAddress,
+    String? deliveryPhone,
+  }) async {
     final cart = ref.read(cartControllerProvider);
     if (cart.isEmpty) return;
 
@@ -58,6 +63,10 @@ class OnlineOrderSubmissionController
                   ),
                 )
                 .toList(),
+            fulfillmentMethod,
+            paymentMethod,
+            deliveryAddress: deliveryAddress,
+            deliveryPhone: deliveryPhone,
           );
       state = OnlineOrderSubmissionSuccess(confirmation, cart);
       ref.read(cartControllerProvider.notifier).clear();
@@ -82,6 +91,11 @@ class OnlineOrderSubmissionController
       'One of the items is no longer available. Pull to refresh the menu.',
     InvalidOrderExceptionReason.shopNotOpen =>
       'The shop just closed -- online ordering is unavailable right now.',
+    InvalidOrderExceptionReason.insufficientPointsBalance =>
+      "You don't have enough points to cover this order. Choose cash on "
+          'site instead, or remove some items.',
+    InvalidOrderExceptionReason.missingDeliveryDetails =>
+      'Enter a delivery address and phone number.',
     InvalidOrderExceptionReason.unknown =>
       'Something went wrong placing your order.',
   };

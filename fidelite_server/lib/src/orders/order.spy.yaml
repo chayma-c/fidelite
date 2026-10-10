@@ -36,9 +36,28 @@ fields:
   ### ticket_numbering.dart for how it's assigned.
   ticketNumber: int, default=0
 
-  ### Split from totalMillimes now so a discount/tax line can be introduced
-  ### later without a schema change; currently always equal.
+  ### Food/items total, before [deliveryFeeMillimes]. Split from
+  ### totalMillimes so a discount/tax line can also be introduced later
+  ### without a schema change.
   subtotalMillimes: int
   totalMillimes: int
+
+  ### Only meaningful for an online order -- null for a counter order
+  ### (nothing to choose; staff are already physically there).
+  fulfillmentMethod: OrderFulfillmentMethod?
+
+  ### Only meaningful for an online order -- see [fulfillmentMethod].
+  paymentMethod: OrderPaymentMethod?
+
+  ### Added to [subtotalMillimes] to make [totalMillimes] when
+  ### [fulfillmentMethod] is delivery; 0 for pickup and for counter orders.
+  deliveryFeeMillimes: int, default=0
+
+  ### Where to deliver -- set only when [fulfillmentMethod] is delivery.
+  deliveryAddress: String?
+
+  ### A phone number staff can reach the customer on -- set only when
+  ### [fulfillmentMethod] is delivery.
+  deliveryPhone: String?
 
   createdAt: DateTime, default=now

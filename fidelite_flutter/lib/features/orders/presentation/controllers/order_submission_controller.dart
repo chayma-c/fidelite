@@ -101,10 +101,15 @@ class OrderSubmissionController extends Notifier<OrderSubmissionState> {
       'One of the quantities is invalid.',
     InvalidOrderExceptionReason.menuItemUnavailable =>
       'One of the items is no longer available. Pull to refresh the menu.',
-    // Never actually thrown for a counter order (staff taking it in person
-    // is what makes the shop "open" in spirit), but the enum is shared
-    // with OnlineOrderEndpoint so the switch must stay exhaustive.
+    // None of these three are ever actually thrown for a counter order
+    // (shop-open, payment method, and delivery details are all
+    // online-order-only concepts), but the enum is shared with
+    // OnlineOrderEndpoint so the switch must stay exhaustive.
     InvalidOrderExceptionReason.shopNotOpen =>
+      'Something went wrong submitting the order.',
+    InvalidOrderExceptionReason.insufficientPointsBalance =>
+      'Something went wrong submitting the order.',
+    InvalidOrderExceptionReason.missingDeliveryDetails =>
       'Something went wrong submitting the order.',
     InvalidOrderExceptionReason.unknown =>
       'Something went wrong submitting the order.',

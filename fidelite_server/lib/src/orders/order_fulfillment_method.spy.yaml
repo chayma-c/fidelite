@@ -1,0 +1,11 @@
+### How a customer wants to receive an online order. Not meaningful for a
+### counter order -- staff and customer are both already physically there.
+enum: OrderFulfillmentMethod
+serialized: byName
+default: pickup
+values:
+  ### Customer comes to the counter to collect it themselves.
+  - pickup
+  ### Delivered to the customer -- adds a flat delivery fee and requires a
+  ### delivery address/phone (see OnlineOrderEndpoint).
+  - delivery

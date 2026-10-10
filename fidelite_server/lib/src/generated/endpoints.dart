@@ -30,12 +30,16 @@ import '../users/jwt_tokens_endpoint.dart' as _i16;
 import '../users/user_endpoint.dart' as _i17;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
     as _i18;
-import 'package:fidelite_server/src/generated/shop/shop_open_status.dart'
+import 'package:fidelite_server/src/generated/orders/order_fulfillment_method.dart'
     as _i19;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+import 'package:fidelite_server/src/generated/orders/order_payment_method.dart'
     as _i20;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:fidelite_server/src/generated/shop/shop_open_status.dart'
     as _i21;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i22;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i23;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -327,6 +331,26 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<List<_i18.OrderItemInput>>(),
               nullable: false,
             ),
+            'fulfillmentMethod': _i1.ParameterDescription(
+              name: 'fulfillmentMethod',
+              type: _i1.getType<_i19.OrderFulfillmentMethod>(),
+              nullable: false,
+            ),
+            'paymentMethod': _i1.ParameterDescription(
+              name: 'paymentMethod',
+              type: _i1.getType<_i20.OrderPaymentMethod>(),
+              nullable: false,
+            ),
+            'deliveryAddress': _i1.ParameterDescription(
+              name: 'deliveryAddress',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'deliveryPhone': _i1.ParameterDescription(
+              name: 'deliveryPhone',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -336,6 +360,10 @@ class Endpoints extends _i1.EndpointDispatch {
                   .placeOrder(
                     session,
                     params['items'],
+                    params['fulfillmentMethod'],
+                    params['paymentMethod'],
+                    deliveryAddress: params['deliveryAddress'],
+                    deliveryPhone: params['deliveryPhone'],
                   ),
         ),
       },
@@ -674,7 +702,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i19.ShopOpenStatus>(),
+              type: _i1.getType<_i21.ShopOpenStatus>(),
               nullable: false,
             ),
           },
@@ -913,9 +941,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i20.Endpoints()
+    modules['serverpod_auth_core'] = _i22.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i21.Endpoints()
+    modules['serverpod_auth_idp'] = _i23.Endpoints()
       ..initializeEndpoints(server);
   }
 }
