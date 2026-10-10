@@ -128,21 +128,24 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
-                    RadioListTile<OrderFulfillmentMethod>(
-                      dense: true,
-                      title: const Text('Pickup at the counter'),
-                      value: OrderFulfillmentMethod.pickup,
+                    RadioGroup<OrderFulfillmentMethod>(
                       groupValue: _fulfillment,
                       onChanged: (value) =>
                           setState(() => _fulfillment = value!),
-                    ),
-                    RadioListTile<OrderFulfillmentMethod>(
-                      dense: true,
-                      title: const Text('Delivery (+2.000 DT)'),
-                      value: OrderFulfillmentMethod.delivery,
-                      groupValue: _fulfillment,
-                      onChanged: (value) =>
-                          setState(() => _fulfillment = value!),
+                      child: const Column(
+                        children: [
+                          RadioListTile<OrderFulfillmentMethod>(
+                            dense: true,
+                            title: Text('Pickup at the counter'),
+                            value: OrderFulfillmentMethod.pickup,
+                          ),
+                          RadioListTile<OrderFulfillmentMethod>(
+                            dense: true,
+                            title: Text('Delivery (+2.000 DT)'),
+                            value: OrderFulfillmentMethod.delivery,
+                          ),
+                        ],
+                      ),
                     ),
                     if (isDelivery)
                       Padding(
@@ -178,30 +181,34 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
-                    RadioListTile<OrderPaymentMethod>(
-                      dense: true,
-                      title: const Text('Cash on pickup/delivery'),
-                      value: OrderPaymentMethod.cashOnSite,
+                    RadioGroup<OrderPaymentMethod>(
                       groupValue: _payment,
                       onChanged: (value) => setState(() => _payment = value!),
-                    ),
-                    RadioListTile<OrderPaymentMethod>(
-                      dense: true,
-                      title: const Text('Pay with Fidélité points'),
-                      subtitle: Text(
-                        canPayWithPoints
-                            ? 'Balance: ${balance.asDinars}'
-                            : 'Not enough points (balance: ${balance.asDinars})',
+                      child: Column(
+                        children: [
+                          const RadioListTile<OrderPaymentMethod>(
+                            dense: true,
+                            title: Text('Cash on pickup/delivery'),
+                            value: OrderPaymentMethod.cashOnSite,
+                          ),
+                          RadioListTile<OrderPaymentMethod>(
+                            dense: true,
+                            title: const Text('Pay with Fidélité points'),
+                            subtitle: Text(
+                              canPayWithPoints
+                                  ? 'Balance: ${balance.asDinars}'
+                                  : 'Not enough points (balance: ${balance.asDinars})',
+                            ),
+                            value: OrderPaymentMethod.points,
+                            // Disabled rather than silently
+                            // allowed-then-rejected -- the balance is
+                            // already known client-side, so there's no
+                            // reason to let the customer pick an option
+                            // that can only fail at submit time.
+                            enabled: canPayWithPoints,
+                          ),
+                        ],
                       ),
-                      value: OrderPaymentMethod.points,
-                      groupValue: _payment,
-                      // Disabled rather than silently allowed-then-rejected
-                      // -- the balance is already known client-side, so
-                      // there's no reason to let the customer pick an
-                      // option that can only fail at submit time.
-                      onChanged: canPayWithPoints
-                          ? (value) => setState(() => _payment = value!)
-                          : null,
                     ),
                   ],
                 ),
