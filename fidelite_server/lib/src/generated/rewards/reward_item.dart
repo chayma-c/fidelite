@@ -24,6 +24,7 @@ abstract class RewardItemRecord
     this.id,
     required this.name,
     this.description,
+    this.category,
     required this.pointsCost,
     bool? isActive,
     this.stock,
@@ -39,6 +40,7 @@ abstract class RewardItemRecord
     int? id,
     required String name,
     String? description,
+    String? category,
     required int pointsCost,
     bool? isActive,
     int? stock,
@@ -52,6 +54,7 @@ abstract class RewardItemRecord
       id: jsonSerialization['id'] as int?,
       name: jsonSerialization['name'] as String,
       description: jsonSerialization['description'] as String?,
+      category: jsonSerialization['category'] as String?,
       pointsCost: jsonSerialization['pointsCost'] as int,
       isActive: jsonSerialization['isActive'] == null
           ? null
@@ -77,6 +80,13 @@ abstract class RewardItemRecord
   String name;
 
   String? description;
+
+  /// The menu section this reward was mirrored from (e.g. "Chapati",
+  /// "Sandwich") -- without it, a reward named after just its filling
+  /// (e.g. "Salami + omelette") doesn't tell the customer which bread/
+  /// style they're actually getting. Nullable since a reward isn't
+  /// required to mirror a menu item going forward (see the class comment).
+  String? category;
 
   /// In millimes, same unit as the cashback balance itself.
   int pointsCost;
@@ -105,6 +115,7 @@ abstract class RewardItemRecord
     int? id,
     String? name,
     String? description,
+    String? category,
     int? pointsCost,
     bool? isActive,
     int? stock,
@@ -119,6 +130,7 @@ abstract class RewardItemRecord
       if (id != null) 'id': id,
       'name': name,
       if (description != null) 'description': description,
+      if (category != null) 'category': category,
       'pointsCost': pointsCost,
       'isActive': isActive,
       if (stock != null) 'stock': stock,
@@ -135,6 +147,7 @@ abstract class RewardItemRecord
       if (id != null) 'id': id,
       'name': name,
       if (description != null) 'description': description,
+      if (category != null) 'category': category,
       'pointsCost': pointsCost,
       'isActive': isActive,
       if (stock != null) 'stock': stock,
@@ -181,6 +194,7 @@ class _RewardItemRecordImpl extends RewardItemRecord {
     int? id,
     required String name,
     String? description,
+    String? category,
     required int pointsCost,
     bool? isActive,
     int? stock,
@@ -191,6 +205,7 @@ class _RewardItemRecordImpl extends RewardItemRecord {
          id: id,
          name: name,
          description: description,
+         category: category,
          pointsCost: pointsCost,
          isActive: isActive,
          stock: stock,
@@ -207,6 +222,7 @@ class _RewardItemRecordImpl extends RewardItemRecord {
     Object? id = _Undefined,
     String? name,
     Object? description = _Undefined,
+    Object? category = _Undefined,
     int? pointsCost,
     bool? isActive,
     Object? stock = _Undefined,
@@ -218,6 +234,7 @@ class _RewardItemRecordImpl extends RewardItemRecord {
       id: id is int? ? id : this.id,
       name: name ?? this.name,
       description: description is String? ? description : this.description,
+      category: category is String? ? category : this.category,
       pointsCost: pointsCost ?? this.pointsCost,
       isActive: isActive ?? this.isActive,
       stock: stock is int? ? stock : this.stock,
@@ -239,6 +256,11 @@ class RewardItemRecordUpdateTable
 
   _i1.ColumnValue<String, String> description(String? value) => _i1.ColumnValue(
     table.description,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> category(String? value) => _i1.ColumnValue(
+    table.category,
     value,
   );
 
@@ -287,6 +309,10 @@ class RewardItemRecordTable extends _i1.Table<int?> {
       'description',
       this,
     );
+    category = _i1.ColumnString(
+      'category',
+      this,
+    );
     pointsCost = _i1.ColumnInt(
       'pointsCost',
       this,
@@ -323,6 +349,13 @@ class RewardItemRecordTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString description;
 
+  /// The menu section this reward was mirrored from (e.g. "Chapati",
+  /// "Sandwich") -- without it, a reward named after just its filling
+  /// (e.g. "Salami + omelette") doesn't tell the customer which bread/
+  /// style they're actually getting. Nullable since a reward isn't
+  /// required to mirror a menu item going forward (see the class comment).
+  late final _i1.ColumnString category;
+
   /// In millimes, same unit as the cashback balance itself.
   late final _i1.ColumnInt pointsCost;
 
@@ -345,6 +378,7 @@ class RewardItemRecordTable extends _i1.Table<int?> {
     id,
     name,
     description,
+    category,
     pointsCost,
     isActive,
     stock,

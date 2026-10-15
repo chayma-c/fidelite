@@ -6,3 +6,16 @@ class: OrderItemInput
 fields:
   menuItemId: int
   quantity: int
+
+  ### Base ingredients to leave out ("menghir") -- must be empty unless
+  ### the referenced menu item is customizable (see
+  ### MenuItemRecord.isCustomizable); validated server-side in
+  ### validateAndPriceOrder.
+  removedIngredients: List<String>
+
+  ### Optional sauces to add -- same customizable-only restriction as
+  ### [removedIngredients].
+  addedSauces: List<String>
+
+  ### Free-text note from the customer (e.g. "spicy").
+  specialRequest: String?

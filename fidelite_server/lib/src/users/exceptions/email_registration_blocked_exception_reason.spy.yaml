@@ -1,0 +1,9 @@
+### Why EmailAuthEndpoint.startRegistration refused to start a new
+### registration for the given email.
+enum: EmailRegistrationBlockedExceptionReason
+serialized: byName
+default: unknown
+values:
+  ### An account with this email is already fully registered.
+  - alreadyRegistered
+  - unknown

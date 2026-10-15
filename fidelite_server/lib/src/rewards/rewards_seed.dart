@@ -21,6 +21,7 @@ Future<void> ensureRewardsSeeded(Session session) async {
     for (var i = 0; i < menuItems.length; i++)
       RewardItemRecord(
         name: menuItems[i].name,
+        category: menuItems[i].category,
         pointsCost: menuItems[i].priceMillimes,
         sortOrder: i,
       ),

@@ -72,6 +72,9 @@ class ReceiptLine {
     required this.name,
     required this.quantity,
     required this.lineTotalMillimes,
+    this.removedIngredients = const [],
+    this.addedSauces = const [],
+    this.specialRequest,
   });
 
   /// The menu category, e.g. "Chawarma" -- printed ahead of [name] as the
@@ -81,4 +84,14 @@ class ReceiptLine {
   final String name;
   final int quantity;
   final int lineTotalMillimes;
+
+  /// Base ingredients left out ("menghir") -- always empty for a
+  /// non-customizable item or a counter order (customization is a
+  /// self-order-only feature; see MenuItemRecord.isCustomizable).
+  final List<String> removedIngredients;
+
+  /// Optional sauces added -- same restriction as [removedIngredients].
+  final List<String> addedSauces;
+
+  final String? specialRequest;
 }

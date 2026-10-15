@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/connectivity/connectivity_provider.dart';
 import '../../../../core/connectivity/server_reachability_provider.dart';
-import '../../../../core/router/app_router.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/serverpod/serverpod_client_provider.dart';
 import '../../../../core/theme/theme_mode_menu_button.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';

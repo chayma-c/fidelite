@@ -14,6 +14,14 @@ fields:
   ### settling, and this keeps re-labelling cheap.
   category: String
 
+  ### Whether ordering this item offers the "leave out a base ingredient /
+  ### add a sauce / special request" customization flow (sandwiches,
+  ### malfouf, chapati -- not plates or suppléments). A per-item flag
+  ### rather than a category-name check in app logic, so renaming/
+  ### reorganizing categories (already happened once since this menu was
+  ### first seeded) never silently breaks which items show it.
+  isCustomizable: bool, default=false
+
   ### Soft-disable instead of delete, so historical orders keep valid
   ### references (see OrderItemRecord's name/price snapshot fields).
   isActive: bool, default=true

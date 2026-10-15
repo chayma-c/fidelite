@@ -424,4 +424,37 @@ scoped and independently revocable).
 5. Add the DNS A record `fidelite.sansalearning.com` → the VPS's IP.
 6. Once traffic is confirmed working, rebuild the Flutter release APK with
    `fidelite_flutter/env/prod.json` — the first build that doesn't depend
-   on the developer's laptop or an ngrok tunnel at all.
+   on the developer's laptop or an ngrok tunnel at all:
+   ```
+   cd fidelite_flutter
+   flutter build apk --release --dart-define-from-file=env/prod.json \
+     --split-per-abi --target-platform android-arm,android-arm64 \
+     --obfuscate --split-debug-info=build/symbols
+   ```
+   `--split-per-abi` produces one APK per CPU architecture instead of a
+   single universal one bundling all of them (roughly a third of the
+   size each) — install `app-arm64-v8a-release.apk` on virtually any
+   modern phone, `app-armeabi-v7a-release.apk` only for older/budget
+   devices. `x86_64` is deliberately left out of `--target-platform`:
+   real phones are never x86_64, only emulators are. `--obfuscate`
+   requires `--split-debug-info`; keep the generated `build/symbols/`
+   directory somewhere safe outside git — it's the only way to turn a
+   future obfuscated crash stack trace back into readable Dart code via
+   `flutter symbolize`.
+7. Share the build via Firebase App Distribution rather than sending the
+   APK file directly — private/invite-only, and testers get an email the
+   moment a new release lands:
+   ```
+   firebase appdistribution:distribute \
+     build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+     --app "1:49035057524:android:9a47cbaf9a85865e4b3421" \
+     --groups staff \
+     --release-notes "What changed in this build"
+   ```
+   Requires `firebase login` once per machine (interactive, opens a
+   browser). The `staff` tester group is managed via
+   `firebase appdistribution:testers:add <emails...> --group-alias staff`
+   or the [Firebase console](https://console.firebase.google.com/project/fidelite-4a202/appdistribution).
+   Only the `arm64-v8a` build is distributed this way — matches what's
+   recommended for manual installs above, covers virtually every real
+   device testers will have.

@@ -35,6 +35,11 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
   /// Chose delivery but didn't provide a (non-empty) address and phone
   /// number.
   missingDeliveryDetails,
+
+  /// Submitted a removed-ingredient/sauce/special-request customization
+  /// for a menu item that doesn't support it (see
+  /// MenuItemRecord.isCustomizable).
+  invalidCustomization,
   unknown;
 
   static InvalidOrderExceptionReason fromJson(String name) {
@@ -51,6 +56,8 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
         return InvalidOrderExceptionReason.insufficientPointsBalance;
       case 'missingDeliveryDetails':
         return InvalidOrderExceptionReason.missingDeliveryDetails;
+      case 'invalidCustomization':
+        return InvalidOrderExceptionReason.invalidCustomization;
       case 'unknown':
         return InvalidOrderExceptionReason.unknown;
       default:

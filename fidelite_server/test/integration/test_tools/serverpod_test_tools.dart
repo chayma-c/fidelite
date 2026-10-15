@@ -15,34 +15,35 @@ import 'package:serverpod_test/serverpod_test.dart' as _i1;
 import 'package:serverpod/serverpod.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i4;
+import 'package:fidelite_server/src/generated/menu/ingredient.dart' as _i5;
 import 'package:fidelite_server/src/generated/orders/online_order_confirmation.dart'
-    as _i5;
-import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
     as _i6;
-import 'package:fidelite_server/src/generated/orders/order_fulfillment_method.dart'
+import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
     as _i7;
-import 'package:fidelite_server/src/generated/orders/order_payment_method.dart'
+import 'package:fidelite_server/src/generated/orders/order_fulfillment_method.dart'
     as _i8;
-import 'package:fidelite_server/src/generated/orders/order.dart' as _i9;
-import 'package:fidelite_server/src/generated/orders/order_item.dart' as _i10;
+import 'package:fidelite_server/src/generated/orders/order_payment_method.dart'
+    as _i9;
+import 'package:fidelite_server/src/generated/orders/order.dart' as _i10;
+import 'package:fidelite_server/src/generated/orders/order_item.dart' as _i11;
 import 'package:fidelite_server/src/generated/orders/order_confirmation.dart'
-    as _i11;
-import 'package:fidelite_server/src/generated/points/claim_result.dart' as _i12;
+    as _i12;
+import 'package:fidelite_server/src/generated/points/claim_result.dart' as _i13;
 import 'package:fidelite_server/src/generated/points/wallet_token_response.dart'
-    as _i13;
-import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
     as _i14;
-import 'package:fidelite_server/src/generated/redemption/redemption_result.dart'
+import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
     as _i15;
-import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i16;
+import 'package:fidelite_server/src/generated/redemption/redemption_result.dart'
+    as _i16;
+import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i17;
 import 'package:fidelite_server/src/generated/shop/online_order_settings.dart'
-    as _i17;
-import 'package:fidelite_server/src/generated/shop/shop_status.dart' as _i18;
+    as _i18;
+import 'package:fidelite_server/src/generated/shop/shop_status.dart' as _i19;
 import 'package:fidelite_server/src/generated/shop/shop_open_status.dart'
-    as _i19;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i20;
-import 'package:fidelite_server/src/generated/users/app_user.dart' as _i21;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i21;
+import 'package:fidelite_server/src/generated/users/app_user.dart' as _i22;
 import 'package:fidelite_server/src/generated/protocol.dart';
 import 'package:fidelite_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -303,6 +304,36 @@ class _MenuEndpoint {
       }
     });
   }
+
+  _i3.Future<List<_i5.IngredientRecord>> getIngredients(
+    _i1.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'menu',
+            method: 'getIngredients',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'menu',
+          methodName: 'getIngredients',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i5.IngredientRecord>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _MenuManagementEndpoint {
@@ -381,6 +412,7 @@ class _MenuManagementEndpoint {
     required String? description,
     required String category,
     required int priceMillimes,
+    required bool isCustomizable,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -398,6 +430,7 @@ class _MenuManagementEndpoint {
             'description': description,
             'category': category,
             'priceMillimes': priceMillimes,
+            'isCustomizable': isCustomizable,
           }),
           serializationManager: _serializationManager,
         );
@@ -421,6 +454,7 @@ class _MenuManagementEndpoint {
     required String? description,
     required String category,
     required int priceMillimes,
+    required bool isCustomizable,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -439,6 +473,7 @@ class _MenuManagementEndpoint {
             'description': description,
             'category': category,
             'priceMillimes': priceMillimes,
+            'isCustomizable': isCustomizable,
           }),
           serializationManager: _serializationManager,
         );
@@ -543,11 +578,11 @@ class _OnlineOrderEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i5.OnlineOrderConfirmation> placeOrder(
+  _i3.Future<_i6.OnlineOrderConfirmation> placeOrder(
     _i1.TestSessionBuilder sessionBuilder,
-    List<_i6.OrderItemInput> items,
-    _i7.OrderFulfillmentMethod fulfillmentMethod,
-    _i8.OrderPaymentMethod paymentMethod, {
+    List<_i7.OrderItemInput> items,
+    _i8.OrderFulfillmentMethod fulfillmentMethod,
+    _i9.OrderPaymentMethod paymentMethod, {
     String? deliveryAddress,
     String? deliveryPhone,
   }) async {
@@ -576,7 +611,7 @@ class _OnlineOrderEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i5.OnlineOrderConfirmation>);
+                as _i3.Future<_i6.OnlineOrderConfirmation>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -595,7 +630,7 @@ class _OnlineOrderManagementEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i9.OrderRecord>> listUnhandled(
+  _i3.Future<List<_i10.OrderRecord>> listUnhandled(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -617,7 +652,7 @@ class _OnlineOrderManagementEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i9.OrderRecord>>);
+                as _i3.Future<List<_i10.OrderRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -625,7 +660,7 @@ class _OnlineOrderManagementEndpoint {
     });
   }
 
-  _i3.Future<List<_i10.OrderItemRecord>> getItemsForOrder(
+  _i3.Future<List<_i11.OrderItemRecord>> getItemsForOrder(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
   ) async {
@@ -648,7 +683,7 @@ class _OnlineOrderManagementEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i10.OrderItemRecord>>);
+                as _i3.Future<List<_i11.OrderItemRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -656,7 +691,7 @@ class _OnlineOrderManagementEndpoint {
     });
   }
 
-  _i3.Future<_i9.OrderRecord> markHandled(
+  _i3.Future<_i10.OrderRecord> markHandled(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
   ) async {
@@ -679,7 +714,7 @@ class _OnlineOrderManagementEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.OrderRecord>);
+                as _i3.Future<_i10.OrderRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -698,9 +733,9 @@ class _OrderEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i11.OrderConfirmation> submitOrder(
+  _i3.Future<_i12.OrderConfirmation> submitOrder(
     _i1.TestSessionBuilder sessionBuilder,
-    List<_i6.OrderItemInput> items, {
+    List<_i7.OrderItemInput> items, {
     int? requestedTicketNumber,
     DateTime? placedAt,
   }) async {
@@ -727,7 +762,7 @@ class _OrderEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.OrderConfirmation>);
+                as _i3.Future<_i12.OrderConfirmation>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -735,7 +770,7 @@ class _OrderEndpoint {
     });
   }
 
-  _i3.Future<List<_i9.OrderRecord>> getOrderHistory(
+  _i3.Future<List<_i10.OrderRecord>> getOrderHistory(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
   }) async {
@@ -758,7 +793,7 @@ class _OrderEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i9.OrderRecord>>);
+                as _i3.Future<List<_i10.OrderRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -766,7 +801,7 @@ class _OrderEndpoint {
     });
   }
 
-  _i3.Future<List<_i9.OrderRecord>> getOrdersInRange(
+  _i3.Future<List<_i10.OrderRecord>> getOrdersInRange(
     _i1.TestSessionBuilder sessionBuilder, {
     required DateTime start,
     required DateTime end,
@@ -793,7 +828,7 @@ class _OrderEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i9.OrderRecord>>);
+                as _i3.Future<List<_i10.OrderRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -812,7 +847,7 @@ class _PointsClaimEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i12.ClaimResult> claimOrderPoints(
+  _i3.Future<_i13.ClaimResult> claimOrderPoints(
     _i1.TestSessionBuilder sessionBuilder,
     int orderId,
     String token,
@@ -839,7 +874,7 @@ class _PointsClaimEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i12.ClaimResult>);
+                as _i3.Future<_i13.ClaimResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -886,7 +921,7 @@ class _WalletEndpoint {
     });
   }
 
-  _i3.Future<_i13.WalletTokenResponse> getWalletToken(
+  _i3.Future<_i14.WalletTokenResponse> getWalletToken(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -908,7 +943,7 @@ class _WalletEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.WalletTokenResponse>);
+                as _i3.Future<_i14.WalletTokenResponse>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -916,7 +951,7 @@ class _WalletEndpoint {
     });
   }
 
-  _i3.Future<List<_i14.PointsLedgerEntryRecord>> getPointsHistory(
+  _i3.Future<List<_i15.PointsLedgerEntryRecord>> getPointsHistory(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
   }) async {
@@ -939,7 +974,7 @@ class _WalletEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i14.PointsLedgerEntryRecord>>);
+                as _i3.Future<List<_i15.PointsLedgerEntryRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -958,7 +993,7 @@ class _RedemptionEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i15.RedemptionResult> redeemReward(
+  _i3.Future<_i16.RedemptionResult> redeemReward(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue walletUserId,
     String walletToken,
@@ -987,7 +1022,7 @@ class _RedemptionEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.RedemptionResult>);
+                as _i3.Future<_i16.RedemptionResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1006,7 +1041,7 @@ class _RewardsEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i16.RewardItemRecord>> getCatalog(
+  _i3.Future<List<_i17.RewardItemRecord>> getCatalog(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1028,7 +1063,7 @@ class _RewardsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i16.RewardItemRecord>>);
+                as _i3.Future<List<_i17.RewardItemRecord>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1047,7 +1082,7 @@ class _OnlineOrderSettingsEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i17.OnlineOrderSettingsRecord> getSettings(
+  _i3.Future<_i18.OnlineOrderSettingsRecord> getSettings(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1069,7 +1104,7 @@ class _OnlineOrderSettingsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i17.OnlineOrderSettingsRecord>);
+                as _i3.Future<_i18.OnlineOrderSettingsRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1077,7 +1112,7 @@ class _OnlineOrderSettingsEndpoint {
     });
   }
 
-  _i3.Future<_i17.OnlineOrderSettingsRecord> setAutoPrint(
+  _i3.Future<_i18.OnlineOrderSettingsRecord> setAutoPrint(
     _i1.TestSessionBuilder sessionBuilder,
     bool enabled,
   ) async {
@@ -1100,7 +1135,7 @@ class _OnlineOrderSettingsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i17.OnlineOrderSettingsRecord>);
+                as _i3.Future<_i18.OnlineOrderSettingsRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1119,7 +1154,7 @@ class _ShopStatusEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i18.ShopStatusRecord> getStatus(
+  _i3.Future<_i19.ShopStatusRecord> getStatus(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1141,7 +1176,7 @@ class _ShopStatusEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i18.ShopStatusRecord>);
+                as _i3.Future<_i19.ShopStatusRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1160,9 +1195,9 @@ class _ShopStatusManagementEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i18.ShopStatusRecord> setStatus(
+  _i3.Future<_i19.ShopStatusRecord> setStatus(
     _i1.TestSessionBuilder sessionBuilder,
-    _i19.ShopOpenStatus status,
+    _i20.ShopOpenStatus status,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1183,7 +1218,7 @@ class _ShopStatusManagementEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i18.ShopStatusRecord>);
+                as _i3.Future<_i19.ShopStatusRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1202,7 +1237,38 @@ class _EmailAuthEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i20.AuthSuccess> login(
+  _i3.Future<_i2.UuidValue> startRegistration(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String email,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'emailAuth',
+            method: 'startRegistration',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'emailAuth',
+          methodName: 'startRegistration',
+          parameters: _i1.testObjectToJson({'email': email}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i2.UuidValue>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i21.AuthSuccess> login(
     _i1.TestSessionBuilder sessionBuilder, {
     required String email,
     required String password,
@@ -1229,38 +1295,7 @@ class _EmailAuthEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i20.AuthSuccess>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i2.UuidValue> startRegistration(
-    _i1.TestSessionBuilder sessionBuilder, {
-    required String email,
-  }) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'emailAuth',
-            method: 'startRegistration',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'emailAuth',
-          methodName: 'startRegistration',
-          parameters: _i1.testObjectToJson({'email': email}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i2.UuidValue>);
+                as _i3.Future<_i21.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1303,7 +1338,7 @@ class _EmailAuthEndpoint {
     });
   }
 
-  _i3.Future<_i20.AuthSuccess> finishRegistration(
+  _i3.Future<_i21.AuthSuccess> finishRegistration(
     _i1.TestSessionBuilder sessionBuilder, {
     required String registrationToken,
     required String password,
@@ -1330,7 +1365,7 @@ class _EmailAuthEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i20.AuthSuccess>);
+                as _i3.Future<_i21.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1478,7 +1513,7 @@ class _JwtTokensEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i20.AuthSuccess> refreshAccessToken(
+  _i3.Future<_i21.AuthSuccess> refreshAccessToken(
     _i1.TestSessionBuilder sessionBuilder, {
     required String refreshToken,
   }) async {
@@ -1501,7 +1536,7 @@ class _JwtTokensEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i20.AuthSuccess>);
+                as _i3.Future<_i21.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1520,7 +1555,7 @@ class _UserEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i21.AppUserRecord> getMe(
+  _i3.Future<_i22.AppUserRecord> getMe(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1542,7 +1577,7 @@ class _UserEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i21.AppUserRecord>);
+                as _i3.Future<_i22.AppUserRecord>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

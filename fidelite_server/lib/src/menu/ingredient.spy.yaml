@@ -1,0 +1,21 @@
+### A customization option offered when ordering a sandwich/malfouf/chapati
+### item -- either part of the fixed base recipe the customer can ask to
+### leave out ("menghir"/without, in the local dialect), or an optional
+### sauce they can add on top. Plain editable catalog data rather than
+### hardcoded in the app, so the base recipe or sauce list can change
+### without a code change.
+class: IngredientRecord
+table: ingredient
+fields:
+  name: String
+  kind: IngredientKind
+
+  ### Soft-disable instead of delete, so a historical order's snapshotted
+  ### ingredient names (see OrderItemRecord) stay meaningful even after an
+  ### ingredient is retired from the catalog.
+  isActive: bool, default=true
+
+  sortOrder: int, default=0
+
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now

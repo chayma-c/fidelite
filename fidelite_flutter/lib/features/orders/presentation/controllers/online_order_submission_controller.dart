@@ -60,6 +60,9 @@ class OnlineOrderSubmissionController
                   (line) => OrderItemInput(
                     menuItemId: line.menuItem.id!,
                     quantity: line.quantity,
+                    removedIngredients: line.removedIngredients,
+                    addedSauces: line.addedSauces,
+                    specialRequest: line.specialRequest,
                   ),
                 )
                 .toList(),
@@ -96,6 +99,9 @@ class OnlineOrderSubmissionController
           'site instead, or remove some items.',
     InvalidOrderExceptionReason.missingDeliveryDetails =>
       'Enter a delivery address and phone number.',
+    InvalidOrderExceptionReason.invalidCustomization =>
+      'One of the items has an invalid customization. Remove it and add '
+          'it again.',
     InvalidOrderExceptionReason.unknown =>
       'Something went wrong placing your order.',
   };

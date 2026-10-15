@@ -18,4 +18,8 @@ values:
   ### Chose delivery but didn't provide a (non-empty) address and phone
   ### number.
   - missingDeliveryDetails
+  ### Submitted a removed-ingredient/sauce/special-request customization
+  ### for a menu item that doesn't support it (see
+  ### MenuItemRecord.isCustomizable).
+  - invalidCustomization
   - unknown

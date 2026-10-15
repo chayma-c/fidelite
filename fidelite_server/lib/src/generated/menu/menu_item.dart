@@ -22,11 +22,13 @@ abstract class MenuItemRecord
     this.description,
     required this.priceMillimes,
     required this.category,
+    bool? isCustomizable,
     bool? isActive,
     int? sortOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : isActive = isActive ?? true,
+  }) : isCustomizable = isCustomizable ?? false,
+       isActive = isActive ?? true,
        sortOrder = sortOrder ?? 0,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
@@ -37,6 +39,7 @@ abstract class MenuItemRecord
     String? description,
     required int priceMillimes,
     required String category,
+    bool? isCustomizable,
     bool? isActive,
     int? sortOrder,
     DateTime? createdAt,
@@ -50,6 +53,9 @@ abstract class MenuItemRecord
       description: jsonSerialization['description'] as String?,
       priceMillimes: jsonSerialization['priceMillimes'] as int,
       category: jsonSerialization['category'] as String,
+      isCustomizable: jsonSerialization['isCustomizable'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isCustomizable']),
       isActive: jsonSerialization['isActive'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
@@ -83,6 +89,14 @@ abstract class MenuItemRecord
   /// settling, and this keeps re-labelling cheap.
   String category;
 
+  /// Whether ordering this item offers the "leave out a base ingredient /
+  /// add a sauce / special request" customization flow (sandwiches,
+  /// malfouf, chapati -- not plates or suppléments). A per-item flag
+  /// rather than a category-name check in app logic, so renaming/
+  /// reorganizing categories (already happened once since this menu was
+  /// first seeded) never silently breaks which items show it.
+  bool isCustomizable;
+
   /// Soft-disable instead of delete, so historical orders keep valid
   /// references (see OrderItemRecord's name/price snapshot fields).
   bool isActive;
@@ -106,6 +120,7 @@ abstract class MenuItemRecord
     String? description,
     int? priceMillimes,
     String? category,
+    bool? isCustomizable,
     bool? isActive,
     int? sortOrder,
     DateTime? createdAt,
@@ -120,6 +135,7 @@ abstract class MenuItemRecord
       if (description != null) 'description': description,
       'priceMillimes': priceMillimes,
       'category': category,
+      'isCustomizable': isCustomizable,
       'isActive': isActive,
       'sortOrder': sortOrder,
       'createdAt': createdAt.toJson(),
@@ -136,6 +152,7 @@ abstract class MenuItemRecord
       if (description != null) 'description': description,
       'priceMillimes': priceMillimes,
       'category': category,
+      'isCustomizable': isCustomizable,
       'isActive': isActive,
       'sortOrder': sortOrder,
       'createdAt': createdAt.toJson(),
@@ -182,6 +199,7 @@ class _MenuItemRecordImpl extends MenuItemRecord {
     String? description,
     required int priceMillimes,
     required String category,
+    bool? isCustomizable,
     bool? isActive,
     int? sortOrder,
     DateTime? createdAt,
@@ -192,6 +210,7 @@ class _MenuItemRecordImpl extends MenuItemRecord {
          description: description,
          priceMillimes: priceMillimes,
          category: category,
+         isCustomizable: isCustomizable,
          isActive: isActive,
          sortOrder: sortOrder,
          createdAt: createdAt,
@@ -208,6 +227,7 @@ class _MenuItemRecordImpl extends MenuItemRecord {
     Object? description = _Undefined,
     int? priceMillimes,
     String? category,
+    bool? isCustomizable,
     bool? isActive,
     int? sortOrder,
     DateTime? createdAt,
@@ -219,6 +239,7 @@ class _MenuItemRecordImpl extends MenuItemRecord {
       description: description is String? ? description : this.description,
       priceMillimes: priceMillimes ?? this.priceMillimes,
       category: category ?? this.category,
+      isCustomizable: isCustomizable ?? this.isCustomizable,
       isActive: isActive ?? this.isActive,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
@@ -247,6 +268,11 @@ class MenuItemRecordUpdateTable extends _i1.UpdateTable<MenuItemRecordTable> {
 
   _i1.ColumnValue<String, String> category(String value) => _i1.ColumnValue(
     table.category,
+    value,
+  );
+
+  _i1.ColumnValue<bool, bool> isCustomizable(bool value) => _i1.ColumnValue(
+    table.isCustomizable,
     value,
   );
 
@@ -292,6 +318,11 @@ class MenuItemRecordTable extends _i1.Table<int?> {
       'category',
       this,
     );
+    isCustomizable = _i1.ColumnBool(
+      'isCustomizable',
+      this,
+      hasDefault: true,
+    );
     isActive = _i1.ColumnBool(
       'isActive',
       this,
@@ -329,6 +360,14 @@ class MenuItemRecordTable extends _i1.Table<int?> {
   /// settling, and this keeps re-labelling cheap.
   late final _i1.ColumnString category;
 
+  /// Whether ordering this item offers the "leave out a base ingredient /
+  /// add a sauce / special request" customization flow (sandwiches,
+  /// malfouf, chapati -- not plates or suppléments). A per-item flag
+  /// rather than a category-name check in app logic, so renaming/
+  /// reorganizing categories (already happened once since this menu was
+  /// first seeded) never silently breaks which items show it.
+  late final _i1.ColumnBool isCustomizable;
+
   /// Soft-disable instead of delete, so historical orders keep valid
   /// references (see OrderItemRecord's name/price snapshot fields).
   late final _i1.ColumnBool isActive;
@@ -347,6 +386,7 @@ class MenuItemRecordTable extends _i1.Table<int?> {
     description,
     priceMillimes,
     category,
+    isCustomizable,
     isActive,
     sortOrder,
     createdAt,

@@ -9,6 +9,13 @@ fields:
   name: String
   description: String?
 
+  ### The menu section this reward was mirrored from (e.g. "Chapati",
+  ### "Sandwich") -- without it, a reward named after just its filling
+  ### (e.g. "Salami + omelette") doesn't tell the customer which bread/
+  ### style they're actually getting. Nullable since a reward isn't
+  ### required to mirror a menu item going forward (see the class comment).
+  category: String?
+
   ### In millimes, same unit as the cashback balance itself.
   pointsCost: int
 

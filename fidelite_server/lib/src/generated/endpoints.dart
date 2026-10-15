@@ -156,6 +156,17 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['menu'] as _i2.MenuEndpoint).getMenu(session),
         ),
+        'getIngredients': _i1.MethodConnector(
+          name: 'getIngredients',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['menu'] as _i2.MenuEndpoint).getIngredients(
+                session,
+              ),
+        ),
       },
     );
     connectors['menuManagement'] = _i1.EndpointConnector(
@@ -207,6 +218,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'isCustomizable': _i1.ParameterDescription(
+              name: 'isCustomizable',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -220,6 +236,7 @@ class Endpoints extends _i1.EndpointDispatch {
                         description: params['description'],
                         category: params['category'],
                         priceMillimes: params['priceMillimes'],
+                        isCustomizable: params['isCustomizable'],
                       ),
         ),
         'updateMenuItem': _i1.MethodConnector(
@@ -250,6 +267,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'isCustomizable': _i1.ParameterDescription(
+              name: 'isCustomizable',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -264,6 +286,7 @@ class Endpoints extends _i1.EndpointDispatch {
                         description: params['description'],
                         category: params['category'],
                         priceMillimes: params['priceMillimes'],
+                        isCustomizable: params['isCustomizable'],
                       ),
         ),
         'setMenuItemActive': _i1.MethodConnector(
@@ -724,6 +747,25 @@ class Endpoints extends _i1.EndpointDispatch {
       name: 'emailAuth',
       endpoint: endpoints['emailAuth']!,
       methodConnectors: {
+        'startRegistration': _i1.MethodConnector(
+          name: 'startRegistration',
+          params: {
+            'email': _i1.ParameterDescription(
+              name: 'email',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+                  .startRegistration(
+                    session,
+                    email: params['email'],
+                  ),
+        ),
         'login': _i1.MethodConnector(
           name: 'login',
           params: {
@@ -747,25 +789,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     email: params['email'],
                     password: params['password'],
-                  ),
-        ),
-        'startRegistration': _i1.MethodConnector(
-          name: 'startRegistration',
-          params: {
-            'email': _i1.ParameterDescription(
-              name: 'email',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
-                  .startRegistration(
-                    session,
-                    email: params['email'],
                   ),
         ),
         'verifyRegistrationCode': _i1.MethodConnector(

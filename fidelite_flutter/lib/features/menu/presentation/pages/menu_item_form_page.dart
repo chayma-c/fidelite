@@ -31,6 +31,7 @@ class _MenuItemFormPageState extends ConsumerState<MenuItemFormPage> {
         ? null
         : (widget.item!.priceMillimes / 1000).toStringAsFixed(3),
   );
+  late bool _isCustomizable = widget.item?.isCustomizable ?? false;
 
   bool get _isEditing => widget.item != null;
 
@@ -167,7 +168,20 @@ class _MenuItemFormPageState extends ConsumerState<MenuItemFormPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Customizable'),
+                  subtitle: const Text(
+                    'Sandwich/malfouf/chapati items: lets the customer '
+                    'leave out a base ingredient, add a sauce, and add a '
+                    'special request when ordering.',
+                  ),
+                  value: _isCustomizable,
+                  onChanged: (value) =>
+                      setState(() => _isCustomizable = value),
+                ),
+                const SizedBox(height: 12),
                 FilledButton(
                   onPressed: isSubmitting ? null : _submit,
                   child: isSubmitting
@@ -202,6 +216,7 @@ class _MenuItemFormPageState extends ConsumerState<MenuItemFormPage> {
         description: description,
         category: category,
         priceMillimes: priceMillimes,
+        isCustomizable: _isCustomizable,
       );
     } else {
       controller.create(
@@ -209,6 +224,7 @@ class _MenuItemFormPageState extends ConsumerState<MenuItemFormPage> {
         description: description,
         category: category,
         priceMillimes: priceMillimes,
+        isCustomizable: _isCustomizable,
       );
     }
   }

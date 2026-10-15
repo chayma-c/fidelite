@@ -155,9 +155,34 @@ class RawBtReceiptPrinter implements ReceiptPrinter {
     raw([0x1B, 0x61, 0x00]); // Left align.
     for (final line in receipt.lines) {
       text('${line.quantity}x ${line.category}: ${line.name}\n');
+      _printLineCustomization(raw, text, line);
     }
 
     _printDeliveryDetails(raw, text, receipt);
+  }
+
+  /// "Menghir"/sauce/note sub-lines under an item -- only the sections
+  /// that actually apply print at all, so a plain uncustomized order never
+  /// grows a stray empty section. Menghir is emphasized (bold): it's the
+  /// one thing that actively breaks the order if missed, unlike a sauce or
+  /// a note which are just additions.
+  void _printLineCustomization(
+    void Function(List<int>) raw,
+    void Function(String) text,
+    ReceiptLine line,
+  ) {
+    if (line.removedIngredients.isNotEmpty) {
+      raw([0x1B, 0x21, 0x08]); // Emphasized (bold).
+      text('  Menghir: ${line.removedIngredients.join(', ')}\n');
+      raw([0x1B, 0x21, 0x00]); // Normal text.
+    }
+    if (line.addedSauces.isNotEmpty) {
+      text('  Sauce: ${line.addedSauces.join(', ')}\n');
+    }
+    final note = line.specialRequest;
+    if (note != null && note.isNotEmpty) {
+      text('  Note: $note\n');
+    }
   }
 
   /// Printed on both the staff and customer copies -- staff need it to
@@ -205,6 +230,7 @@ class RawBtReceiptPrinter implements ReceiptPrinter {
 
     for (final line in receipt.lines) {
       text('${line.quantity}x ${line.category}: ${line.name}\n');
+      _printLineCustomization(raw, text, line);
       raw([0x1B, 0x61, 0x02]); // Right align.
       text('${line.lineTotalMillimes.asDinars}\n');
       raw([0x1B, 0x61, 0x00]); // Back to left align.

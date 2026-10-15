@@ -18,4 +18,16 @@ class MenuEndpoint extends Endpoint {
       ],
     );
   }
+
+  /// The customization catalog shown when ordering a customizable item
+  /// (see [MenuItemRecord.isCustomizable]) -- both kinds (base/sauce)
+  /// together, ordered for display by kind then
+  /// [IngredientRecord.sortOrder].
+  Future<List<IngredientRecord>> getIngredients(Session session) {
+    return IngredientRecord.db.find(
+      session,
+      where: (t) => t.isActive.equals(true),
+      orderByList: (t) => [Order(column: t.kind), Order(column: t.sortOrder)],
+    );
+  }
 }

@@ -17,12 +17,18 @@ class ValidatedOrderItem {
     required this.menuItemNameSnapshot,
     required this.unitPriceMillimesSnapshot,
     required this.quantity,
+    required this.removedIngredients,
+    required this.addedSauces,
+    required this.specialRequest,
   });
 
   final int menuItemId;
   final String menuItemNameSnapshot;
   final int unitPriceMillimesSnapshot;
   final int quantity;
+  final List<String> removedIngredients;
+  final List<String> addedSauces;
+  final String? specialRequest;
 
   int get lineTotalMillimes => unitPriceMillimesSnapshot * quantity;
 }
@@ -71,6 +77,24 @@ Future<PricedOrder> validateAndPriceOrder(
     }
   }
 
+  // A plate/supplement never offers the customization flow -- reject
+  // rather than silently drop a selection that shouldn't have been
+  // possible to submit in the first place (see MenuItemRecord
+  // .isCustomizable and the client-side item_customization_sheet.dart
+  // that's the only place these fields are ever populated).
+  for (final item in items) {
+    final hasCustomization =
+        item.removedIngredients.isNotEmpty ||
+        item.addedSauces.isNotEmpty ||
+        (item.specialRequest?.trim().isNotEmpty ?? false);
+    if (hasCustomization && !menuItemsById[item.menuItemId]!.isCustomizable) {
+      throw InvalidOrderException(
+        reason: InvalidOrderExceptionReason.invalidCustomization,
+        menuItemId: item.menuItemId,
+      );
+    }
+  }
+
   final validated = items.map((item) {
     final menuItem = menuItemsById[item.menuItemId]!;
     return ValidatedOrderItem(
@@ -78,6 +102,11 @@ Future<PricedOrder> validateAndPriceOrder(
       menuItemNameSnapshot: menuItem.name,
       unitPriceMillimesSnapshot: menuItem.priceMillimes,
       quantity: item.quantity,
+      removedIngredients: item.removedIngredients,
+      addedSauces: item.addedSauces,
+      specialRequest: item.specialRequest?.trim().isEmpty ?? true
+          ? null
+          : item.specialRequest!.trim(),
     );
   }).toList();
 
@@ -101,6 +130,9 @@ List<OrderItemRecord> buildOrderItemRecords(int orderId, PricedOrder priced) {
           unitPriceMillimesSnapshot: item.unitPriceMillimesSnapshot,
           quantity: item.quantity,
           lineTotalMillimes: item.lineTotalMillimes,
+          removedIngredients: item.removedIngredients,
+          addedSauces: item.addedSauces,
+          specialRequest: item.specialRequest,
         ),
       )
       .toList();

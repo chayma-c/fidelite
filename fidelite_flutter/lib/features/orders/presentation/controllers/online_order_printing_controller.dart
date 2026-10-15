@@ -57,6 +57,9 @@ class OnlineOrderPrintingController {
             name: item.menuItemNameSnapshot,
             quantity: item.quantity,
             lineTotalMillimes: item.lineTotalMillimes,
+            removedIngredients: item.removedIngredients,
+            addedSauces: item.addedSauces,
+            specialRequest: item.specialRequest,
           ),
       ],
     );

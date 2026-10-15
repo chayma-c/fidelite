@@ -7,6 +7,7 @@ import '../../../shop/data/shop_status_providers.dart';
 import '../../../wallet/data/wallet_providers.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/online_order_submission_controller.dart';
+import 'item_customization_sheet.dart';
 
 /// Mirrors OnlineOrderEndpoint's `flatDeliveryFeeMillimes` for display only
 /// -- the server is the one that actually computes and charges the real
@@ -45,6 +46,32 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
     _addressController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _editLine(
+    BuildContext context,
+    WidgetRef ref,
+    CartLine line,
+  ) async {
+    final result = await showItemCustomizationSheet(
+      context,
+      menuItem: line.menuItem,
+      initial: line,
+    );
+    if (result == null) return;
+
+    ref
+        .read(cartControllerProvider.notifier)
+        .replaceLine(
+          line,
+          CartLine(
+            menuItem: line.menuItem,
+            quantity: line.quantity,
+            removedIngredients: result.removedIngredients,
+            addedSauces: result.addedSauces,
+            specialRequest: result.specialRequest,
+          ),
+        );
   }
 
   @override
@@ -94,30 +121,47 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
               : ListView(
                   children: [
                     for (final line in cart)
-                      ListTile(
-                        title: Row(
-                          children: [
-                            Expanded(child: Text(line.menuItem.name)),
-                            Text('x${line.quantity}'),
-                          ],
-                        ),
-                        subtitle: Text(line.lineTotalMillimes.asDinars),
-                        leading: IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          tooltip: 'Decrease quantity',
-                          onPressed: () => ref
-                              .read(cartControllerProvider.notifier)
-                              .setQuantity(
-                                line.menuItem.id!,
-                                line.quantity - 1,
+                      InkWell(
+                        onTap: line.menuItem.isCustomizable
+                            ? () => _editLine(context, ref, line)
+                            : null,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(line.menuItem.name),
+                                    if (line.isCustomized)
+                                      Text(
+                                        describeCartLineCustomization(line),
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    Text(
+                                      line.lineTotalMillimes.asDinars,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall,
+                                    ),
+                                  ],
+                                ),
                               ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          tooltip: 'Remove',
-                          onPressed: () => ref
-                              .read(cartControllerProvider.notifier)
-                              .removeItem(line.menuItem.id!),
+                              _QuantityStepper(
+                                quantity: line.quantity,
+                                onDecrement: () => ref
+                                    .read(cartControllerProvider.notifier)
+                                    .setLineQuantity(line, line.quantity - 1),
+                                onIncrement: () => ref
+                                    .read(cartControllerProvider.notifier)
+                                    .setLineQuantity(line, line.quantity + 1),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     const Divider(height: 1),
@@ -128,23 +172,28 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
-                    RadioGroup<OrderFulfillmentMethod>(
-                      groupValue: _fulfillment,
-                      onChanged: (value) =>
-                          setState(() => _fulfillment = value!),
-                      child: const Column(
-                        children: [
-                          RadioListTile<OrderFulfillmentMethod>(
-                            dense: true,
-                            title: Text('Pickup at the counter'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SegmentedButton<OrderFulfillmentMethod>(
+                        segments: [
+                          const ButtonSegment(
                             value: OrderFulfillmentMethod.pickup,
+                            label: Text('Pickup'),
+                            icon: Icon(Icons.storefront_outlined),
                           ),
-                          RadioListTile<OrderFulfillmentMethod>(
-                            dense: true,
-                            title: Text('Delivery (+2.000 DT)'),
+                          ButtonSegment(
                             value: OrderFulfillmentMethod.delivery,
+                            label: Text(
+                              'Delivery (+${_deliveryFeeMillimes.asDinars})',
+                            ),
+                            icon: const Icon(
+                              Icons.delivery_dining_outlined,
+                            ),
                           ),
                         ],
+                        selected: {_fulfillment},
+                        onSelectionChanged: (selection) =>
+                            setState(() => _fulfillment = selection.first),
                       ),
                     ),
                     if (isDelivery)
@@ -181,31 +230,49 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
-                    RadioGroup<OrderPaymentMethod>(
-                      groupValue: _payment,
-                      onChanged: (value) => setState(() => _payment = value!),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const RadioListTile<OrderPaymentMethod>(
-                            dense: true,
-                            title: Text('Cash on pickup/delivery'),
-                            value: OrderPaymentMethod.cashOnSite,
+                          SegmentedButton<OrderPaymentMethod>(
+                            segments: [
+                              const ButtonSegment(
+                                value: OrderPaymentMethod.cashOnSite,
+                                label: Text('Cash'),
+                                icon: Icon(Icons.payments_outlined),
+                              ),
+                              ButtonSegment(
+                                value: OrderPaymentMethod.points,
+                                label: const Text('Points'),
+                                icon: const Icon(
+                                  Icons.card_giftcard_outlined,
+                                ),
+                                // Disabled rather than silently
+                                // allowed-then-rejected -- the balance is
+                                // already known client-side, so there's no
+                                // reason to let the customer pick an option
+                                // that can only fail at submit time.
+                                enabled: canPayWithPoints,
+                              ),
+                            ],
+                            selected: {_payment},
+                            onSelectionChanged: (selection) =>
+                                setState(() => _payment = selection.first),
                           ),
-                          RadioListTile<OrderPaymentMethod>(
-                            dense: true,
-                            title: const Text('Pay with Fidélité points'),
-                            subtitle: Text(
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
                               canPayWithPoints
-                                  ? 'Balance: ${balance.asDinars}'
+                                  ? 'Points balance: ${balance.asDinars}'
                                   : 'Not enough points (balance: ${balance.asDinars})',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: canPayWithPoints
+                                        ? null
+                                        : Theme.of(context).colorScheme.error,
+                                  ),
                             ),
-                            value: OrderPaymentMethod.points,
-                            // Disabled rather than silently
-                            // allowed-then-rejected -- the balance is
-                            // already known client-side, so there's no
-                            // reason to let the customer pick an option
-                            // that can only fail at submit time.
-                            enabled: canPayWithPoints,
                           ),
                         ],
                       ),
@@ -213,61 +280,113 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                   ],
                 ),
         ),
-        const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (isDelivery) ...[
-                _SummaryRow(label: 'Subtotal', valueMillimes: subtotal),
-                _SummaryRow(
-                  label: 'Delivery fee',
-                  valueMillimes: deliveryFee,
-                ),
-                const SizedBox(height: 4),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Total',
-                    style: Theme.of(context).textTheme.titleMedium,
+        // Elevated rather than a plain Divider so the total+CTA reads as a
+        // pinned bar distinct from the scrolling content above it -- it was
+        // already outside the Expanded ListView (so already "sticky"), this
+        // just makes that visually obvious.
+        Material(
+          elevation: 3,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isDelivery) ...[
+                  _SummaryRow(label: 'Subtotal', valueMillimes: subtotal),
+                  _SummaryRow(
+                    label: 'Delivery fee',
+                    valueMillimes: deliveryFee,
                   ),
-                  Text(
-                    total.asDinars,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const SizedBox(height: 4),
                 ],
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: canSubmit
-                    ? () => ref
-                          .read(onlineOrderSubmissionControllerProvider.notifier)
-                          .submit(
-                            fulfillmentMethod: _fulfillment,
-                            paymentMethod: _payment,
-                            deliveryAddress: isDelivery
-                                ? _addressController.text.trim()
-                                : null,
-                            deliveryPhone: isDelivery
-                                ? _phoneController.text.trim()
-                                : null,
-                          )
-                    : null,
-                child: isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(!isShopOpen ? 'Shop is closed' : 'Place order'),
-              ),
-            ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      total.asDinars,
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: canSubmit
+                      ? () => ref
+                            .read(
+                              onlineOrderSubmissionControllerProvider.notifier,
+                            )
+                            .submit(
+                              fulfillmentMethod: _fulfillment,
+                              paymentMethod: _payment,
+                              deliveryAddress: isDelivery
+                                  ? _addressController.text.trim()
+                                  : null,
+                              deliveryPhone: isDelivery
+                                  ? _phoneController.text.trim()
+                                  : null,
+                            )
+                      : null,
+                  child: isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(!isShopOpen ? 'Shop is closed' : 'Place order'),
+                ),
+              ],
+            ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A compact -/qty/+ control replacing the previous pair of separately
+/// placed icon buttons (decrease vs. delete) -- decrementing to zero still
+/// removes the line, same as before, via CartController.setQuantity.
+class _QuantityStepper extends StatelessWidget {
+  const _QuantityStepper({
+    required this.quantity,
+    required this.onDecrement,
+    required this.onIncrement,
+  });
+
+  final int quantity;
+  final VoidCallback onDecrement;
+  final VoidCallback onIncrement;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.remove_circle_outline),
+          tooltip: 'Decrease quantity',
+          visualDensity: VisualDensity.compact,
+          onPressed: onDecrement,
+        ),
+        SizedBox(
+          width: 20,
+          child: Text(
+            '$quantity',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline),
+          tooltip: 'Increase quantity',
+          visualDensity: VisualDensity.compact,
+          onPressed: onIncrement,
         ),
       ],
     );

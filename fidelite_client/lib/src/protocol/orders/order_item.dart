@@ -30,6 +30,9 @@ abstract class OrderItemRecord implements _i1.SerializableModel {
     required this.unitPriceMillimesSnapshot,
     required this.quantity,
     required this.lineTotalMillimes,
+    required this.removedIngredients,
+    required this.addedSauces,
+    this.specialRequest,
   });
 
   factory OrderItemRecord({
@@ -42,6 +45,9 @@ abstract class OrderItemRecord implements _i1.SerializableModel {
     required int unitPriceMillimesSnapshot,
     required int quantity,
     required int lineTotalMillimes,
+    required List<String> removedIngredients,
+    required List<String> addedSauces,
+    String? specialRequest,
   }) = _OrderItemRecordImpl;
 
   factory OrderItemRecord.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -64,6 +70,13 @@ abstract class OrderItemRecord implements _i1.SerializableModel {
           jsonSerialization['unitPriceMillimesSnapshot'] as int,
       quantity: jsonSerialization['quantity'] as int,
       lineTotalMillimes: jsonSerialization['lineTotalMillimes'] as int,
+      removedIngredients: _i4.Protocol().deserialize<List<String>>(
+        jsonSerialization['removedIngredients'],
+      ),
+      addedSauces: _i4.Protocol().deserialize<List<String>>(
+        jsonSerialization['addedSauces'],
+      ),
+      specialRequest: jsonSerialization['specialRequest'] as String?,
     );
   }
 
@@ -88,6 +101,21 @@ abstract class OrderItemRecord implements _i1.SerializableModel {
 
   int lineTotalMillimes;
 
+  /// Base ingredients the customer asked to leave out ("menghir"), by
+  /// name -- snapshotted as plain text like the other *Snapshot fields,
+  /// so a later edit/removal from the ingredient catalog never corrupts
+  /// a historical receipt. Empty for a non-customizable item, or a
+  /// customizable one ordered with nothing left out.
+  List<String> removedIngredients;
+
+  /// Optional sauces the customer added, by name -- same snapshot
+  /// reasoning as [removedIngredients].
+  List<String> addedSauces;
+
+  /// Free-text note from the customer (e.g. "spicy"). Null when they
+  /// skipped it.
+  String? specialRequest;
+
   /// Returns a shallow copy of this [OrderItemRecord]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -101,6 +129,9 @@ abstract class OrderItemRecord implements _i1.SerializableModel {
     int? unitPriceMillimesSnapshot,
     int? quantity,
     int? lineTotalMillimes,
+    List<String>? removedIngredients,
+    List<String>? addedSauces,
+    String? specialRequest,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -115,6 +146,9 @@ abstract class OrderItemRecord implements _i1.SerializableModel {
       'unitPriceMillimesSnapshot': unitPriceMillimesSnapshot,
       'quantity': quantity,
       'lineTotalMillimes': lineTotalMillimes,
+      'removedIngredients': removedIngredients.toJson(),
+      'addedSauces': addedSauces.toJson(),
+      if (specialRequest != null) 'specialRequest': specialRequest,
     };
   }
 
@@ -137,6 +171,9 @@ class _OrderItemRecordImpl extends OrderItemRecord {
     required int unitPriceMillimesSnapshot,
     required int quantity,
     required int lineTotalMillimes,
+    required List<String> removedIngredients,
+    required List<String> addedSauces,
+    String? specialRequest,
   }) : super._(
          id: id,
          orderId: orderId,
@@ -147,6 +184,9 @@ class _OrderItemRecordImpl extends OrderItemRecord {
          unitPriceMillimesSnapshot: unitPriceMillimesSnapshot,
          quantity: quantity,
          lineTotalMillimes: lineTotalMillimes,
+         removedIngredients: removedIngredients,
+         addedSauces: addedSauces,
+         specialRequest: specialRequest,
        );
 
   /// Returns a shallow copy of this [OrderItemRecord]
@@ -163,6 +203,9 @@ class _OrderItemRecordImpl extends OrderItemRecord {
     int? unitPriceMillimesSnapshot,
     int? quantity,
     int? lineTotalMillimes,
+    List<String>? removedIngredients,
+    List<String>? addedSauces,
+    Object? specialRequest = _Undefined,
   }) {
     return OrderItemRecord(
       id: id is int? ? id : this.id,
@@ -177,6 +220,13 @@ class _OrderItemRecordImpl extends OrderItemRecord {
           unitPriceMillimesSnapshot ?? this.unitPriceMillimesSnapshot,
       quantity: quantity ?? this.quantity,
       lineTotalMillimes: lineTotalMillimes ?? this.lineTotalMillimes,
+      removedIngredients:
+          removedIngredients ??
+          this.removedIngredients.map((e0) => e0).toList(),
+      addedSauces: addedSauces ?? this.addedSauces.map((e0) => e0).toList(),
+      specialRequest: specialRequest is String?
+          ? specialRequest
+          : this.specialRequest,
     );
   }
 }

@@ -41,6 +41,7 @@ class MenuManagementEndpoint extends Endpoint {
     required String? description,
     required String category,
     required int priceMillimes,
+    required bool isCustomizable,
   }) async {
     final cleanName = name.trim();
     final cleanCategory = category.trim();
@@ -61,6 +62,7 @@ class MenuManagementEndpoint extends Endpoint {
         description: cleanDescription,
         category: cleanCategory,
         priceMillimes: priceMillimes,
+        isCustomizable: isCustomizable,
         // Appended to the end of its category; staff don't currently have a
         // way to reorder items within a category.
         sortOrder: await _nextSortOrder(session, cleanCategory),
@@ -77,6 +79,7 @@ class MenuManagementEndpoint extends Endpoint {
     required String? description,
     required String category,
     required int priceMillimes,
+    required bool isCustomizable,
   }) async {
     final existing = await MenuItemRecord.db.findById(session, id);
     if (existing == null) {
@@ -103,6 +106,7 @@ class MenuManagementEndpoint extends Endpoint {
         description: cleanDescription,
         category: cleanCategory,
         priceMillimes: priceMillimes,
+        isCustomizable: isCustomizable,
         updatedAt: DateTime.now().toUtc(),
       ),
     );

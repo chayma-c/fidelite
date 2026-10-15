@@ -12,3 +12,18 @@ fields:
 
   quantity: int
   lineTotalMillimes: int
+
+  ### Base ingredients the customer asked to leave out ("menghir"), by
+  ### name -- snapshotted as plain text like the other *Snapshot fields,
+  ### so a later edit/removal from the ingredient catalog never corrupts
+  ### a historical receipt. Empty for a non-customizable item, or a
+  ### customizable one ordered with nothing left out.
+  removedIngredients: List<String>
+
+  ### Optional sauces the customer added, by name -- same snapshot
+  ### reasoning as [removedIngredients].
+  addedSauces: List<String>
+
+  ### Free-text note from the customer (e.g. "spicy"). Null when they
+  ### skipped it.
+  specialRequest: String?

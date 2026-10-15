@@ -7,18 +7,14 @@ import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/auth/presentation/pages/no_access_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
+import '../../features/orders/presentation/pages/customer_order_page.dart';
 import '../../features/orders/presentation/pages/order_builder_page.dart';
 import '../../features/orders/presentation/pages/order_confirmation_page.dart';
+import '../../features/rewards/presentation/pages/rewards_catalog_page.dart';
+import '../../features/wallet/presentation/pages/points_history_page.dart';
 import '../../features/wallet/presentation/pages/wallet_home_page.dart';
-
-abstract final class AppRoutes {
-  static const splash = '/';
-  static const login = '/login';
-  static const staffHome = '/staff';
-  static const orderConfirmation = '/staff/order-confirmation';
-  static const wallet = '/wallet';
-  static const noAccess = '/no-access';
-}
+import 'app_routes.dart';
+import 'customer_nav_shell.dart';
 
 /// Bridges Riverpod's [authControllerProvider] to a [Listenable] so
 /// `GoRouter` re-evaluates its `redirect` callback whenever auth state
@@ -56,9 +52,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.orderConfirmation,
         builder: (context, state) => const OrderConfirmationPage(),
       ),
-      GoRoute(
-        path: AppRoutes.wallet,
-        builder: (context, state) => const WalletHomePage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            CustomerNavShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.wallet,
+                builder: (context, state) => const WalletHomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.customerOrder,
+                builder: (context, state) => const CustomerOrderPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.customerRewards,
+                builder: (context, state) => const RewardsCatalogPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.customerActivity,
+                builder: (context, state) => const PointsHistoryPage(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.noAccess,

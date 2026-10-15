@@ -63,6 +63,14 @@ class OrderSubmissionController extends Notifier<OrderSubmissionState> {
                   (line) => OrderItemInput(
                     menuItemId: line.menuItem.id!,
                     quantity: line.quantity,
+                    // Always empty for a counter order -- the staff order
+                    // builder doesn't offer customization -- but read from
+                    // the line rather than hardcoded, same as the online
+                    // path, so this keeps working unchanged if that ever
+                    // changes.
+                    removedIngredients: line.removedIngredients,
+                    addedSauces: line.addedSauces,
+                    specialRequest: line.specialRequest,
                   ),
                 )
                 .toList(),
@@ -101,15 +109,18 @@ class OrderSubmissionController extends Notifier<OrderSubmissionState> {
       'One of the quantities is invalid.',
     InvalidOrderExceptionReason.menuItemUnavailable =>
       'One of the items is no longer available. Pull to refresh the menu.',
-    // None of these three are ever actually thrown for a counter order
-    // (shop-open, payment method, and delivery details are all
-    // online-order-only concepts), but the enum is shared with
+    // None of these four are ever actually thrown for a counter order
+    // (shop-open, payment method, delivery details, and item customization
+    // are all online-order-only concepts -- the staff order builder never
+    // sends customization data), but the enum is shared with
     // OnlineOrderEndpoint so the switch must stay exhaustive.
     InvalidOrderExceptionReason.shopNotOpen =>
       'Something went wrong submitting the order.',
     InvalidOrderExceptionReason.insufficientPointsBalance =>
       'Something went wrong submitting the order.',
     InvalidOrderExceptionReason.missingDeliveryDetails =>
+      'Something went wrong submitting the order.',
+    InvalidOrderExceptionReason.invalidCustomization =>
       'Something went wrong submitting the order.',
     InvalidOrderExceptionReason.unknown =>
       'Something went wrong submitting the order.',

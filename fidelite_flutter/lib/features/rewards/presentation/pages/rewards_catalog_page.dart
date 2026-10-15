@@ -22,7 +22,7 @@ class RewardsCatalogPage extends ConsumerWidget {
           itemBuilder: (context, index) {
             final reward = rewards[index];
             return ListTile(
-              title: Text(reward.name),
+              title: Text(reward.displayName),
               trailing: Text(
                 reward.pointsCost.asDinars,
                 style: const TextStyle(fontWeight: FontWeight.bold),

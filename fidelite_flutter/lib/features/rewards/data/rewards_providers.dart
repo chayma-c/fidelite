@@ -26,3 +26,15 @@ final rewardsCatalogProvider = FutureProvider.autoDispose<
     rethrow;
   }
 });
+
+/// "Category — Name" when the reward has a category (true for anything
+/// mirrored from the menu), otherwise just the name. Without the
+/// category, a reward named after just its filling (e.g. "Salami +
+/// omelette") doesn't tell the customer which bread/style they're
+/// actually getting -- e.g. a Chapati versus a Malfouf.
+extension RewardItemDisplayName on RewardItemRecord {
+  String get displayName {
+    final category = this.category;
+    return category == null ? name : '$category — $name';
+  }
+}

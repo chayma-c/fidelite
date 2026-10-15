@@ -1,0 +1,8 @@
+### Whether an ingredient is part of the fixed base recipe (removable --
+### "menghir"/without) or an optional sauce (addable).
+enum: IngredientKind
+serialized: byName
+default: base
+values:
+  - base
+  - sauce

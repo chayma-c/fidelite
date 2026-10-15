@@ -136,6 +136,13 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
                   (line) => OrderItemInput(
                     menuItemId: line.menuItemId,
                     quantity: line.quantity,
+                    // A queued counter order never carries customization --
+                    // PendingOrderLine (unlike CartLine) has nowhere to
+                    // have stored it even if it did, since it's built from
+                    // the staff order builder, which doesn't offer it.
+                    removedIngredients: const [],
+                    addedSauces: const [],
+                    specialRequest: null,
                   ),
                 )
                 .toList(),

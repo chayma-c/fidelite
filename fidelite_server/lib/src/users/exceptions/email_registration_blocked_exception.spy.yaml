@@ -1,0 +1,11 @@
+### Thrown by EmailAuthEndpoint.startRegistration instead of letting
+### serverpod_auth_idp_server's EmailIdpBaseEndpoint silently accept the
+### request and leave the customer waiting on a code that will never
+### arrive -- its default behavior deliberately hides whether an email is
+### already registered (anti-enumeration hardening), but the owner chose
+### to accept that minor trade-off here in exchange for not stranding
+### customers on a dead-end "check your email" screen. Inspect [reason]
+### to show a specific message.
+exception: EmailRegistrationBlockedException
+fields:
+  reason: EmailRegistrationBlockedExceptionReason

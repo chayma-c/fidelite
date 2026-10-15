@@ -1,3 +1,4 @@
+import 'package:fidelite_client/fidelite_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
@@ -92,7 +93,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   const ShopStatusBanner(),
                   const SizedBox(height: 16),
                   _buildScreen(context),
-                  if (_errorMessage != null) ...[
+                  if (_controller.error is EmailRegistrationBlockedException) ...[
+                    const SizedBox(height: 16),
+                    _EmailAlreadyRegisteredNotice(
+                      onForgotPassword: () => _controller.navigateTo(
+                        EmailFlowScreen.requestPasswordReset,
+                      ),
+                    ),
+                  ] else if (_errorMessage != null) ...[
                     const SizedBox(height: 16),
                     Text(
                       _errorMessage!,
@@ -394,6 +402,29 @@ class _SwitchModeLink extends StatelessWidget {
       children: [
         Text(prompt),
         TextButton(onPressed: onPressed, child: Text(actionLabel)),
+      ],
+    );
+  }
+}
+
+class _EmailAlreadyRegisteredNotice extends StatelessWidget {
+  const _EmailAlreadyRegisteredNotice({required this.onForgotPassword});
+
+  final VoidCallback onForgotPassword;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          'This email is already registered.',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+          textAlign: TextAlign.center,
+        ),
+        TextButton(
+          onPressed: onForgotPassword,
+          child: const Text('Forgot your password?'),
+        ),
       ],
     );
   }

@@ -12,6 +12,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
 import 'package:serverpod/serverpod.dart' as _i1;
+import 'package:fidelite_server/src/generated/protocol.dart' as _i2;
 
 /// One requested line when submitting an order. Deliberately carries no
 /// price -- the server always looks up the current [MenuItemRecord] price
@@ -22,17 +23,30 @@ abstract class OrderItemInput
   OrderItemInput._({
     required this.menuItemId,
     required this.quantity,
+    required this.removedIngredients,
+    required this.addedSauces,
+    this.specialRequest,
   });
 
   factory OrderItemInput({
     required int menuItemId,
     required int quantity,
+    required List<String> removedIngredients,
+    required List<String> addedSauces,
+    String? specialRequest,
   }) = _OrderItemInputImpl;
 
   factory OrderItemInput.fromJson(Map<String, dynamic> jsonSerialization) {
     return OrderItemInput(
       menuItemId: jsonSerialization['menuItemId'] as int,
       quantity: jsonSerialization['quantity'] as int,
+      removedIngredients: _i2.Protocol().deserialize<List<String>>(
+        jsonSerialization['removedIngredients'],
+      ),
+      addedSauces: _i2.Protocol().deserialize<List<String>>(
+        jsonSerialization['addedSauces'],
+      ),
+      specialRequest: jsonSerialization['specialRequest'] as String?,
     );
   }
 
@@ -40,12 +54,28 @@ abstract class OrderItemInput
 
   int quantity;
 
+  /// Base ingredients to leave out ("menghir") -- must be empty unless
+  /// the referenced menu item is customizable (see
+  /// MenuItemRecord.isCustomizable); validated server-side in
+  /// validateAndPriceOrder.
+  List<String> removedIngredients;
+
+  /// Optional sauces to add -- same customizable-only restriction as
+  /// [removedIngredients].
+  List<String> addedSauces;
+
+  /// Free-text note from the customer (e.g. "spicy").
+  String? specialRequest;
+
   /// Returns a shallow copy of this [OrderItemInput]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   OrderItemInput copyWith({
     int? menuItemId,
     int? quantity,
+    List<String>? removedIngredients,
+    List<String>? addedSauces,
+    String? specialRequest,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -53,6 +83,9 @@ abstract class OrderItemInput
       '__className__': 'OrderItemInput',
       'menuItemId': menuItemId,
       'quantity': quantity,
+      'removedIngredients': removedIngredients.toJson(),
+      'addedSauces': addedSauces.toJson(),
+      if (specialRequest != null) 'specialRequest': specialRequest,
     };
   }
 
@@ -62,6 +95,9 @@ abstract class OrderItemInput
       '__className__': 'OrderItemInput',
       'menuItemId': menuItemId,
       'quantity': quantity,
+      'removedIngredients': removedIngredients.toJson(),
+      'addedSauces': addedSauces.toJson(),
+      if (specialRequest != null) 'specialRequest': specialRequest,
     };
   }
 
@@ -71,13 +107,21 @@ abstract class OrderItemInput
   }
 }
 
+class _Undefined {}
+
 class _OrderItemInputImpl extends OrderItemInput {
   _OrderItemInputImpl({
     required int menuItemId,
     required int quantity,
+    required List<String> removedIngredients,
+    required List<String> addedSauces,
+    String? specialRequest,
   }) : super._(
          menuItemId: menuItemId,
          quantity: quantity,
+         removedIngredients: removedIngredients,
+         addedSauces: addedSauces,
+         specialRequest: specialRequest,
        );
 
   /// Returns a shallow copy of this [OrderItemInput]
@@ -87,10 +131,20 @@ class _OrderItemInputImpl extends OrderItemInput {
   OrderItemInput copyWith({
     int? menuItemId,
     int? quantity,
+    List<String>? removedIngredients,
+    List<String>? addedSauces,
+    Object? specialRequest = _Undefined,
   }) {
     return OrderItemInput(
       menuItemId: menuItemId ?? this.menuItemId,
       quantity: quantity ?? this.quantity,
+      removedIngredients:
+          removedIngredients ??
+          this.removedIngredients.map((e0) => e0).toList(),
+      addedSauces: addedSauces ?? this.addedSauces.map((e0) => e0).toList(),
+      specialRequest: specialRequest is String?
+          ? specialRequest
+          : this.specialRequest,
     );
   }
 }

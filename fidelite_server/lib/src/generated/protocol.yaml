@@ -1,5 +1,6 @@
 menu:
   - getMenu:
+  - getIngredients:
 menuManagement:
   - listAllMenuItems:
   - getCategories:
@@ -36,8 +37,8 @@ shopStatus:
 shopStatusManagement:
   - setStatus:
 emailAuth:
-  - login:
   - startRegistration:
+  - login:
   - verifyRegistrationCode:
   - finishRegistration:
   - startPasswordReset:

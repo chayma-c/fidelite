@@ -40,6 +40,7 @@ class MenuItemFormController extends Notifier<MenuItemFormState> {
     required String? description,
     required String category,
     required int priceMillimes,
+    required bool isCustomizable,
   }) => _submit(
     () => ref
         .read(serverpodClientProvider)
@@ -49,6 +50,7 @@ class MenuItemFormController extends Notifier<MenuItemFormState> {
           description: description,
           category: category,
           priceMillimes: priceMillimes,
+          isCustomizable: isCustomizable,
         ),
   );
 
@@ -58,6 +60,7 @@ class MenuItemFormController extends Notifier<MenuItemFormState> {
     required String? description,
     required String category,
     required int priceMillimes,
+    required bool isCustomizable,
   }) => _submit(
     () => ref
         .read(serverpodClientProvider)
@@ -68,6 +71,7 @@ class MenuItemFormController extends Notifier<MenuItemFormState> {
           description: description,
           category: category,
           priceMillimes: priceMillimes,
+          isCustomizable: isCustomizable,
         ),
   );
 

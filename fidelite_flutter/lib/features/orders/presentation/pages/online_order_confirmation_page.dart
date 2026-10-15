@@ -67,10 +67,23 @@ class OnlineOrderConfirmationPage extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: Text(
-                                  '${line.quantity}x ${line.menuItem.name}',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${line.quantity}x ${line.menuItem.name}',
+                                    ),
+                                    if (line.isCustomized)
+                                      Text(
+                                        describeCartLineCustomization(line),
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                  ],
                                 ),
                               ),
                               Text(line.lineTotalMillimes.asDinars),
