@@ -458,3 +458,20 @@ scoped and independently revocable).
    Only the `arm64-v8a` build is distributed this way — matches what's
    recommended for manual installs above, covers virtually every real
    device testers will have.
+8. For **customers** (public, not invite-only like step 7), share a GitHub
+   Release instead — the keystore means every release updates cleanly
+   over the last one on a device that already has it installed:
+   1. Copy the build to a clean, stable filename:
+      `cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/distribution/fidelite.apk`
+   2. Publish a release at <https://github.com/chayma-c/fidelite/releases/new>
+      with a plain version tag (e.g. `1.1.0`, no `v` prefix — doesn't
+      actually matter which, see below), attach `fidelite.apk`, and make
+      sure **"Set as the latest release"** is checked.
+   3. The QR code (`build/distribution/install-qr.png`) and every printed
+      flyer/table card always point at
+      `https://github.com/chayma-c/fidelite/releases/latest/download/fidelite.apk`
+      — GitHub resolves `/latest/` to whichever release has that flag, so
+      **the tag name doesn't matter and the QR code never needs
+      regenerating** as long as the asset keeps the same filename
+      (`fidelite.apk`) and each new release is marked latest. Only
+      regenerate the QR if the filename or repo ever changes.
