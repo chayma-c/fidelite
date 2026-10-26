@@ -65,7 +65,11 @@ class PendingOrdersPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  for (final order in state.queued) _QueuedOrderTile(order: order),
+                  for (final order in state.queued)
+                    _QueuedOrderTile(
+                      order: order,
+                      failureReason: state.failureReasons[order.localId],
+                    ),
                 ],
               ],
             ),
@@ -74,20 +78,39 @@ class PendingOrdersPage extends ConsumerWidget {
 }
 
 class _QueuedOrderTile extends StatelessWidget {
-  const _QueuedOrderTile({required this.order});
+  const _QueuedOrderTile({required this.order, this.failureReason});
 
   final PendingOrder order;
 
+  /// Set only when the server was actually reached and rejected this
+  /// order outright on the last sync attempt -- see
+  /// PendingOrderQueueController.syncAll. Null just means "still offline,"
+  /// the normal case, which doesn't need to look alarming.
+  final String? failureReason;
+
   @override
   Widget build(BuildContext context) {
+    final reason = failureReason;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.cloud_off),
+        leading: Icon(
+          reason == null ? Icons.cloud_off : Icons.error_outline,
+          color: reason == null ? null : colorScheme.error,
+        ),
         title: Text(
           'Ticket #${order.ticketNumber} -- ${order.lines.length} item(s) -- '
           '${order.estimatedTotalMillimes.asDinars} (estimated)',
         ),
-        subtitle: Text('Queued ${_timeAgo(order.createdAt)}'),
+        subtitle: Text(
+          reason == null
+              ? 'Queued ${_timeAgo(order.createdAt)}'
+              : '$reason (queued ${_timeAgo(order.createdAt)})',
+          style: reason == null
+              ? null
+              : TextStyle(color: colorScheme.error),
+        ),
       ),
     );
   }

@@ -29,6 +29,7 @@ class PendingOrdersState {
     this.queued = const [],
     this.readyToPrint = const [],
     this.isSyncing = false,
+    this.failureReasons = const {},
   });
 
   /// Orders still waiting to reach the server. Persisted, so they survive
@@ -45,14 +46,26 @@ class PendingOrdersState {
   /// shows a spinner for.
   final bool isSyncing;
 
+  /// Why each currently-queued order (keyed by [PendingOrder.localId])
+  /// failed on its *most recent* sync attempt -- only set when the server
+  /// was actually reached and rejected the order outright (a stale app
+  /// build sending a request shape the server no longer accepts, a
+  /// since-deactivated menu item, etc.), never for a plain "couldn't reach
+  /// the server" failure, which is the normal/expected case while offline
+  /// and shouldn't read as broken. Recomputed fresh on every [syncAll]
+  /// call -- not persisted, since it's just "what happened last attempt."
+  final Map<String, String> failureReasons;
+
   PendingOrdersState copyWith({
     List<PendingOrder>? queued,
     List<SyncedPendingOrder>? readyToPrint,
     bool? isSyncing,
+    Map<String, String>? failureReasons,
   }) => PendingOrdersState(
     queued: queued ?? this.queued,
     readyToPrint: readyToPrint ?? this.readyToPrint,
     isSyncing: isSyncing ?? this.isSyncing,
+    failureReasons: failureReasons ?? this.failureReasons,
   );
 }
 
@@ -99,11 +112,17 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
   }
 
   /// Replays every queued order against the server, in the order they were
-  /// placed. An order that keeps failing (offline again, or a genuine
-  /// rejection like a since-deactivated item) simply stays queued for the
-  /// next attempt -- distinguishing "still offline" from "this order is
-  /// permanently stuck" isn't handled yet; staff can see how long something
-  /// has been queued on the pending-orders screen.
+  /// placed. An order that keeps failing stays queued for the next attempt
+  /// either way, but *why* it failed is recorded in
+  /// [PendingOrdersState.failureReasons] when the server was actually
+  /// reached and rejected it outright -- a since-deactivated menu item, or
+  /// (the case that prompted this) a stale app build sending a request
+  /// shape the server no longer accepts after a protocol change, which
+  /// would otherwise fail every single sync attempt forever while looking
+  /// indistinguishable from "just still offline." A genuine connection
+  /// failure (statusCode -1 -- the server was never reached at all) gets
+  /// no reason recorded; that's the normal, expected case while offline
+  /// and retrying silently is correct for it.
   ///
   /// [PendingOrdersState.isSyncing] guards against two overlapping runs --
   /// without it, a second call starting before the first finishes (e.g.
@@ -127,6 +146,7 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
       final client = ref.read(serverpodClientProvider);
       final stillQueued = <PendingOrder>[];
       final newlySynced = <SyncedPendingOrder>[];
+      final failureReasons = <String, String>{};
 
       for (final order in state.queued) {
         try {
@@ -158,6 +178,25 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
           newlySynced.add(
             SyncedPendingOrder(source: order, confirmation: confirmation),
           );
+        } on InvalidOrderException catch (e) {
+          stillQueued.add(order);
+          failureReasons[order.localId] = _messageFor(e.reason);
+        } on ServerpodClientException catch (e) {
+          stillQueued.add(order);
+          // statusCode -1 means the request never actually reached the
+          // server (see ServerpodClientException's throw sites in the
+          // serverpod_client package) -- a plain connection failure, left
+          // without a reason so it doesn't read as broken. Any other
+          // status code means the server *did* respond, just with a
+          // rejection -- most notably a 400 if this app build is sending
+          // a request shape (e.g. a field the current protocol requires)
+          // that predates a server-side schema change.
+          if (e.statusCode != -1) {
+            failureReasons[order.localId] =
+                'The server rejected this order (code ${e.statusCode}). '
+                'This usually means the app needs an update -- check for '
+                'a newer version.';
+          }
         } catch (_) {
           stillQueued.add(order);
         }
@@ -167,6 +206,7 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
         queued: stillQueued,
         readyToPrint: [...state.readyToPrint, ...newlySynced],
         isSyncing: false,
+        failureReasons: failureReasons,
       );
       await _persistQueue();
 
@@ -185,6 +225,30 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
       if (state.isSyncing) state = state.copyWith(isSyncing: false);
     }
   }
+
+  /// Unlike a live counter-order submission (OrderSubmissionController),
+  /// where the shop being closed or the balance running short just can't
+  /// happen, a *queued* order replaying here genuinely can hit several of
+  /// these for real -- it could have sat offline long enough for the shop
+  /// to have since closed, or for one of its items to have been
+  /// deactivated in the meantime.
+  String _messageFor(InvalidOrderExceptionReason reason) => switch (reason) {
+    InvalidOrderExceptionReason.emptyCart => 'The cart was empty.',
+    InvalidOrderExceptionReason.invalidQuantity =>
+      'One of the quantities was invalid.',
+    InvalidOrderExceptionReason.menuItemUnavailable =>
+      'One of the items is no longer on the menu.',
+    InvalidOrderExceptionReason.shopNotOpen =>
+      "The shop wasn't open when this synced.",
+    InvalidOrderExceptionReason.insufficientPointsBalance =>
+      'Something went wrong syncing this order.',
+    InvalidOrderExceptionReason.missingDeliveryDetails =>
+      'Something went wrong syncing this order.',
+    InvalidOrderExceptionReason.invalidCustomization =>
+      'Something went wrong syncing this order.',
+    InvalidOrderExceptionReason.unknown =>
+      'Something went wrong syncing this order.',
+  };
 
   Future<void> _persistQueue() async {
     await ref
