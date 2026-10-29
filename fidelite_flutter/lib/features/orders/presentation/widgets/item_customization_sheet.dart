@@ -242,51 +242,115 @@ class _Options extends StatelessWidget {
     final base = ingredients.where((i) => i.kind == IngredientKind.base);
     final sauces = ingredients.where((i) => i.kind == IngredientKind.sauce);
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                "Don't want something? (menghir)",
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+        // Deliberately heavy-handed: a bordered, error-toned panel with an
+        // explicit "WITHOUT" eyebrow rather than a plain section title --
+        // a customer skimming a chip row reflexively reads it as "pick
+        // what you want" (the common pattern everywhere else), and this
+        // is the one section on the sheet where that reflex gives the
+        // opposite of the intended order.
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.errorContainer.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.error.withValues(alpha: 0.5),
             ),
-            TextButton(
-              onPressed: removed.isEmpty ? null : onKolChay,
-              child: const Text('Kol chay (skip)'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            for (final ingredient in base)
-              FilterChip(
-                label: Text(ingredient.name),
-                selected: removed.contains(ingredient.name),
-                onSelected: (_) => onToggleRemoved(ingredient.name),
-                avatar: removed.contains(ingredient.name)
-                    ? const Icon(Icons.remove_circle, size: 18)
-                    : null,
-                selectedColor: colorScheme.errorContainer,
-                checkmarkColor: colorScheme.onErrorContainer,
-                labelStyle: removed.contains(ingredient.name)
-                    ? TextStyle(
-                        color: colorScheme.onErrorContainer,
-                        decoration: TextDecoration.lineThrough,
-                      )
-                    : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.do_not_disturb_on_outlined,
+                    color: colorScheme.error,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'WITHOUT (MENGHIR)',
+                          style: textTheme.titleSmall?.copyWith(
+                            color: colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          'Tap to LEAVE OUT an ingredient. Everything '
+                          "not tapped stays in, as usual.",
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-          ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final ingredient in base)
+                    FilterChip(
+                      label: Text(ingredient.name),
+                      selected: removed.contains(ingredient.name),
+                      onSelected: (_) => onToggleRemoved(ingredient.name),
+                      avatar: Icon(
+                        Icons.remove_circle_outline,
+                        size: 18,
+                        color: removed.contains(ingredient.name)
+                            ? colorScheme.onErrorContainer
+                            : colorScheme.error.withValues(alpha: 0.6),
+                      ),
+                      selectedColor: colorScheme.errorContainer,
+                      checkmarkColor: colorScheme.onErrorContainer,
+                      labelStyle: removed.contains(ingredient.name)
+                          ? TextStyle(
+                              color: colorScheme.onErrorContainer,
+                              decoration: TextDecoration.lineThrough,
+                            )
+                          : null,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: removed.isEmpty ? null : onKolChay,
+                  child: const Text('Kol chay (skip)'),
+                ),
+              ),
+            ],
+          ),
         ),
         if (sauces.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('Add a sauce', style: Theme.of(context).textTheme.titleSmall),
+          Row(
+            children: [
+              Icon(
+                Icons.add_circle_outline,
+                size: 18,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text('Add a sauce', style: textTheme.titleSmall),
+            ],
+          ),
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,

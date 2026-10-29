@@ -15,10 +15,11 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import '../orders/order.dart' as _i2;
 import 'package:fidelite_client/src/protocol/protocol.dart' as _i3;
 
-/// What OnlineOrderEndpoint.placeOrder hands back. No claim QR -- unlike a
-/// counter order, cashback here is credited directly in the same call
-/// (see OnlineOrderEndpoint), since the orderer is already a known,
-/// authenticated account; there's nothing to scan or claim.
+/// What OnlineOrderEndpoint.placeOrder hands back. Still no claim QR here
+/// -- unlike a counter order, the token for that is only minted when
+/// staff print the ticket (see OnlineOrderManagementEndpoint
+/// .issueClaimToken), since printing happens asynchronously, sometime
+/// after this call returns.
 abstract class OnlineOrderConfirmation implements _i1.SerializableModel {
   OnlineOrderConfirmation._({
     required this.order,
@@ -46,8 +47,16 @@ abstract class OnlineOrderConfirmation implements _i1.SerializableModel {
 
   _i2.OrderRecord order;
 
+  /// For a cash order: a *preview* of what scanning the printed receipt
+  /// will earn -- nothing has actually been credited yet. Always 0 when
+  /// paid with points (no cashback on an order paid that way -- see
+  /// OrderPaymentMethod.points).
   int pointsEarnedMillimes;
 
+  /// The customer's actual current balance right after this call -- for a
+  /// cash order, that's unchanged from before placing it (see
+  /// [pointsEarnedMillimes]); for a points-paid order, it already
+  /// reflects that payment's debit.
   int newBalanceMillimes;
 
   /// Returns a shallow copy of this [OnlineOrderConfirmation]

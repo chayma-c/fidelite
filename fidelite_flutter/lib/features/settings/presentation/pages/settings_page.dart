@@ -13,6 +13,7 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final autoPrintAsync = ref.watch(autoPrintSettingProvider);
+    final deliveryEnabledAsync = ref.watch(deliveryEnabledSettingProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -34,6 +35,37 @@ class SettingsPage extends ConsumerWidget {
                     .read(autoPrintSettingControllerProvider)
                     .setEnabled(value);
               },
+            ),
+            const Divider(height: 1),
+            deliveryEnabledAsync.when(
+              data: (deliveryEnabled) => SwitchListTile(
+                title: const Text('Allow delivery'),
+                subtitle: const Text(
+                  'Let customers choose delivery when placing an online '
+                  "order. Turn this off when delivery genuinely can't be "
+                  "fulfilled right now (no one free to drive, etc.) -- "
+                  'customers will still see Delivery as an option, just '
+                  'disabled, with a note that it\'s not available.',
+                ),
+                value: deliveryEnabled,
+                onChanged: (value) async {
+                  await ref
+                      .read(deliveryEnabledSettingControllerProvider)
+                      .setEnabled(value);
+                },
+              ),
+              loading: () => const ListTile(
+                title: Text('Allow delivery'),
+                trailing: SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              error: (error, _) => ListTile(
+                title: const Text('Allow delivery'),
+                subtitle: Text('Could not load: $error'),
+              ),
             ),
           ],
         ),

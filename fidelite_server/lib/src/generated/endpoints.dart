@@ -22,24 +22,25 @@ import '../points/points_claim_endpoint.dart' as _i8;
 import '../points/wallet_endpoint.dart' as _i9;
 import '../redemption/redemption_endpoint.dart' as _i10;
 import '../rewards/rewards_endpoint.dart' as _i11;
-import '../shop/online_order_settings_endpoint.dart' as _i12;
-import '../shop/shop_status_endpoint.dart' as _i13;
-import '../shop/shop_status_management_endpoint.dart' as _i14;
-import '../users/email_auth_endpoint.dart' as _i15;
-import '../users/jwt_tokens_endpoint.dart' as _i16;
-import '../users/user_endpoint.dart' as _i17;
+import '../shop/online_order_public_settings_endpoint.dart' as _i12;
+import '../shop/online_order_settings_endpoint.dart' as _i13;
+import '../shop/shop_status_endpoint.dart' as _i14;
+import '../shop/shop_status_management_endpoint.dart' as _i15;
+import '../users/email_auth_endpoint.dart' as _i16;
+import '../users/jwt_tokens_endpoint.dart' as _i17;
+import '../users/user_endpoint.dart' as _i18;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
-    as _i18;
-import 'package:fidelite_server/src/generated/orders/order_fulfillment_method.dart'
     as _i19;
-import 'package:fidelite_server/src/generated/orders/order_payment_method.dart'
+import 'package:fidelite_server/src/generated/orders/order_fulfillment_method.dart'
     as _i20;
-import 'package:fidelite_server/src/generated/shop/shop_open_status.dart'
+import 'package:fidelite_server/src/generated/orders/order_payment_method.dart'
     as _i21;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+import 'package:fidelite_server/src/generated/shop/shop_open_status.dart'
     as _i22;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i23;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i24;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -105,37 +106,43 @@ class Endpoints extends _i1.EndpointDispatch {
           'rewards',
           null,
         ),
-      'onlineOrderSettings': _i12.OnlineOrderSettingsEndpoint()
+      'onlineOrderPublicSettings': _i12.OnlineOrderPublicSettingsEndpoint()
+        ..initialize(
+          server,
+          'onlineOrderPublicSettings',
+          null,
+        ),
+      'onlineOrderSettings': _i13.OnlineOrderSettingsEndpoint()
         ..initialize(
           server,
           'onlineOrderSettings',
           null,
         ),
-      'shopStatus': _i13.ShopStatusEndpoint()
+      'shopStatus': _i14.ShopStatusEndpoint()
         ..initialize(
           server,
           'shopStatus',
           null,
         ),
-      'shopStatusManagement': _i14.ShopStatusManagementEndpoint()
+      'shopStatusManagement': _i15.ShopStatusManagementEndpoint()
         ..initialize(
           server,
           'shopStatusManagement',
           null,
         ),
-      'emailAuth': _i15.EmailAuthEndpoint()
+      'emailAuth': _i16.EmailAuthEndpoint()
         ..initialize(
           server,
           'emailAuth',
           null,
         ),
-      'jwtTokens': _i16.JwtTokensEndpoint()
+      'jwtTokens': _i17.JwtTokensEndpoint()
         ..initialize(
           server,
           'jwtTokens',
           null,
         ),
-      'user': _i17.UserEndpoint()
+      'user': _i18.UserEndpoint()
         ..initialize(
           server,
           'user',
@@ -351,17 +358,17 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'items': _i1.ParameterDescription(
               name: 'items',
-              type: _i1.getType<List<_i18.OrderItemInput>>(),
+              type: _i1.getType<List<_i19.OrderItemInput>>(),
               nullable: false,
             ),
             'fulfillmentMethod': _i1.ParameterDescription(
               name: 'fulfillmentMethod',
-              type: _i1.getType<_i19.OrderFulfillmentMethod>(),
+              type: _i1.getType<_i20.OrderFulfillmentMethod>(),
               nullable: false,
             ),
             'paymentMethod': _i1.ParameterDescription(
               name: 'paymentMethod',
-              type: _i1.getType<_i20.OrderPaymentMethod>(),
+              type: _i1.getType<_i21.OrderPaymentMethod>(),
               nullable: false,
             ),
             'deliveryAddress': _i1.ParameterDescription(
@@ -449,6 +456,27 @@ class Endpoints extends _i1.EndpointDispatch {
                         params['orderId'],
                       ),
         ),
+        'issueClaimToken': _i1.MethodConnector(
+          name: 'issueClaimToken',
+          params: {
+            'orderId': _i1.ParameterDescription(
+              name: 'orderId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['onlineOrderManagement']
+                          as _i6.OnlineOrderManagementEndpoint)
+                      .issueClaimToken(
+                        session,
+                        params['orderId'],
+                      ),
+        ),
       },
     );
     connectors['order'] = _i1.EndpointConnector(
@@ -460,7 +488,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'items': _i1.ParameterDescription(
               name: 'items',
-              type: _i1.getType<List<_i18.OrderItemInput>>(),
+              type: _i1.getType<List<_i19.OrderItemInput>>(),
               nullable: false,
             ),
             'requestedTicketNumber': _i1.ParameterDescription(
@@ -661,6 +689,24 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['onlineOrderPublicSettings'] = _i1.EndpointConnector(
+      name: 'onlineOrderPublicSettings',
+      endpoint: endpoints['onlineOrderPublicSettings']!,
+      methodConnectors: {
+        'getSettings': _i1.MethodConnector(
+          name: 'getSettings',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['onlineOrderPublicSettings']
+                          as _i12.OnlineOrderPublicSettingsEndpoint)
+                      .getSettings(session),
+        ),
+      },
+    );
     connectors['onlineOrderSettings'] = _i1.EndpointConnector(
       name: 'onlineOrderSettings',
       endpoint: endpoints['onlineOrderSettings']!,
@@ -674,7 +720,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['onlineOrderSettings']
-                          as _i12.OnlineOrderSettingsEndpoint)
+                          as _i13.OnlineOrderSettingsEndpoint)
                       .getSettings(session),
         ),
         'setAutoPrint': _i1.MethodConnector(
@@ -692,8 +738,29 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['onlineOrderSettings']
-                          as _i12.OnlineOrderSettingsEndpoint)
+                          as _i13.OnlineOrderSettingsEndpoint)
                       .setAutoPrint(
+                        session,
+                        params['enabled'],
+                      ),
+        ),
+        'setDeliveryEnabled': _i1.MethodConnector(
+          name: 'setDeliveryEnabled',
+          params: {
+            'enabled': _i1.ParameterDescription(
+              name: 'enabled',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['onlineOrderSettings']
+                          as _i13.OnlineOrderSettingsEndpoint)
+                      .setDeliveryEnabled(
                         session,
                         params['enabled'],
                       ),
@@ -711,7 +778,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shopStatus'] as _i13.ShopStatusEndpoint)
+              ) async => (endpoints['shopStatus'] as _i14.ShopStatusEndpoint)
                   .getStatus(session),
         ),
       },
@@ -725,7 +792,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i21.ShopOpenStatus>(),
+              type: _i1.getType<_i22.ShopOpenStatus>(),
               nullable: false,
             ),
           },
@@ -735,7 +802,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['shopStatusManagement']
-                          as _i14.ShopStatusManagementEndpoint)
+                          as _i15.ShopStatusManagementEndpoint)
                       .setStatus(
                         session,
                         params['status'],
@@ -760,7 +827,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .startRegistration(
                     session,
                     email: params['email'],
@@ -785,7 +852,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['emailAuth'] as _i15.EmailAuthEndpoint).login(
+                  (endpoints['emailAuth'] as _i16.EmailAuthEndpoint).login(
                     session,
                     email: params['email'],
                     password: params['password'],
@@ -809,7 +876,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .verifyRegistrationCode(
                     session,
                     accountRequestId: params['accountRequestId'],
@@ -834,7 +901,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .finishRegistration(
                     session,
                     registrationToken: params['registrationToken'],
@@ -854,7 +921,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .startPasswordReset(
                     session,
                     email: params['email'],
@@ -878,7 +945,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .verifyPasswordResetCode(
                     session,
                     passwordResetRequestId: params['passwordResetRequestId'],
@@ -903,7 +970,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .finishPasswordReset(
                     session,
                     finishPasswordResetToken:
@@ -918,7 +985,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['emailAuth'] as _i15.EmailAuthEndpoint)
+              ) async => (endpoints['emailAuth'] as _i16.EmailAuthEndpoint)
                   .hasAccount(session),
         ),
       },
@@ -940,7 +1007,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['jwtTokens'] as _i16.JwtTokensEndpoint)
+              ) async => (endpoints['jwtTokens'] as _i17.JwtTokensEndpoint)
                   .refreshAccessToken(
                     session,
                     refreshToken: params['refreshToken'],
@@ -960,13 +1027,13 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['user'] as _i17.UserEndpoint).getMe(session),
+                  (endpoints['user'] as _i18.UserEndpoint).getMe(session),
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i22.Endpoints()
+    modules['serverpod_auth_core'] = _i23.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i23.Endpoints()
+    modules['serverpod_auth_idp'] = _i24.Endpoints()
       ..initializeEndpoints(server);
   }
 }

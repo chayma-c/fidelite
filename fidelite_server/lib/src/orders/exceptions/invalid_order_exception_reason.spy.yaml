@@ -22,4 +22,9 @@ values:
   ### for a menu item that doesn't support it (see
   ### MenuItemRecord.isCustomizable).
   - invalidCustomization
+  ### Chose delivery while staff have it turned off (see
+  ### OnlineOrderSettingsRecord.deliveryEnabled) -- normally caught
+  ### client-side first (the option shows disabled), this is the
+  ### server-side backstop.
+  - deliveryNotAvailable
   - unknown

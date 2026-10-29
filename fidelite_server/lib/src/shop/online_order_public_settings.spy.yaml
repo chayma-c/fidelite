@@ -1,0 +1,9 @@
+### The customer-visible subset of OnlineOrderSettingsRecord -- just
+### [deliveryEnabled], deliberately excluding staff-internal fields like
+### autoPrintEnabled. Returned by the separate public
+### OnlineOrderPublicSettingsEndpoint rather than the record itself, so a
+### future staff-internal-only field added to OnlineOrderSettingsRecord
+### never accidentally becomes customer-visible by default.
+class: OnlineOrderPublicSettings
+fields:
+  deliveryEnabled: bool

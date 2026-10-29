@@ -1,8 +1,11 @@
 ### Singleton row (see online_order_settings_util.dart for the same
-### lazy-create pattern as ShopStatusRecord) holding staff-only operational
-### settings for online orders. Deliberately separate from ShopStatusRecord
-### even though both are "shop settings" -- that one is public (customers
-### read it), this one is staff-internal only.
+### lazy-create pattern as ShopStatusRecord) holding staff-controlled
+### operational settings for online orders. Written only through the
+### staff-only OnlineOrderSettingsEndpoint; most of it (e.g.
+### [autoPrintEnabled]) is never read back by a customer, except
+### [deliveryEnabled], exposed read-only through the separate public
+### OnlineOrderPublicSettingsEndpoint -- same public-read/staff-write split
+### already used for the menu and shop status.
 class: OnlineOrderSettingsRecord
 table: online_order_settings
 fields:
@@ -12,4 +15,13 @@ fields:
   ### unconditionally is exactly what caused problems when staff were
   ### already busy taking counter orders.
   autoPrintEnabled: bool, default=false
+
+  ### Whether a customer can choose delivery as a fulfillment method right
+  ### now. On by default; staff turn it off when delivery genuinely can't
+  ### be fulfilled (no one available to drive, etc.) rather than leaving
+  ### customers to find out only after placing an order. Customer-visible
+  ### -- see OnlineOrderPublicSettingsEndpoint, the one exception to this
+  ### record otherwise being staff-internal only.
+  deliveryEnabled: bool, default=true
+
   updatedAt: DateTime, default=now

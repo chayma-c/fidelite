@@ -48,22 +48,23 @@ import 'redemption/redemption.dart' as _i32;
 import 'redemption/redemption_result.dart' as _i33;
 import 'redemption/redemption_status.dart' as _i34;
 import 'rewards/reward_item.dart' as _i35;
-import 'shop/online_order_settings.dart' as _i36;
-import 'shop/shop_open_status.dart' as _i37;
-import 'shop/shop_status.dart' as _i38;
-import 'users/app_user.dart' as _i39;
-import 'users/exceptions/email_registration_blocked_exception.dart' as _i40;
+import 'shop/online_order_public_settings.dart' as _i36;
+import 'shop/online_order_settings.dart' as _i37;
+import 'shop/shop_open_status.dart' as _i38;
+import 'shop/shop_status.dart' as _i39;
+import 'users/app_user.dart' as _i40;
+import 'users/exceptions/email_registration_blocked_exception.dart' as _i41;
 import 'users/exceptions/email_registration_blocked_exception_reason.dart'
-    as _i41;
-import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i42;
-import 'package:fidelite_server/src/generated/menu/ingredient.dart' as _i43;
+    as _i42;
+import 'package:fidelite_server/src/generated/menu/menu_item.dart' as _i43;
+import 'package:fidelite_server/src/generated/menu/ingredient.dart' as _i44;
 import 'package:fidelite_server/src/generated/orders/order_item_input.dart'
-    as _i44;
-import 'package:fidelite_server/src/generated/orders/order.dart' as _i45;
-import 'package:fidelite_server/src/generated/orders/order_item.dart' as _i46;
+    as _i45;
+import 'package:fidelite_server/src/generated/orders/order.dart' as _i46;
+import 'package:fidelite_server/src/generated/orders/order_item.dart' as _i47;
 import 'package:fidelite_server/src/generated/points/points_ledger_entry.dart'
-    as _i47;
-import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i48;
+    as _i48;
+import 'package:fidelite_server/src/generated/rewards/reward_item.dart' as _i49;
 export 'menu/exceptions/menu_item_validation_exception.dart';
 export 'menu/exceptions/menu_item_validation_exception_reason.dart';
 export 'menu/ingredient.dart';
@@ -95,6 +96,7 @@ export 'redemption/redemption.dart';
 export 'redemption/redemption_result.dart';
 export 'redemption/redemption_status.dart';
 export 'rewards/reward_item.dart';
+export 'shop/online_order_public_settings.dart';
 export 'shop/online_order_settings.dart';
 export 'shop/shop_open_status.dart';
 export 'shop/shop_status.dart';
@@ -557,6 +559,13 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: false,
           dartType: 'bool',
           columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deliveryEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
         ),
         _i2.ColumnDefinition(
           name: 'updatedAt',
@@ -1368,23 +1377,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i35.RewardItemRecord) {
       return _i35.RewardItemRecord.fromJson(data) as T;
     }
-    if (t == _i36.OnlineOrderSettingsRecord) {
-      return _i36.OnlineOrderSettingsRecord.fromJson(data) as T;
+    if (t == _i36.OnlineOrderPublicSettings) {
+      return _i36.OnlineOrderPublicSettings.fromJson(data) as T;
     }
-    if (t == _i37.ShopOpenStatus) {
-      return _i37.ShopOpenStatus.fromJson(data) as T;
+    if (t == _i37.OnlineOrderSettingsRecord) {
+      return _i37.OnlineOrderSettingsRecord.fromJson(data) as T;
     }
-    if (t == _i38.ShopStatusRecord) {
-      return _i38.ShopStatusRecord.fromJson(data) as T;
+    if (t == _i38.ShopOpenStatus) {
+      return _i38.ShopOpenStatus.fromJson(data) as T;
     }
-    if (t == _i39.AppUserRecord) {
-      return _i39.AppUserRecord.fromJson(data) as T;
+    if (t == _i39.ShopStatusRecord) {
+      return _i39.ShopStatusRecord.fromJson(data) as T;
     }
-    if (t == _i40.EmailRegistrationBlockedException) {
-      return _i40.EmailRegistrationBlockedException.fromJson(data) as T;
+    if (t == _i40.AppUserRecord) {
+      return _i40.AppUserRecord.fromJson(data) as T;
     }
-    if (t == _i41.EmailRegistrationBlockedExceptionReason) {
-      return _i41.EmailRegistrationBlockedExceptionReason.fromJson(data) as T;
+    if (t == _i41.EmailRegistrationBlockedException) {
+      return _i41.EmailRegistrationBlockedException.fromJson(data) as T;
+    }
+    if (t == _i42.EmailRegistrationBlockedExceptionReason) {
+      return _i42.EmailRegistrationBlockedExceptionReason.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.MenuItemValidationException?>()) {
       return (data != null
@@ -1504,78 +1516,84 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i35.RewardItemRecord?>()) {
       return (data != null ? _i35.RewardItemRecord.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i36.OnlineOrderSettingsRecord?>()) {
+    if (t == _i1.getType<_i36.OnlineOrderPublicSettings?>()) {
       return (data != null
-              ? _i36.OnlineOrderSettingsRecord.fromJson(data)
+              ? _i36.OnlineOrderPublicSettings.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i37.ShopOpenStatus?>()) {
-      return (data != null ? _i37.ShopOpenStatus.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i38.ShopStatusRecord?>()) {
-      return (data != null ? _i38.ShopStatusRecord.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i39.AppUserRecord?>()) {
-      return (data != null ? _i39.AppUserRecord.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i40.EmailRegistrationBlockedException?>()) {
+    if (t == _i1.getType<_i37.OnlineOrderSettingsRecord?>()) {
       return (data != null
-              ? _i40.EmailRegistrationBlockedException.fromJson(data)
+              ? _i37.OnlineOrderSettingsRecord.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i41.EmailRegistrationBlockedExceptionReason?>()) {
+    if (t == _i1.getType<_i38.ShopOpenStatus?>()) {
+      return (data != null ? _i38.ShopOpenStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i39.ShopStatusRecord?>()) {
+      return (data != null ? _i39.ShopStatusRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i40.AppUserRecord?>()) {
+      return (data != null ? _i40.AppUserRecord.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i41.EmailRegistrationBlockedException?>()) {
       return (data != null
-              ? _i41.EmailRegistrationBlockedExceptionReason.fromJson(data)
+              ? _i41.EmailRegistrationBlockedException.fromJson(data)
+              : null)
+          as T;
+    }
+    if (t == _i1.getType<_i42.EmailRegistrationBlockedExceptionReason?>()) {
+      return (data != null
+              ? _i42.EmailRegistrationBlockedExceptionReason.fromJson(data)
               : null)
           as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i42.MenuItemRecord>) {
+    if (t == List<_i43.MenuItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i42.MenuItemRecord>(e))
+              .map((e) => deserialize<_i43.MenuItemRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i43.IngredientRecord>) {
+    if (t == List<_i44.IngredientRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i43.IngredientRecord>(e))
+              .map((e) => deserialize<_i44.IngredientRecord>(e))
               .toList()
           as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i44.OrderItemInput>) {
+    if (t == List<_i45.OrderItemInput>) {
       return (data as List)
-              .map((e) => deserialize<_i44.OrderItemInput>(e))
+              .map((e) => deserialize<_i45.OrderItemInput>(e))
               .toList()
           as T;
     }
-    if (t == List<_i45.OrderRecord>) {
+    if (t == List<_i46.OrderRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i45.OrderRecord>(e))
+              .map((e) => deserialize<_i46.OrderRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i46.OrderItemRecord>) {
+    if (t == List<_i47.OrderItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i46.OrderItemRecord>(e))
+              .map((e) => deserialize<_i47.OrderItemRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i47.PointsLedgerEntryRecord>) {
+    if (t == List<_i48.PointsLedgerEntryRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i47.PointsLedgerEntryRecord>(e))
+              .map((e) => deserialize<_i48.PointsLedgerEntryRecord>(e))
               .toList()
           as T;
     }
-    if (t == List<_i48.RewardItemRecord>) {
+    if (t == List<_i49.RewardItemRecord>) {
       return (data as List)
-              .map((e) => deserialize<_i48.RewardItemRecord>(e))
+              .map((e) => deserialize<_i49.RewardItemRecord>(e))
               .toList()
           as T;
     }
@@ -1625,13 +1643,14 @@ class Protocol extends _i1.SerializationManagerServer {
       _i33.RedemptionResult => 'RedemptionResult',
       _i34.RedemptionStatus => 'RedemptionStatus',
       _i35.RewardItemRecord => 'RewardItemRecord',
-      _i36.OnlineOrderSettingsRecord => 'OnlineOrderSettingsRecord',
-      _i37.ShopOpenStatus => 'ShopOpenStatus',
-      _i38.ShopStatusRecord => 'ShopStatusRecord',
-      _i39.AppUserRecord => 'AppUserRecord',
-      _i40.EmailRegistrationBlockedException =>
+      _i36.OnlineOrderPublicSettings => 'OnlineOrderPublicSettings',
+      _i37.OnlineOrderSettingsRecord => 'OnlineOrderSettingsRecord',
+      _i38.ShopOpenStatus => 'ShopOpenStatus',
+      _i39.ShopStatusRecord => 'ShopStatusRecord',
+      _i40.AppUserRecord => 'AppUserRecord',
+      _i41.EmailRegistrationBlockedException =>
         'EmailRegistrationBlockedException',
-      _i41.EmailRegistrationBlockedExceptionReason =>
+      _i42.EmailRegistrationBlockedExceptionReason =>
         'EmailRegistrationBlockedExceptionReason',
       _ => null,
     };
@@ -1709,17 +1728,19 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'RedemptionStatus';
       case _i35.RewardItemRecord():
         return 'RewardItemRecord';
-      case _i36.OnlineOrderSettingsRecord():
+      case _i36.OnlineOrderPublicSettings():
+        return 'OnlineOrderPublicSettings';
+      case _i37.OnlineOrderSettingsRecord():
         return 'OnlineOrderSettingsRecord';
-      case _i37.ShopOpenStatus():
+      case _i38.ShopOpenStatus():
         return 'ShopOpenStatus';
-      case _i38.ShopStatusRecord():
+      case _i39.ShopStatusRecord():
         return 'ShopStatusRecord';
-      case _i39.AppUserRecord():
+      case _i40.AppUserRecord():
         return 'AppUserRecord';
-      case _i40.EmailRegistrationBlockedException():
+      case _i41.EmailRegistrationBlockedException():
         return 'EmailRegistrationBlockedException';
-      case _i41.EmailRegistrationBlockedExceptionReason():
+      case _i42.EmailRegistrationBlockedExceptionReason():
         return 'EmailRegistrationBlockedExceptionReason';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1836,23 +1857,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'RewardItemRecord') {
       return deserialize<_i35.RewardItemRecord>(data['data']);
     }
+    if (dataClassName == 'OnlineOrderPublicSettings') {
+      return deserialize<_i36.OnlineOrderPublicSettings>(data['data']);
+    }
     if (dataClassName == 'OnlineOrderSettingsRecord') {
-      return deserialize<_i36.OnlineOrderSettingsRecord>(data['data']);
+      return deserialize<_i37.OnlineOrderSettingsRecord>(data['data']);
     }
     if (dataClassName == 'ShopOpenStatus') {
-      return deserialize<_i37.ShopOpenStatus>(data['data']);
+      return deserialize<_i38.ShopOpenStatus>(data['data']);
     }
     if (dataClassName == 'ShopStatusRecord') {
-      return deserialize<_i38.ShopStatusRecord>(data['data']);
+      return deserialize<_i39.ShopStatusRecord>(data['data']);
     }
     if (dataClassName == 'AppUserRecord') {
-      return deserialize<_i39.AppUserRecord>(data['data']);
+      return deserialize<_i40.AppUserRecord>(data['data']);
     }
     if (dataClassName == 'EmailRegistrationBlockedException') {
-      return deserialize<_i40.EmailRegistrationBlockedException>(data['data']);
+      return deserialize<_i41.EmailRegistrationBlockedException>(data['data']);
     }
     if (dataClassName == 'EmailRegistrationBlockedExceptionReason') {
-      return deserialize<_i41.EmailRegistrationBlockedExceptionReason>(
+      return deserialize<_i42.EmailRegistrationBlockedExceptionReason>(
         data['data'],
       );
     }
@@ -1912,12 +1936,12 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i32.RedemptionRecord.t;
       case _i35.RewardItemRecord:
         return _i35.RewardItemRecord.t;
-      case _i36.OnlineOrderSettingsRecord:
-        return _i36.OnlineOrderSettingsRecord.t;
-      case _i38.ShopStatusRecord:
-        return _i38.ShopStatusRecord.t;
-      case _i39.AppUserRecord:
-        return _i39.AppUserRecord.t;
+      case _i37.OnlineOrderSettingsRecord:
+        return _i37.OnlineOrderSettingsRecord.t;
+      case _i39.ShopStatusRecord:
+        return _i39.ShopStatusRecord.t;
+      case _i40.AppUserRecord:
+        return _i40.AppUserRecord.t;
     }
     return null;
   }

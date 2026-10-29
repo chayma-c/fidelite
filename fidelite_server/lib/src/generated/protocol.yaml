@@ -15,6 +15,7 @@ onlineOrderManagement:
   - listUnhandled:
   - getItemsForOrder:
   - markHandled:
+  - issueClaimToken:
 order:
   - submitOrder:
   - getOrderHistory:
@@ -29,9 +30,12 @@ redemption:
   - redeemReward:
 rewards:
   - getCatalog:
+onlineOrderPublicSettings:
+  - getSettings:
 onlineOrderSettings:
   - getSettings:
   - setAutoPrint:
+  - setDeliveryEnabled:
 shopStatus:
   - getStatus:
 shopStatusManagement:

@@ -14,22 +14,28 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 
 /// Singleton row (see online_order_settings_util.dart for the same
-/// lazy-create pattern as ShopStatusRecord) holding staff-only operational
-/// settings for online orders. Deliberately separate from ShopStatusRecord
-/// even though both are "shop settings" -- that one is public (customers
-/// read it), this one is staff-internal only.
+/// lazy-create pattern as ShopStatusRecord) holding staff-controlled
+/// operational settings for online orders. Written only through the
+/// staff-only OnlineOrderSettingsEndpoint; most of it (e.g.
+/// [autoPrintEnabled]) is never read back by a customer, except
+/// [deliveryEnabled], exposed read-only through the separate public
+/// OnlineOrderPublicSettingsEndpoint -- same public-read/staff-write split
+/// already used for the menu and shop status.
 abstract class OnlineOrderSettingsRecord
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
   OnlineOrderSettingsRecord._({
     this.id,
     bool? autoPrintEnabled,
+    bool? deliveryEnabled,
     DateTime? updatedAt,
   }) : autoPrintEnabled = autoPrintEnabled ?? false,
+       deliveryEnabled = deliveryEnabled ?? true,
        updatedAt = updatedAt ?? DateTime.now();
 
   factory OnlineOrderSettingsRecord({
     int? id,
     bool? autoPrintEnabled,
+    bool? deliveryEnabled,
     DateTime? updatedAt,
   }) = _OnlineOrderSettingsRecordImpl;
 
@@ -42,6 +48,11 @@ abstract class OnlineOrderSettingsRecord
           ? null
           : _i1.BoolJsonExtension.fromJson(
               jsonSerialization['autoPrintEnabled'],
+            ),
+      deliveryEnabled: jsonSerialization['deliveryEnabled'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['deliveryEnabled'],
             ),
       updatedAt: jsonSerialization['updatedAt'] == null
           ? null
@@ -63,6 +74,14 @@ abstract class OnlineOrderSettingsRecord
   /// already busy taking counter orders.
   bool autoPrintEnabled;
 
+  /// Whether a customer can choose delivery as a fulfillment method right
+  /// now. On by default; staff turn it off when delivery genuinely can't
+  /// be fulfilled (no one available to drive, etc.) rather than leaving
+  /// customers to find out only after placing an order. Customer-visible
+  /// -- see OnlineOrderPublicSettingsEndpoint, the one exception to this
+  /// record otherwise being staff-internal only.
+  bool deliveryEnabled;
+
   DateTime updatedAt;
 
   @override
@@ -74,6 +93,7 @@ abstract class OnlineOrderSettingsRecord
   OnlineOrderSettingsRecord copyWith({
     int? id,
     bool? autoPrintEnabled,
+    bool? deliveryEnabled,
     DateTime? updatedAt,
   });
   @override
@@ -82,6 +102,7 @@ abstract class OnlineOrderSettingsRecord
       '__className__': 'OnlineOrderSettingsRecord',
       if (id != null) 'id': id,
       'autoPrintEnabled': autoPrintEnabled,
+      'deliveryEnabled': deliveryEnabled,
       'updatedAt': updatedAt.toJson(),
     };
   }
@@ -92,6 +113,7 @@ abstract class OnlineOrderSettingsRecord
       '__className__': 'OnlineOrderSettingsRecord',
       if (id != null) 'id': id,
       'autoPrintEnabled': autoPrintEnabled,
+      'deliveryEnabled': deliveryEnabled,
       'updatedAt': updatedAt.toJson(),
     };
   }
@@ -132,10 +154,12 @@ class _OnlineOrderSettingsRecordImpl extends OnlineOrderSettingsRecord {
   _OnlineOrderSettingsRecordImpl({
     int? id,
     bool? autoPrintEnabled,
+    bool? deliveryEnabled,
     DateTime? updatedAt,
   }) : super._(
          id: id,
          autoPrintEnabled: autoPrintEnabled,
+         deliveryEnabled: deliveryEnabled,
          updatedAt: updatedAt,
        );
 
@@ -146,11 +170,13 @@ class _OnlineOrderSettingsRecordImpl extends OnlineOrderSettingsRecord {
   OnlineOrderSettingsRecord copyWith({
     Object? id = _Undefined,
     bool? autoPrintEnabled,
+    bool? deliveryEnabled,
     DateTime? updatedAt,
   }) {
     return OnlineOrderSettingsRecord(
       id: id is int? ? id : this.id,
       autoPrintEnabled: autoPrintEnabled ?? this.autoPrintEnabled,
+      deliveryEnabled: deliveryEnabled ?? this.deliveryEnabled,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -162,6 +188,11 @@ class OnlineOrderSettingsRecordUpdateTable
 
   _i1.ColumnValue<bool, bool> autoPrintEnabled(bool value) => _i1.ColumnValue(
     table.autoPrintEnabled,
+    value,
+  );
+
+  _i1.ColumnValue<bool, bool> deliveryEnabled(bool value) => _i1.ColumnValue(
+    table.deliveryEnabled,
     value,
   );
 
@@ -181,6 +212,11 @@ class OnlineOrderSettingsRecordTable extends _i1.Table<int?> {
       this,
       hasDefault: true,
     );
+    deliveryEnabled = _i1.ColumnBool(
+      'deliveryEnabled',
+      this,
+      hasDefault: true,
+    );
     updatedAt = _i1.ColumnDateTime(
       'updatedAt',
       this,
@@ -197,12 +233,21 @@ class OnlineOrderSettingsRecordTable extends _i1.Table<int?> {
   /// already busy taking counter orders.
   late final _i1.ColumnBool autoPrintEnabled;
 
+  /// Whether a customer can choose delivery as a fulfillment method right
+  /// now. On by default; staff turn it off when delivery genuinely can't
+  /// be fulfilled (no one available to drive, etc.) rather than leaving
+  /// customers to find out only after placing an order. Customer-visible
+  /// -- see OnlineOrderPublicSettingsEndpoint, the one exception to this
+  /// record otherwise being staff-internal only.
+  late final _i1.ColumnBool deliveryEnabled;
+
   late final _i1.ColumnDateTime updatedAt;
 
   @override
   List<_i1.Column> get columns => [
     id,
     autoPrintEnabled,
+    deliveryEnabled,
     updatedAt,
   ];
 }

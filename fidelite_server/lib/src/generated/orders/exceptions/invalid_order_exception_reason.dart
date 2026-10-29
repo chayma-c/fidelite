@@ -40,6 +40,12 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
   /// for a menu item that doesn't support it (see
   /// MenuItemRecord.isCustomizable).
   invalidCustomization,
+
+  /// Chose delivery while staff have it turned off (see
+  /// OnlineOrderSettingsRecord.deliveryEnabled) -- normally caught
+  /// client-side first (the option shows disabled), this is the
+  /// server-side backstop.
+  deliveryNotAvailable,
   unknown;
 
   static InvalidOrderExceptionReason fromJson(String name) {
@@ -58,6 +64,8 @@ enum InvalidOrderExceptionReason implements _i1.SerializableModel {
         return InvalidOrderExceptionReason.missingDeliveryDetails;
       case 'invalidCustomization':
         return InvalidOrderExceptionReason.invalidCustomization;
+      case 'deliveryNotAvailable':
+        return InvalidOrderExceptionReason.deliveryNotAvailable;
       case 'unknown':
         return InvalidOrderExceptionReason.unknown;
       default:

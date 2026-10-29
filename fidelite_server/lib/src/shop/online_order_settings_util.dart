@@ -14,6 +14,7 @@ Future<OnlineOrderSettingsRecord> currentOnlineOrderSettingsOrDefault(
     session,
     OnlineOrderSettingsRecord(
       autoPrintEnabled: false,
+      deliveryEnabled: true,
       updatedAt: DateTime.now().toUtc(),
     ),
   );

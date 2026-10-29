@@ -30,3 +30,38 @@ class AutoPrintSettingController {
 final autoPrintSettingControllerProvider = Provider<AutoPrintSettingController>(
   (ref) => AutoPrintSettingController(ref),
 );
+
+/// Whether a customer can currently choose delivery as a fulfillment
+/// method -- staff-side read, for the Settings page toggle. Not the same
+/// provider the customer's own cart reads from (see
+/// deliveryAvailableProvider in features/orders): that one hits the
+/// separate public endpoint, since this staff-only one requires a staff
+/// session.
+final deliveryEnabledSettingProvider = FutureProvider.autoDispose<bool>((
+  ref,
+) async {
+  final settings = await ref
+      .read(serverpodClientProvider)
+      .onlineOrderSettings
+      .getSettings();
+  return settings.deliveryEnabled;
+});
+
+class DeliveryEnabledSettingController {
+  DeliveryEnabledSettingController(this.ref);
+
+  final Ref ref;
+
+  Future<void> setEnabled(bool enabled) async {
+    await ref
+        .read(serverpodClientProvider)
+        .onlineOrderSettings
+        .setDeliveryEnabled(enabled);
+    ref.invalidate(deliveryEnabledSettingProvider);
+  }
+}
+
+final deliveryEnabledSettingControllerProvider =
+    Provider<DeliveryEnabledSettingController>(
+      (ref) => DeliveryEnabledSettingController(ref),
+    );

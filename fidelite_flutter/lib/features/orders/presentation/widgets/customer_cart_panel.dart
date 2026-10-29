@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/money/millimes_formatting.dart';
 import '../../../shop/data/shop_status_providers.dart';
 import '../../../wallet/data/wallet_providers.dart';
+import '../../data/online_order_public_settings_providers.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/online_order_submission_controller.dart';
 import 'item_customization_sheet.dart';
@@ -82,6 +83,12 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
     final isShopOpen =
         ref.watch(shopStatusProvider).valueOrNull == ShopOpenStatus.open;
     final balance = ref.watch(balanceProvider).valueOrNull ?? 0;
+    // Fails open while loading/on error -- same reasoning as isShopOpen
+    // not existing here at all for that case: the submit button itself
+    // (gated on isShopOpen, checked server-side regardless) is the real
+    // backstop, not this.
+    final deliveryAvailable =
+        ref.watch(deliveryAvailableProvider).valueOrNull ?? true;
 
     final subtotal = cart.fold<int>(
       0,
@@ -100,7 +107,7 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
         cart.isNotEmpty &&
         !isSubmitting &&
         isShopOpen &&
-        (!isDelivery || hasDeliveryDetails) &&
+        (!isDelivery || (deliveryAvailable && hasDeliveryDetails)) &&
         (_payment != OrderPaymentMethod.points || canPayWithPoints);
 
     return Column(
@@ -189,6 +196,11 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                             icon: const Icon(
                               Icons.delivery_dining_outlined,
                             ),
+                            // Disabled rather than hidden -- a customer who
+                            // expects delivery to exist should see that it
+                            // does, just not right now, rather than wonder
+                            // whether the app dropped the option entirely.
+                            enabled: deliveryAvailable,
                           ),
                         ],
                         selected: {_fulfillment},
@@ -196,6 +208,17 @@ class _CustomerCartPanelState extends ConsumerState<CustomerCartPanel> {
                             setState(() => _fulfillment = selection.first),
                       ),
                     ),
+                    if (!deliveryAvailable)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                        child: Text(
+                          'Delivery is not available right now.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                        ),
+                      ),
                     if (isDelivery)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),

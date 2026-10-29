@@ -5,12 +5,6 @@ import '../points/claim_token_util.dart';
 import 'order_pricing_util.dart';
 import 'ticket_numbering.dart';
 
-/// Order-claim tokens are valid for a week -- generous on purpose. Per the
-/// design in OrderClaimTokenRecord, single-use (not short expiry) is what
-/// actually prevents a receipt being claimed twice; this window just bounds
-/// how long a stale unclaimed row sticks around.
-const _claimTokenValidity = Duration(days: 7);
-
 class OrderEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
@@ -92,7 +86,7 @@ class OrderEndpoint extends Endpoint {
         OrderClaimTokenRecord(
           orderId: order.id!,
           tokenHash: ClaimTokenUtil.hash(rawToken),
-          expiresAt: DateTime.now().toUtc().add(_claimTokenValidity),
+          expiresAt: DateTime.now().toUtc().add(ClaimTokenUtil.validity),
         ),
         transaction: transaction,
       );

@@ -102,6 +102,8 @@ class OnlineOrderSubmissionController
     InvalidOrderExceptionReason.invalidCustomization =>
       'One of the items has an invalid customization. Remove it and add '
           'it again.',
+    InvalidOrderExceptionReason.deliveryNotAvailable =>
+      'Delivery just became unavailable. Choose pickup instead.',
     InvalidOrderExceptionReason.unknown =>
       'Something went wrong placing your order.',
   };

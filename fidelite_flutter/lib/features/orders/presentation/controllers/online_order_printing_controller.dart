@@ -19,14 +19,22 @@ class OnlineOrderPrintingController {
   /// unreachable), the order deliberately stays in the queue so it can be
   /// retried instead of silently disappearing unprinted.
   ///
-  /// No claim QR on this ticket: unlike a counter order, cashback for an
-  /// online order was already credited the moment it was placed (see
-  /// OnlineOrderEndpoint) -- there's nothing left to scan.
+  /// Mints this ticket's claim QR right before printing (see
+  /// OnlineOrderManagementEndpoint.issueClaimToken) -- same earn-by-
+  /// scanning mechanic as a counter order, not credited automatically at
+  /// placement. Skipped for a points-paid order: no cashback is ever
+  /// earned on one, so there's nothing to claim and the server would
+  /// refuse to issue a token for it anyway.
   Future<void> printAndMarkHandled(OrderRecord order) async {
     final client = ref.read(serverpodClientProvider);
     final items = await client.onlineOrderManagement.getItemsForOrder(
       order.id!,
     );
+
+    final paidWithPoints = order.paymentMethod == OrderPaymentMethod.points;
+    final claimQrPayload = paidWithPoints
+        ? null
+        : await client.onlineOrderManagement.issueClaimToken(order.id!);
 
     // OrderItemRecord only snapshots name/price, not category (the same
     // is true for a counter order -- see order_confirmation_page.dart,
@@ -49,7 +57,8 @@ class OnlineOrderPrintingController {
       deliveryFeeMillimes: order.deliveryFeeMillimes,
       deliveryAddress: order.deliveryAddress,
       deliveryPhone: order.deliveryPhone,
-      paidWithPoints: order.paymentMethod == OrderPaymentMethod.points,
+      paidWithPoints: paidWithPoints,
+      claimQrPayload: claimQrPayload,
       lines: [
         for (final item in items)
           ReceiptLine(

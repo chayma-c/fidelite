@@ -29,4 +29,18 @@ class OnlineOrderSettingsEndpoint extends Endpoint {
       ),
     );
   }
+
+  Future<OnlineOrderSettingsRecord> setDeliveryEnabled(
+    Session session,
+    bool enabled,
+  ) async {
+    final current = await currentOnlineOrderSettingsOrDefault(session);
+    return OnlineOrderSettingsRecord.db.updateRow(
+      session,
+      current.copyWith(
+        deliveryEnabled: enabled,
+        updatedAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
 }

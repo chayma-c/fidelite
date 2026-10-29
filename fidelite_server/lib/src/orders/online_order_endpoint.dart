@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../notifications/fcm_notification_sender.dart';
 import '../points/points_balance.dart';
+import '../shop/online_order_settings_util.dart';
 import '../shop/shop_status_util.dart';
 import 'order_pricing_util.dart';
 import 'ticket_numbering.dart';
@@ -10,9 +11,16 @@ import 'ticket_numbering.dart';
 const _notificationSender = FcmNotificationSender();
 
 /// Lets a customer place and pay for their own order instead of waiting at
-/// the counter -- the whole point of this endpoint. Cashback is credited
-/// directly in the same call (see OnlineOrderConfirmation for why there's
-/// no claim QR), and staff are pushed a notification so an order placed
+/// the counter -- the whole point of this endpoint. Paying with points
+/// settles immediately, right here (it's a real-time payment, not a
+/// bonus) -- but cash orders no longer earn cashback in this same call.
+/// Earning is deliberately a separate, later step: scanning the order's
+/// receipt QR (see PointsClaimEndpoint.claimOrderPoints), same as a
+/// counter order. The token for that QR is minted when staff print the
+/// ticket (see OnlineOrderManagementEndpoint.issueClaimToken), not here --
+/// an online order's printing is asynchronous (staff might not print for
+/// minutes or longer), so there's no raw token to hand back yet at
+/// placement time. Staff are pushed a notification so an order placed
 /// while nobody's looking at the app still gets noticed.
 class OnlineOrderEndpoint extends Endpoint {
   @override
@@ -37,6 +45,14 @@ class OnlineOrderEndpoint extends Endpoint {
     }
 
     final isDelivery = fulfillmentMethod == OrderFulfillmentMethod.delivery;
+    if (isDelivery) {
+      final settings = await currentOnlineOrderSettingsOrDefault(session);
+      if (!settings.deliveryEnabled) {
+        throw InvalidOrderException(
+          reason: InvalidOrderExceptionReason.deliveryNotAvailable,
+        );
+      }
+    }
     if (isDelivery &&
         ((deliveryAddress?.trim().isEmpty ?? true) ||
             (deliveryPhone?.trim().isEmpty ?? true))) {
@@ -110,38 +126,38 @@ class OnlineOrderEndpoint extends Endpoint {
         );
 
         // Paying with points settles the order immediately, in full
-        // (including the delivery fee) -- and doesn't earn cashback on
-        // top, which would otherwise read as generating points from
-        // spending points. Paying cash on site/delivery earns the usual
-        // cashback, computed on the food subtotal only -- the delivery
-        // fee is a pass-through service charge, not purchase amount.
+        // (including the delivery fee) -- a real-time payment action, so
+        // it's recorded right here same as before. It still never earns
+        // cashback on top, which would otherwise read as generating points
+        // from spending points.
+        //
+        // Paying cash doesn't credit anything here anymore -- [pointsEarned]
+        // below is purely a *preview* of what scanning the receipt will be
+        // worth (shown on the confirmation screen), not an amount actually
+        // added to the balance. [newBalance] is therefore just
+        // [currentBalance] unchanged in that case.
         final int pointsEarned;
-        final int ledgerDelta;
-        final PointsLedgerReason ledgerReason;
+        final int newBalance;
         if (payWithPoints) {
           pointsEarned = 0;
-          ledgerDelta = -grandTotal;
-          ledgerReason = PointsLedgerReason.onlineOrderPayment;
+          newBalance = currentBalance - grandTotal;
+          await PointsLedgerEntryRecord.db.insertRow(
+            session,
+            PointsLedgerEntryRecord(
+              userId: customerUserId,
+              deltaMillimes: -grandTotal,
+              reason: PointsLedgerReason.onlineOrderPayment,
+              relatedOrderId: order.id,
+              balanceAfterMillimes: newBalance,
+              createdByUserId: customerUserId,
+              createdAt: now,
+            ),
+            transaction: transaction,
+          );
         } else {
           pointsEarned = (priced.totalMillimes * cashbackRate).round();
-          ledgerDelta = pointsEarned;
-          ledgerReason = PointsLedgerReason.onlineOrder;
+          newBalance = currentBalance;
         }
-        final newBalance = currentBalance + ledgerDelta;
-
-        await PointsLedgerEntryRecord.db.insertRow(
-          session,
-          PointsLedgerEntryRecord(
-            userId: customerUserId,
-            deltaMillimes: ledgerDelta,
-            reason: ledgerReason,
-            relatedOrderId: order.id,
-            balanceAfterMillimes: newBalance,
-            createdByUserId: customerUserId,
-            createdAt: now,
-          ),
-          transaction: transaction,
-        );
 
         return OnlineOrderConfirmation(
           order: order,

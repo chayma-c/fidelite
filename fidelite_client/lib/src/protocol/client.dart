@@ -35,17 +35,19 @@ import 'package:fidelite_client/src/protocol/points/points_ledger_entry.dart'
 import 'package:fidelite_client/src/protocol/redemption/redemption_result.dart'
     as _i15;
 import 'package:fidelite_client/src/protocol/rewards/reward_item.dart' as _i16;
-import 'package:fidelite_client/src/protocol/shop/online_order_settings.dart'
+import 'package:fidelite_client/src/protocol/shop/online_order_public_settings.dart'
     as _i17;
-import 'package:fidelite_client/src/protocol/shop/shop_status.dart' as _i18;
+import 'package:fidelite_client/src/protocol/shop/online_order_settings.dart'
+    as _i18;
+import 'package:fidelite_client/src/protocol/shop/shop_status.dart' as _i19;
 import 'package:fidelite_client/src/protocol/shop/shop_open_status.dart'
-    as _i19;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i20;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i21;
-import 'package:fidelite_client/src/protocol/users/app_user.dart' as _i22;
-import 'protocol.dart' as _i23;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i22;
+import 'package:fidelite_client/src/protocol/users/app_user.dart' as _i23;
+import 'protocol.dart' as _i24;
 
 /// {@category Endpoint}
 class EndpointMenu extends _i1.EndpointRef {
@@ -176,9 +178,16 @@ class EndpointDeviceToken extends _i1.EndpointRef {
 }
 
 /// Lets a customer place and pay for their own order instead of waiting at
-/// the counter -- the whole point of this endpoint. Cashback is credited
-/// directly in the same call (see OnlineOrderConfirmation for why there's
-/// no claim QR), and staff are pushed a notification so an order placed
+/// the counter -- the whole point of this endpoint. Paying with points
+/// settles immediately, right here (it's a real-time payment, not a
+/// bonus) -- but cash orders no longer earn cashback in this same call.
+/// Earning is deliberately a separate, later step: scanning the order's
+/// receipt QR (see PointsClaimEndpoint.claimOrderPoints), same as a
+/// counter order. The token for that QR is minted when staff print the
+/// ticket (see OnlineOrderManagementEndpoint.issueClaimToken), not here --
+/// an online order's printing is asynchronous (staff might not print for
+/// minutes or longer), so there's no raw token to hand back yet at
+/// placement time. Staff are pushed a notification so an order placed
 /// while nobody's looking at the app still gets noticed.
 /// {@category Endpoint}
 class EndpointOnlineOrder extends _i1.EndpointRef {
@@ -241,6 +250,34 @@ class EndpointOnlineOrderManagement extends _i1.EndpointRef {
       caller.callServerEndpoint<_i9.OrderRecord>(
         'onlineOrderManagement',
         'markHandled',
+        {'orderId': orderId},
+      );
+
+  /// Mints the claim QR for an online order's printed ticket -- called
+  /// right before printing (see the client's
+  /// OnlineOrderPrintingController), not at order-placement time: printing
+  /// is asynchronous, so there's no raw token to hand back yet when
+  /// OnlineOrderEndpoint.placeOrder returns (see its own doc comment).
+  ///
+  /// Refuses an order paid with points -- no cashback is ever earned on
+  /// one (see OrderPaymentMethod.points), so there's nothing to claim.
+  /// This is the actual enforcement of that rule for online orders:
+  /// PointsClaimEndpoint.claimOrderPoints computes its payout from the
+  /// order total alone, with no awareness of how the order was paid for,
+  /// so the only thing standing between a points-paid order and a
+  /// double-dip is simply never minting it a valid token in the first
+  /// place.
+  ///
+  /// If a still-valid token already exists for this order (e.g. this is a
+  /// reprint), it's expired before minting a fresh one -- otherwise two
+  /// live tickets for the same order could each be scanned and double
+  /// -credit cashback. The old row is kept (not deleted) for audit/
+  /// history; only [ClaimTokenStatus.pending] ones are touched, so an
+  /// already-claimed token's record is untouched either way.
+  _i2.Future<String> issueClaimToken(int orderId) =>
+      caller.callServerEndpoint<String>(
+        'onlineOrderManagement',
+        'issueClaimToken',
         {'orderId': orderId},
       );
 }
@@ -418,6 +455,27 @@ class EndpointRewards extends _i1.EndpointRef {
       );
 }
 
+/// Read-only and deliberately public -- same reasoning as ShopStatusEndpoint:
+/// a customer deciding how to receive their order needs to see this before
+/// (and while) building their cart. Projects just [deliveryEnabled] off the
+/// staff-internal OnlineOrderSettingsRecord (see
+/// OnlineOrderSettingsEndpoint for the staff-only read/write of the full
+/// record) rather than exposing it directly.
+/// {@category Endpoint}
+class EndpointOnlineOrderPublicSettings extends _i1.EndpointRef {
+  EndpointOnlineOrderPublicSettings(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'onlineOrderPublicSettings';
+
+  _i2.Future<_i17.OnlineOrderPublicSettings> getSettings() =>
+      caller.callServerEndpoint<_i17.OnlineOrderPublicSettings>(
+        'onlineOrderPublicSettings',
+        'getSettings',
+        {},
+      );
+}
+
 /// Staff-internal only -- unlike ShopStatusEndpoint, nothing here is ever
 /// customer-visible.
 /// {@category Endpoint}
@@ -427,17 +485,24 @@ class EndpointOnlineOrderSettings extends _i1.EndpointRef {
   @override
   String get name => 'onlineOrderSettings';
 
-  _i2.Future<_i17.OnlineOrderSettingsRecord> getSettings() =>
-      caller.callServerEndpoint<_i17.OnlineOrderSettingsRecord>(
+  _i2.Future<_i18.OnlineOrderSettingsRecord> getSettings() =>
+      caller.callServerEndpoint<_i18.OnlineOrderSettingsRecord>(
         'onlineOrderSettings',
         'getSettings',
         {},
       );
 
-  _i2.Future<_i17.OnlineOrderSettingsRecord> setAutoPrint(bool enabled) =>
-      caller.callServerEndpoint<_i17.OnlineOrderSettingsRecord>(
+  _i2.Future<_i18.OnlineOrderSettingsRecord> setAutoPrint(bool enabled) =>
+      caller.callServerEndpoint<_i18.OnlineOrderSettingsRecord>(
         'onlineOrderSettings',
         'setAutoPrint',
+        {'enabled': enabled},
+      );
+
+  _i2.Future<_i18.OnlineOrderSettingsRecord> setDeliveryEnabled(bool enabled) =>
+      caller.callServerEndpoint<_i18.OnlineOrderSettingsRecord>(
+        'onlineOrderSettings',
+        'setDeliveryEnabled',
         {'enabled': enabled},
       );
 }
@@ -454,8 +519,8 @@ class EndpointShopStatus extends _i1.EndpointRef {
   @override
   String get name => 'shopStatus';
 
-  _i2.Future<_i18.ShopStatusRecord> getStatus() =>
-      caller.callServerEndpoint<_i18.ShopStatusRecord>(
+  _i2.Future<_i19.ShopStatusRecord> getStatus() =>
+      caller.callServerEndpoint<_i19.ShopStatusRecord>(
         'shopStatus',
         'getStatus',
         {},
@@ -473,8 +538,8 @@ class EndpointShopStatusManagement extends _i1.EndpointRef {
   @override
   String get name => 'shopStatusManagement';
 
-  _i2.Future<_i18.ShopStatusRecord> setStatus(_i19.ShopOpenStatus status) =>
-      caller.callServerEndpoint<_i18.ShopStatusRecord>(
+  _i2.Future<_i19.ShopStatusRecord> setStatus(_i20.ShopOpenStatus status) =>
+      caller.callServerEndpoint<_i19.ShopStatusRecord>(
         'shopStatusManagement',
         'setStatus',
         {'status': status},
@@ -487,7 +552,7 @@ class EndpointShopStatusManagement extends _i1.EndpointRef {
 /// endpoint is registered and reachable, per the module's own
 /// "subclass this in your own application" contract.
 /// {@category Endpoint}
-class EndpointEmailAuth extends _i20.EndpointEmailIdpBase {
+class EndpointEmailAuth extends _i21.EndpointEmailIdpBase {
   EndpointEmailAuth(_i1.EndpointCaller caller) : super(caller);
 
   @override
@@ -524,10 +589,10 @@ class EndpointEmailAuth extends _i20.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i2.Future<_i21.AuthSuccess> login({
+  _i2.Future<_i22.AuthSuccess> login({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i21.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i22.AuthSuccess>(
     'emailAuth',
     'login',
     {
@@ -574,10 +639,10 @@ class EndpointEmailAuth extends _i20.EndpointEmailIdpBase {
   ///
   /// Returns a session for the newly created user.
   @override
-  _i2.Future<_i21.AuthSuccess> finishRegistration({
+  _i2.Future<_i22.AuthSuccess> finishRegistration({
     required String registrationToken,
     required String password,
-  }) => caller.callServerEndpoint<_i21.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i22.AuthSuccess>(
     'emailAuth',
     'finishRegistration',
     {
@@ -676,7 +741,7 @@ class EndpointEmailAuth extends _i20.EndpointEmailIdpBase {
 /// `FlutterAuthSessionManager`'s JWT auth key provider to find a refresh
 /// endpoint at all (`client.getEndpointOfType<EndpointRefreshJwtTokens>()`).
 /// {@category Endpoint}
-class EndpointJwtTokens extends _i21.EndpointRefreshJwtTokens {
+class EndpointJwtTokens extends _i22.EndpointRefreshJwtTokens {
   EndpointJwtTokens(_i1.EndpointCaller caller) : super(caller);
 
   @override
@@ -701,9 +766,9 @@ class EndpointJwtTokens extends _i21.EndpointRefreshJwtTokens {
   /// This endpoint is unauthenticated, meaning the client won't include any
   /// authentication information with the call.
   @override
-  _i2.Future<_i21.AuthSuccess> refreshAccessToken({
+  _i2.Future<_i22.AuthSuccess> refreshAccessToken({
     required String refreshToken,
-  }) => caller.callServerEndpoint<_i21.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i22.AuthSuccess>(
     'jwtTokens',
     'refreshAccessToken',
     {'refreshToken': refreshToken},
@@ -722,8 +787,8 @@ class EndpointUser extends _i1.EndpointRef {
   @override
   String get name => 'user';
 
-  _i2.Future<_i22.AppUserRecord> getMe() =>
-      caller.callServerEndpoint<_i22.AppUserRecord>(
+  _i2.Future<_i23.AppUserRecord> getMe() =>
+      caller.callServerEndpoint<_i23.AppUserRecord>(
         'user',
         'getMe',
         {},
@@ -732,13 +797,13 @@ class EndpointUser extends _i1.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    serverpod_auth_core = _i21.Caller(client);
-    serverpod_auth_idp = _i20.Caller(client);
+    serverpod_auth_core = _i22.Caller(client);
+    serverpod_auth_idp = _i21.Caller(client);
   }
 
-  late final _i21.Caller serverpod_auth_core;
+  late final _i22.Caller serverpod_auth_core;
 
-  late final _i20.Caller serverpod_auth_idp;
+  late final _i21.Caller serverpod_auth_idp;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -761,7 +826,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i23.Protocol(),
+         _i24.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -780,6 +845,7 @@ class Client extends _i1.ServerpodClientShared {
     wallet = EndpointWallet(this);
     redemption = EndpointRedemption(this);
     rewards = EndpointRewards(this);
+    onlineOrderPublicSettings = EndpointOnlineOrderPublicSettings(this);
     onlineOrderSettings = EndpointOnlineOrderSettings(this);
     shopStatus = EndpointShopStatus(this);
     shopStatusManagement = EndpointShopStatusManagement(this);
@@ -809,6 +875,8 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointRewards rewards;
 
+  late final EndpointOnlineOrderPublicSettings onlineOrderPublicSettings;
+
   late final EndpointOnlineOrderSettings onlineOrderSettings;
 
   late final EndpointShopStatus shopStatus;
@@ -835,6 +903,7 @@ class Client extends _i1.ServerpodClientShared {
     'wallet': wallet,
     'redemption': redemption,
     'rewards': rewards,
+    'onlineOrderPublicSettings': onlineOrderPublicSettings,
     'onlineOrderSettings': onlineOrderSettings,
     'shopStatus': shopStatus,
     'shopStatusManagement': shopStatusManagement,

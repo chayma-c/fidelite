@@ -246,6 +246,8 @@ class PendingOrderQueueController extends Notifier<PendingOrdersState> {
       'Something went wrong syncing this order.',
     InvalidOrderExceptionReason.invalidCustomization =>
       'Something went wrong syncing this order.',
+    InvalidOrderExceptionReason.deliveryNotAvailable =>
+      'Something went wrong syncing this order.',
     InvalidOrderExceptionReason.unknown =>
       'Something went wrong syncing this order.',
   };

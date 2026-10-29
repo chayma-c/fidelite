@@ -130,14 +130,19 @@ class OnlineOrderConfirmationPage extends StatelessWidget {
                             Text(
                               paidWithPoints
                                   ? 'Paid with points -- nothing due'
-                                  : '+${confirmation.pointsEarnedMillimes.asDinars} '
-                                        'cashback earned',
+                                  : 'Scan your ticket when it\'s ready to '
+                                        'earn ${confirmation.pointsEarnedMillimes.asDinars} '
+                                        'cashback',
                               style: Theme.of(context).textTheme.titleSmall,
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'New balance: '
-                              '${confirmation.newBalanceMillimes.asDinars}',
+                              paidWithPoints
+                                  ? 'New balance: '
+                                        '${confirmation.newBalanceMillimes.asDinars}'
+                                  : 'Current balance: '
+                                        '${confirmation.newBalanceMillimes.asDinars}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],

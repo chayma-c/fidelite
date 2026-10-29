@@ -5,9 +5,11 @@ default: adjustment
 values:
   ### Cashback earned by a customer claiming a confirmed order's receipt QR.
   - orderClaim
-  ### Cashback earned automatically when a customer places an online order
-  ### themselves -- no QR to scan, since the orderer is already a known,
-  ### authenticated account at the moment the order is placed.
+  ### Legacy -- no longer written. Used to mean cashback credited
+  ### automatically the moment an online order was placed, before online
+  ### orders required scanning the receipt QR too (see
+  ### OnlineOrderEndpoint); kept so historical ledger rows with this
+  ### reason still deserialize correctly.
   - onlineOrder
   ### Cashback spent redeeming a reward (staff-scanned wallet QR).
   - redemption
