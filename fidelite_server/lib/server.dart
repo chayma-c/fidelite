@@ -6,6 +6,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
+import 'src/menu/customizable_categories_backfill.dart';
 import 'src/menu/ingredient_seed.dart';
 import 'src/menu/menu_seed.dart';
 import 'src/rewards/rewards_seed.dart';
@@ -158,6 +159,7 @@ void run(List<String> args) async {
   final seedSession = await pod.createSession();
   try {
     await ensureMenuSeeded(seedSession);
+    await ensureCustomizableCategoriesBackfilled(seedSession);
     await ensureIngredientsSeeded(seedSession);
     await ensureRewardsSeeded(seedSession);
     await ensureStaffUserSeeded(seedSession);
