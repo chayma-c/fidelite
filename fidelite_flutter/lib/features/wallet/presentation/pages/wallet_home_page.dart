@@ -6,6 +6,7 @@ import '../../../../core/money/millimes_formatting.dart';
 import '../../../../core/serverpod/me_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_mode_menu_button.dart';
+import '../../../../core/update/update_available_banner.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../rewards/data/rewards_providers.dart';
 import '../../../shop/presentation/widgets/shop_status_banner.dart';
@@ -40,6 +41,7 @@ class WalletHomePage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const UpdateAvailableBanner(),
               const Center(child: ShopStatusBanner()),
               const SizedBox(height: 16),
               _BalanceHeroCard(
